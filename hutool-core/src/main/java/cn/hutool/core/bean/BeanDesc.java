@@ -1,13 +1,5 @@
 package cn.hutool.core.bean;
 
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
-
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.CaseInsensitiveMap;
 import cn.hutool.core.util.BooleanUtil;
@@ -16,6 +8,14 @@ import cn.hutool.core.util.ModifierUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.TypeUtil;
+
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Bean信息描述做为BeanInfo替代方案，此对象持有JavaBean中的setters和getters等相关信息描述<br>
@@ -35,9 +35,9 @@ public class BeanDesc implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 	/** Bean类 */
-	private Class<?> beanClass;
+	private final Class<?> beanClass;
 	/** 属性Map */
-	private Map<String, PropDesc> propMap = new LinkedHashMap<>();
+	private final Map<String, PropDesc> propMap = new LinkedHashMap<>();
 
 	/**
 	 * 构造
@@ -141,7 +141,7 @@ public class BeanDesc implements Serializable{
 		for (Field field : ReflectUtil.getFields(this.beanClass)) {
 			if(false == ModifierUtil.isStatic(field)) {
 				//只针对非static属性
-				this.propMap.put(field.getName(), createProp(field));
+				this.propMap.put(ReflectUtil.getFieldName(field), createProp(field));
 			}
 		}
 		return this;
@@ -300,11 +300,11 @@ public class BeanDesc implements Serializable{
 	public static class PropDesc {
 
 		/** 字段 */
-		private Field field;
+		private final Field field;
 		/** Getter方法 */
-		private Method getter;
+		private final Method getter;
 		/** Setter方法 */
-		private Method setter;
+		private final Method setter;
 
 		/**
 		 * 构造<br>
@@ -321,11 +321,21 @@ public class BeanDesc implements Serializable{
 		}
 
 		/**
-		 * 获取字段名
+		 * 获取字段名，如果存在Alias注解，读取注解的值作为名称
 		 * 
 		 * @return 字段名
 		 */
 		public String getFieldName() {
+			return ReflectUtil.getFieldName(this.field);
+		}
+
+		/**
+		 * 获取字段名称
+		 *
+		 * @return 字段名
+		 * @since 5.1.6
+		 */
+		public String getRawFieldName() {
 			return null == this.field ? null : this.field.getName();
 		}
 

@@ -1,10 +1,11 @@
 package cn.hutool.extra.mail;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.util.Date;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -19,13 +20,11 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import javax.mail.util.ByteArrayDataSource;
-
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IORuntimeException;
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.util.ArrayUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.Date;
 
 /**
  * 邮件发送客户端
@@ -38,7 +37,7 @@ public class Mail {
 	/**
 	 * 邮箱帐户信息以及一些客户端配置信息
 	 */
-	private MailAccount mailAccount;
+	private final MailAccount mailAccount;
 	/**
 	 * 收件人列表
 	 */
@@ -70,7 +69,7 @@ public class Mail {
 	/**
 	 * 正文、附件和图片的混合部分
 	 */
-	private Multipart multipart = new MimeMultipart();
+	private final Multipart multipart = new MimeMultipart();
 	/**
 	 * 是否使用全局会话，默认为false
 	 */
@@ -349,10 +348,10 @@ public class Mail {
 	/**
 	 * 发送
 	 *
-	 * @return this
+	 * @return message-id
 	 * @throws MailException 邮件发送异常
 	 */
-	public Mail send() throws MailException {
+	public String send() throws MailException {
 		try {
 			return doSend();
 		} catch (MessagingException e) {
@@ -365,12 +364,13 @@ public class Mail {
 	/**
 	 * 执行发送
 	 *
-	 * @return this
+	 * @return message-id
 	 * @throws MessagingException 发送异常
 	 */
-	private Mail doSend() throws MessagingException {
-		Transport.send(buildMsg());
-		return this;
+	private String doSend() throws MessagingException {
+		final MimeMessage mimeMessage = buildMsg();
+		Transport.send(mimeMessage);
+		return mimeMessage.getMessageID();
 	}
 
 	/**

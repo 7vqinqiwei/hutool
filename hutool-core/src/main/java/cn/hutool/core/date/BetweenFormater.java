@@ -17,7 +17,7 @@ public class BetweenFormater implements Serializable{
 	/** 格式化级别 */
 	private Level level;
 	/** 格式化级别的最大个数 */
-	private int levelMaxCount;
+	private final int levelMaxCount;
 	
 	/**
 	 * 构造
@@ -51,8 +51,10 @@ public class BetweenFormater implements Serializable{
 			long day = betweenMs / DateUnit.DAY.getMillis();
 			long hour = betweenMs / DateUnit.HOUR.getMillis() - day * 24;
 			long minute = betweenMs / DateUnit.MINUTE.getMillis() - day * 24 * 60 - hour * 60;
-			long second = betweenMs / DateUnit.SECOND.getMillis() - ((day * 24 + hour) * 60 + minute) * 60;
-			long millisecond = betweenMs - (((day * 24 + hour) * 60 + minute) * 60 + second) * 1000;
+
+			final long BetweenOfSecond = ((day * 24 + hour) * 60 + minute) * 60;
+			long second = betweenMs / DateUnit.SECOND.getMillis() - BetweenOfSecond;
+			long millisecond = betweenMs - (BetweenOfSecond + second) * 1000;
 			
 			final int level = this.level.ordinal();
 			int levelCount = 0;
@@ -137,7 +139,7 @@ public class BetweenFormater implements Serializable{
 		MILLSECOND("毫秒");
 
 		/** 级别名称 */
-		private String name;
+		private final String name;
 
 		/**
 		 * 构造

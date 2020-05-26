@@ -1,10 +1,8 @@
 package cn.hutool.core.lang;
 
+import cn.hutool.core.exceptions.ValidateException;
 import org.junit.Assert;
 import org.junit.Test;
-
-import cn.hutool.core.exceptions.ValidateException;
-import cn.hutool.core.lang.Validator;
 
 /**
  * 验证器单元测试
@@ -108,13 +106,13 @@ public class ValidatorTest {
 	@Test
 	public void isMatchTest() {
 		String url = "http://aaa-bbb.somthing.com/a.php?a=b&c=2";
-		Assert.assertTrue(Validator.isMactchRegex(PatternPool.URL_HTTP, url));
+		Assert.assertTrue(Validator.isMatchRegex(PatternPool.URL_HTTP, url));
 
 		url = "https://aaa-bbb.somthing.com/a.php?a=b&c=2";
-		Assert.assertTrue(Validator.isMactchRegex(PatternPool.URL_HTTP, url));
+		Assert.assertTrue(Validator.isMatchRegex(PatternPool.URL_HTTP, url));
 
 		url = "https://aaa-bbb.somthing.com:8080/a.php?a=b&c=2";
-		Assert.assertTrue(Validator.isMactchRegex(PatternPool.URL_HTTP, url));
+		Assert.assertTrue(Validator.isMatchRegex(PatternPool.URL_HTTP, url));
 	}
 
 	@Test
@@ -131,5 +129,11 @@ public class ValidatorTest {
 		str = "123_abc_ccc中文";
 		general = Validator.isGeneral(str, -1, 100);
 		Assert.assertFalse(general);
+	}
+
+	@Test
+	public void isPlateNumberTest(){
+		Assert.assertTrue(Validator.isPlateNumber("粤BA03205"));
+		Assert.assertTrue(Validator.isPlateNumber("闽20401领"));
 	}
 }

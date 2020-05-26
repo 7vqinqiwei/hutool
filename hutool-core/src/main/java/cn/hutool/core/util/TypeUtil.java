@@ -1,5 +1,7 @@
 package cn.hutool.core.util;
 
+import cn.hutool.core.map.TableMap;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -7,8 +9,6 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Map;
-
-import cn.hutool.core.map.TableMap;
 
 /**
  * 针对 {@link Type} 的工具类封装<br>
@@ -59,11 +59,7 @@ public class TypeUtil {
 		if (null == field) {
 			return null;
 		}
-		Type type = field.getGenericType();
-		if (null == type) {
-			type = field.getType();
-		}
-		return type;
+		return field.getGenericType();
 	}
 
 	/**
@@ -253,12 +249,23 @@ public class TypeUtil {
 	 * @since 4.5.2
 	 */
 	public static ParameterizedType toParameterizedType(Type type) {
+		ParameterizedType result = null;
 		if (type instanceof ParameterizedType) {
-			return (ParameterizedType) type;
+			result = (ParameterizedType) type;
 		} else if (type instanceof Class) {
-			return toParameterizedType(((Class<?>) type).getGenericSuperclass());
+			final Class<?> clazz = (Class<?>) type;
+			Type genericSuper = clazz.getGenericSuperclass();
+			if(null == genericSuper || Object.class.equals(genericSuper)){
+				// 如果类没有父类，而是实现一些定义好的泛型接口，则取接口的Type
+				final Type[] genericInterfaces = clazz.getGenericInterfaces();
+				if(ArrayUtil.isNotEmpty(genericInterfaces)){
+					// 默认取第一个实现接口的泛型Type
+					genericSuper = genericInterfaces[0];
+				}
+			}
+			result = toParameterizedType(genericSuper);
 		}
-		return null;
+		return result;
 	}
 	
 	/**
@@ -300,6 +307,7 @@ public class TypeUtil {
 		// 查找方法定义所在类或接口中此泛型参数的位置
 		final Type[] result = new Type[size];
 		for(int i = 0; i < typeVariables.length; i++) {
+			//noinspection SuspiciousMethodCalls
 			result[i] = (typeVariables[i] instanceof TypeVariable) ? tableMap.get(typeVariables[i]) : typeVariables[i];
 		}
 		return result;

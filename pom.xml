@@ -8,9 +8,9 @@
 
 	<groupId>cn.hutool</groupId>
 	<artifactId>hutool-parent</artifactId>
-	<version>5.0.3</version>
+	<version>5.3.5</version>
 	<name>hutool</name>
-	<description>提供丰富的Java工具方法</description>
+	<description>Hutool是一个小而全的Java工具类库，通过静态方法封装，降低相关API的学习成本，提高工作效率，使Java拥有函数式语言般的优雅，让Java语言也可以“甜甜的”。</description>
 	<url>https://github.com/looly/hutool</url>
 
 	<modules>
@@ -42,8 +42,8 @@
 
 		<!-- versions -->
 		<compile.version>8</compile.version>
-		<junit.version>4.13-beta-3</junit.version>
-		<lombok.version>1.18.10</lombok.version>
+		<junit.version>4.13</junit.version>
+		<lombok.version>1.18.12</lombok.version>
 	</properties>
 
 	<dependencies>
@@ -134,7 +134,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-source-plugin</artifactId>
-						<version>3.1.0</version>
+						<version>3.2.1</version>
 						<executions>
 							<execution>
 								<id>oss</id>

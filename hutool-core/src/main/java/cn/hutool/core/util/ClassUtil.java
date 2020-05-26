@@ -1,20 +1,5 @@
 package cn.hutool.core.util;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
-import java.net.URI;
-import java.net.URL;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
 import cn.hutool.core.convert.BasicType;
 import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.io.FileUtil;
@@ -24,6 +9,22 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.lang.ClassScanner;
 import cn.hutool.core.lang.Filter;
 import cn.hutool.core.lang.Singleton;
+
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
+import java.net.URI;
+import java.net.URL;
+import java.time.temporal.TemporalAccessor;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 /**
  * 类工具类 <br>
@@ -744,7 +745,17 @@ public class ClassUtil {
 
 	/**
 	 * 是否为简单值类型<br>
-	 * 包括：原始类型,、String、other CharSequence, a Number, a Date, a URI, a URL, a Locale or a Class.
+	 * 包括：
+	 * <pre>
+	 *     原始类型
+	 *     String、other CharSequence
+	 *     Number
+	 *     Date
+	 *     URI
+	 *     URL
+	 *     Locale
+	 *     Class
+	 * </pre>
 	 *
 	 * @param clazz 类
 	 * @return 是否为简单值类型
@@ -758,7 +769,9 @@ public class ClassUtil {
 				|| clazz.equals(URI.class) //
 				|| clazz.equals(URL.class) //
 				|| clazz.equals(Locale.class) //
-				|| clazz.equals(Class.class);//
+				|| clazz.equals(Class.class)//
+				// jdk8 date object
+				|| TemporalAccessor.class.isAssignableFrom(clazz); //
 	}
 
 	/**
@@ -1040,5 +1053,38 @@ public class ClassUtil {
 		return objectPackageName.startsWith("java.") //
 				|| objectPackageName.startsWith("javax.") //
 				|| clazz.getClassLoader() == null;
+	}
+
+	/**
+	 * 获取class类路径URL, 不管是否在jar包中都会返回文件夹的路径<br>
+	 * class在jar包中返回jar所在文件夹,class不在jar中返回文件夹目录<br>
+	 * jdk中的类不能使用此方法
+	 *
+	 * @param clazz 类
+	 * @return URL
+	 * @since 5.2.4
+	 */
+	public static URL getLocation(Class<?> clazz) {
+		if (null == clazz) {
+			return null;
+		}
+		return clazz.getProtectionDomain().getCodeSource().getLocation();
+	}
+
+	/**
+	 * 获取class类路径, 不管是否在jar包中都会返回文件夹的路径<br>
+	 * class在jar包中返回jar所在文件夹,class不在jar中返回文件夹目录<br>
+	 * jdk中的类不能使用此方法
+	 *
+	 * @param clazz 类
+	 * @return class路径
+	 * @since 5.2.4
+	 */
+	public static String getLocationPath(Class<?> clazz) {
+		final URL location = getLocation(clazz);
+		if (null == location) {
+			return null;
+		}
+		return location.getPath();
 	}
 }

@@ -1,32 +1,5 @@
 package cn.hutool.poi.excel;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.poi.hssf.usermodel.DVConstraint;
-import org.apache.poi.hssf.usermodel.HSSFDataValidation;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.DataValidation;
-import org.apache.poi.ss.usermodel.Font;
-import org.apache.poi.ss.usermodel.HeaderFooter;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.util.CellRangeAddressList;
-import org.apache.poi.xssf.usermodel.XSSFDataValidationConstraint;
-import org.apache.poi.xssf.usermodel.XSSFDataValidationHelper;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.comparator.IndexedComparator;
@@ -39,8 +12,34 @@ import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.URLUtil;
+import cn.hutool.poi.excel.cell.CellLocation;
 import cn.hutool.poi.excel.cell.CellUtil;
 import cn.hutool.poi.excel.style.Align;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.DataValidation;
+import org.apache.poi.ss.usermodel.DataValidationConstraint;
+import org.apache.poi.ss.usermodel.DataValidationHelper;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HeaderFooter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.util.CellRangeAddressList;
+import org.apache.poi.xssf.usermodel.XSSFDataValidation;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Excel 写入器<br>
@@ -68,6 +67,8 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	private Comparator<String> aliasComparator;
 	/** 样式集，定义不同类型数据样式 */
 	private StyleSet styleSet;
+	/** 标题项对应列号缓存，每次写标题更新此缓存 */
+	private Map<String, Integer> headLocationCache;
 
 	// -------------------------------------------------------------------------- Constructor start
 	/**
@@ -192,13 +193,14 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	 * <pre>
 	 * 1. 当前行游标归零
 	 * 2. 清空别名比较器
+	 * 3. 清除标题缓存
 	 * </pre>
 	 * 
 	 * @return this
 	 */
 	public ExcelWriter reset() {
 		resetRow();
-		this.aliasComparator = null;
+		this.headLocationCache = null;
 		return this;
 	}
 
@@ -423,6 +425,8 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	 */
 	public ExcelWriter setHeaderAlias(Map<String, String> headerAlias) {
 		this.headerAlias = headerAlias;
+		// 新增别名时清除比较器缓存
+		this.aliasComparator = null;
 		return this;
 	}
 
@@ -434,6 +438,8 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	 */
 	public ExcelWriter clearHeaderAlias() {
 		this.headerAlias = null;
+		// 清空别名时清除比较器缓存
+		this.aliasComparator = null;
 		return this;
 	}
 
@@ -464,6 +470,32 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 		}
 		this.headerAlias = headerAlias;
 		headerAlias.put(name, alias);
+		// 新增别名时清除比较器缓存
+		this.aliasComparator = null;
+		return this;
+	}
+
+	/**
+	 * 设置窗口冻结，之前冻结的窗口会被覆盖，如果rowSplit为0表示取消冻结
+	 *
+	 * @param rowSplit 冻结的行及行数，2表示前两行
+	 * @return this
+	 * @since 5.2.5
+	 */
+	public ExcelWriter setFreezePane(int rowSplit){
+		return setFreezePane(0, rowSplit);
+	}
+
+	/**
+	 * 设置窗口冻结，之前冻结的窗口会被覆盖，如果colSplit和rowSplit为0表示取消冻结
+	 *
+	 * @param colSplit 冻结的列及列数，2表示前两列
+	 * @param rowSplit 冻结的行及行数，2表示前两行
+	 * @return this
+	 * @since 5.2.5
+	 */
+	public ExcelWriter setFreezePane(int colSplit, int rowSplit){
+		getSheet().createFreezePane(colSplit, rowSplit);
 		return this;
 	}
 
@@ -564,22 +596,20 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	 * @since 4.6.2
 	 */
 	public ExcelWriter addSelect(CellRangeAddressList regions, String... selectList) {
-		final DVConstraint constraint = DVConstraint.createExplicitListConstraint(selectList);
-		
-		// 绑定
-		DataValidation dataValidation;
-		
-		if(this.sheet instanceof XSSFSheet) {
-			final XSSFDataValidationHelper dvHelper = new XSSFDataValidationHelper((XSSFSheet)sheet);
-			final XSSFDataValidationConstraint dvConstraint = (XSSFDataValidationConstraint) dvHelper.createExplicitListConstraint(selectList);
-			dataValidation = dvHelper.createValidation(dvConstraint, regions);
-		} else {
-			dataValidation = new HSSFDataValidation(regions, constraint);
+		final DataValidationHelper validationHelper = this.sheet.getDataValidationHelper();
+		final DataValidationConstraint constraint = validationHelper.createExplicitListConstraint(selectList);
+
+		//设置下拉框数据
+		final DataValidation dataValidation = validationHelper.createValidation(constraint, regions);
+
+		//处理Excel兼容性问题
+		if(dataValidation instanceof XSSFDataValidation) {
+			dataValidation.setSuppressDropDownArrow(true);
+			dataValidation.setShowErrorBox(true);
+		}else {
+			dataValidation.setSuppressDropDownArrow(false);
 		}
-		
-		dataValidation.setSuppressDropDownArrow(true);
-		dataValidation.setShowErrorBox(true);
-		
+
 		return addValidationData(dataValidation);
 	}
 
@@ -660,7 +690,10 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	public ExcelWriter merge(int firstRow, int lastRow, int firstColumn, int lastColumn, Object content, boolean isSetHeaderStyle) {
 		Assert.isFalse(this.isClosed, "ExcelWriter has been closed!");
 
-		final CellStyle style = (isSetHeaderStyle && null != this.styleSet && null != this.styleSet.headCellStyle) ? this.styleSet.headCellStyle : this.styleSet.cellStyle;
+		CellStyle style = null;
+		if(null != this.styleSet){
+			style = (isSetHeaderStyle && null != this.styleSet.headCellStyle) ? this.styleSet.headCellStyle : this.styleSet.cellStyle;
+		}
 		CellUtil.mergingCells(this.sheet, firstRow, lastRow, firstColumn, lastColumn, style);
 
 		// 设置内容
@@ -772,7 +805,16 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	 */
 	public ExcelWriter writeHeadRow(Iterable<?> rowData) {
 		Assert.isFalse(this.isClosed, "ExcelWriter has been closed!");
-		RowUtil.writeRow(this.sheet.createRow(this.currentRow.getAndIncrement()), rowData, this.styleSet, true);
+		this.headLocationCache = new ConcurrentHashMap<>();
+		final Row row = this.sheet.createRow(this.currentRow.getAndIncrement());
+		int i = 0;
+		Cell cell;
+		for (Object value : rowData) {
+			cell = row.createCell(i);
+			CellUtil.setCellValue(cell, value, this.styleSet, true);
+			this.headLocationCache.put(StrUtil.toString(value), i);
+			i++;
+		}
 		return this;
 	}
 
@@ -792,7 +834,7 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	 * @see #writeRow(Map, boolean)
 	 * @since 4.1.5
 	 */
-	@SuppressWarnings({"rawtypes" })
+	@SuppressWarnings({"rawtypes", "unchecked"})
 	public ExcelWriter writeRow(Object rowBean, boolean isWriteKeyAsHead) {
 		if (rowBean instanceof Iterable) {
 			return writeRow((Iterable<?>) rowBean);
@@ -800,16 +842,16 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 		Map rowMap;
 		if (rowBean instanceof Map) {
 			if (MapUtil.isNotEmpty(this.headerAlias)) {
-				rowMap = MapUtil.newTreeMap((Map) rowBean, getInitedAliasComparator());
+				rowMap = MapUtil.newTreeMap((Map) rowBean, getCachedAliasComparator());
 			} else {
 				rowMap = (Map) rowBean;
 			}
 		} else if (BeanUtil.isBean(rowBean.getClass())) {
 			if (MapUtil.isEmpty(this.headerAlias)) {
-				rowMap = BeanUtil.beanToMap(rowBean, new LinkedHashMap<String, Object>(), false, false);
+				rowMap = BeanUtil.beanToMap(rowBean, new LinkedHashMap<>(), false, false);
 			} else {
 				// 别名存在情况下按照别名的添加顺序排序Bean数据
-				rowMap = BeanUtil.beanToMap(rowBean, new TreeMap<>(getInitedAliasComparator()), false, false);
+				rowMap = BeanUtil.beanToMap(rowBean, new TreeMap<>(getCachedAliasComparator()), false, false);
 			}
 		} else {
 			// 其它转为字符串默认输出
@@ -838,7 +880,20 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 		if (isWriteKeyAsHead) {
 			writeHeadRow(aliasMap.keySet());
 		}
-		writeRow(aliasMap.values());
+
+		// 如果已经写出标题行，根据标题行找对应的值写入
+		if(MapUtil.isNotEmpty(this.headLocationCache)){
+			final Row row = RowUtil.getOrCreateRow(this.sheet, this.currentRow.getAndIncrement());
+			Integer location;
+			for (Entry<?, ?> entry : aliasMap.entrySet()) {
+				location = this.headLocationCache.get(StrUtil.toString(entry.getKey()));
+				if(null != location){
+					CellUtil.setCellValue(CellUtil.getOrCreateCell(row, location), entry.getValue(), this.styleSet, false);
+				}
+			}
+		} else{
+			writeRow(aliasMap.values());
+		}
 		return this;
 	}
 
@@ -855,6 +910,19 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 		Assert.isFalse(this.isClosed, "ExcelWriter has been closed!");
 		RowUtil.writeRow(this.sheet.createRow(this.currentRow.getAndIncrement()), rowData, this.styleSet, false);
 		return this;
+	}
+
+	/**
+	 * 给指定单元格赋值，使用默认单元格样式
+	 *
+	 * @param locationRef 单元格地址标识符，例如A11，B5
+	 * @param value 值
+	 * @return this
+	 * @since 5.1.4
+	 */
+	public ExcelWriter writeCellValue(String locationRef, Object value) {
+		final CellLocation cellLocation = ExcelUtil.toLocation(locationRef);
+		return writeCellValue(cellLocation.getX(), cellLocation.getY(), value);
 	}
 
 	/**
@@ -883,10 +951,25 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	 */
 	@Deprecated
 	public CellStyle createStyleForCell(int x, int y) {
-		final Cell cell = getOrCreateCell(x, y);
-		final CellStyle cellStyle = this.workbook.createCellStyle();
-		cell.setCellStyle(cellStyle);
-		return cellStyle;
+		return createCellStyle(x, y);
+	}
+
+	/**
+	 * 设置某个单元格的样式<br>
+	 * 此方法用于多个单元格共享样式的情况<br>
+	 * 可以调用{@link #getOrCreateCellStyle(int, int)} 方法创建或取得一个样式对象。
+	 *
+	 * <p>
+	 * 需要注意的是，共享样式会共享同一个{@link CellStyle}，一个单元格样式改变，全部改变。
+	 *
+	 * @param style 单元格样式
+	 * @param locationRef 单元格地址标识符，例如A11，B5
+	 * @return this
+	 * @since 5.1.4
+	 */
+	public ExcelWriter setStyle(CellStyle style, String locationRef) {
+		final CellLocation cellLocation = ExcelUtil.toLocation(locationRef);
+		return setStyle(style, cellLocation.getX(), cellLocation.getY());
 	}
 	
 	/**
@@ -1015,10 +1098,10 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 			return rowMap;
 		}
 
-		final Map<Object, Object> filteredMap = new LinkedHashMap<>();
+		final Map<Object, Object> filteredMap = MapUtil.newHashMap(rowMap.size(), true);
 		String aliasName;
 		for (Entry<?, ?> entry : rowMap.entrySet()) {
-			aliasName = this.headerAlias.get(entry.getKey());
+			aliasName = this.headerAlias.get(StrUtil.toString(entry.getKey()));
 			if (null != aliasName) {
 				// 别名键值对加入
 				filteredMap.put(aliasName, entry.getValue());
@@ -1036,14 +1119,14 @@ public class ExcelWriter extends ExcelBase<ExcelWriter> {
 	 * @return Comparator
 	 * @since 4.1.5
 	 */
-	private Comparator<String> getInitedAliasComparator() {
+	private Comparator<String> getCachedAliasComparator() {
 		if (MapUtil.isEmpty(this.headerAlias)) {
 			return null;
 		}
 		Comparator<String> aliasComparator = this.aliasComparator;
 		if (null == aliasComparator) {
 			Set<String> keySet = this.headerAlias.keySet();
-			aliasComparator = new IndexedComparator<>(keySet.toArray(new String[keySet.size()]));
+			aliasComparator = new IndexedComparator<>(keySet.toArray(new String[0]));
 			this.aliasComparator = aliasComparator;
 		}
 		return aliasComparator;

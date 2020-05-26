@@ -1,5 +1,17 @@
 package cn.hutool.http;
 
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.io.FastByteArrayOutputStream;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.io.StreamProgress;
+import cn.hutool.core.util.CharsetUtil;
+import cn.hutool.core.util.ReUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.URLUtil;
+import cn.hutool.http.cookie.GlobalCookieManager;
+
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.EOFException;
@@ -12,18 +24,6 @@ import java.net.HttpCookie;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map.Entry;
-
-import cn.hutool.core.convert.Convert;
-import cn.hutool.core.io.FastByteArrayOutputStream;
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IORuntimeException;
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.io.StreamProgress;
-import cn.hutool.core.util.CharsetUtil;
-import cn.hutool.core.util.ReUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.util.URLUtil;
-import cn.hutool.http.cookie.GlobalCookieManager;
 
 /**
  * Http响应类<br>
@@ -43,7 +43,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 	/** 响应状态码 */
 	protected int status;
 	/** 是否忽略读取Http响应体 */
-	private boolean ignoreBody;
+	private final boolean ignoreBody;
 	/** 从响应中获取的编码 */
 	private Charset charsetFromResponse;
 
@@ -111,7 +111,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 	 */
 	public boolean isGzip() {
 		final String contentEncoding = contentEncoding();
-		return contentEncoding != null && contentEncoding.equalsIgnoreCase("gzip");
+		return "gzip".equalsIgnoreCase(contentEncoding);
 	}
 
 	/**
@@ -122,7 +122,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 	 */
 	public boolean isDeflate() {
 		final String contentEncoding = contentEncoding();
-		return contentEncoding != null && contentEncoding.equalsIgnoreCase("deflate");
+		return "deflate".equalsIgnoreCase(contentEncoding);
 	}
 
 	/**
@@ -133,7 +133,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 	 */
 	public boolean isChunked() {
 		final String transferEncoding = header(Header.TRANSFER_ENCODING);
-		return transferEncoding != null && transferEncoding.equalsIgnoreCase("Chunked");
+		return "Chunked".equalsIgnoreCase(transferEncoding);
 	}
 
 	/**
@@ -379,6 +379,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 			// 服务器无返回内容，忽略之
 		}
 
+
 		// 读取响应头信息
 		try {
 			this.headers = httpConnection.headers();
@@ -420,6 +421,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 		try {
 			IoUtil.copy(in, out);
 		} catch (IORuntimeException e) {
+			//noinspection StatementWithEmptyBody
 			if (e.getCause() instanceof EOFException || StrUtil.containsIgnoreCase(e.getMessage(), "Premature EOF")) {
 				// 忽略读取HTTP流中的EOF错误
 			} else {
@@ -447,6 +449,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 		try {
 			this.readBody(this.in);
 		} catch (IORuntimeException e) {
+			//noinspection StatementWithEmptyBody
 			if (e.getCause() instanceof FileNotFoundException) {
 				// 服务器无返回内容，忽略之
 			} else {
@@ -468,11 +471,11 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 	 */
 	private String getFileNameFromDisposition() {
 		String fileName = null;
-		final String desposition = header(Header.CONTENT_DISPOSITION);
-		if (StrUtil.isNotBlank(desposition)) {
-			fileName = ReUtil.get("filename=\"(.*?)\"", desposition, 1);
+		final String disposition = header(Header.CONTENT_DISPOSITION);
+		if (StrUtil.isNotBlank(disposition)) {
+			fileName = ReUtil.get("filename=\"(.*?)\"", disposition, 1);
 			if (StrUtil.isBlank(fileName)) {
-				fileName = StrUtil.subAfter(desposition, "filename=", true);
+				fileName = StrUtil.subAfter(disposition, "filename=", true);
 			}
 		}
 		return fileName;

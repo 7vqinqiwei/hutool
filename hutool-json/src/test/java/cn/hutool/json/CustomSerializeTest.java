@@ -11,7 +11,7 @@ public class CustomSerializeTest {
 
 	@Test
 	public void serializeTest() {
-		JSONUtil.putSerializer(CustomBean.class, (JSONObjectSerializer<CustomBean>) (json, bean) -> json.put("customName", bean.name));
+		JSONUtil.putSerializer(CustomBean.class, (JSONObjectSerializer<CustomBean>) (json, bean) -> json.set("customName", bean.name));
 		
 		CustomBean customBean = new CustomBean();
 		customBean.name = "testName";
@@ -19,7 +19,7 @@ public class CustomSerializeTest {
 		JSONObject obj = JSONUtil.parseObj(customBean);
 		Assert.assertEquals("testName", obj.getStr("customName"));
 	}
-	
+
 	@Test
 	public void deserializeTest() {
 		JSONUtil.putDeserializer(CustomBean.class, json -> {

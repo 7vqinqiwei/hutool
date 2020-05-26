@@ -1,18 +1,16 @@
 package cn.hutool.core.img;
 
+import cn.hutool.core.io.FileUtil;
+import org.junit.Ignore;
+import org.junit.Test;
+
+import javax.imageio.ImageIO;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-
-import javax.imageio.ImageIO;
-
-import org.junit.Ignore;
-import org.junit.Test;
-
-import cn.hutool.core.io.FileUtil;
 
 public class ImgUtilTest {
 
@@ -21,7 +19,13 @@ public class ImgUtilTest {
 	public void scaleTest() {
 		ImgUtil.scale(FileUtil.file("e:/pic/test.jpg"), FileUtil.file("e:/pic/test_result.jpg"), 0.8f);
 	}
-	
+
+	@Test
+	@Ignore
+	public void scaleTest2() {
+		ImgUtil.scale(FileUtil.file("e:/pic/test.jpg"), FileUtil.file("e:/pic/test_result.jpg"), 0.8f);
+	}
+
 	@Test
 	@Ignore
 	public void scalePngTest() {
@@ -49,7 +53,7 @@ public class ImgUtilTest {
 
 	@Test
 	@Ignore
-	public void flipTest() throws IOException {
+	public void flipTest() {
 		ImgUtil.flip(FileUtil.file("d:/logo.png"), FileUtil.file("d:/result.png"));
 	}
 

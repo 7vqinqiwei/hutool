@@ -1,6 +1,5 @@
 package cn.hutool.core.util;
 
-import cn.hutool.core.lang.Console;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -51,6 +50,13 @@ public class URLUtilTest {
 		url = "\\/www.hutool.cn//aaa/bbb?a=1&b=2";
 		normalize = URLUtil.normalize(url, true);
 		Assert.assertEquals("http://www.hutool.cn/aaa/bbb?a=1&b=2", normalize);
+	}
+
+	@Test
+	public void normalizeIpv6Test() {
+		String url = "http://[fe80::8f8:2022:a603:d180]:9439";
+		String normalize = URLUtil.normalize("http://[fe80::8f8:2022:a603:d180]:9439", true);
+		Assert.assertEquals(url, normalize);
 	}
 	
 	@Test

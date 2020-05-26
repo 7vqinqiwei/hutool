@@ -1,11 +1,5 @@
 package cn.hutool.poi.excel.test;
 
-import java.util.List;
-
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.lang.Console;
@@ -13,6 +7,9 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.sax.Excel03SaxReader;
 import cn.hutool.poi.excel.sax.handler.RowHandler;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Excel sax方式读取
@@ -21,49 +18,6 @@ import cn.hutool.poi.excel.sax.handler.RowHandler;
  *
  */
 public class ExcelSaxReadTest {
-
-	@Test
-	@Ignore
-	public void readBlankLineTest() {
-		ExcelUtil.readBySax("e:/ExcelBlankLine.xlsx", 0, new RowHandler() {
-
-			@Override
-			public void handle(int sheetIndex, int rowIndex, List<Object> rowList) {
-				if (StrUtil.isAllEmpty(Convert.toStrArray(rowList))) {
-					return;
-				}
-				Console.log(rowList);
-			}
-		});
-	}
-
-	@Test
-	public void readBySaxTest() {
-		ExcelUtil.readBySax("blankAndDateTest.xlsx", 0, createRowHandler());
-	}
-
-	@Test
-	@Ignore
-	public void readBySaxTest2() {
-		ExcelUtil.readBySax("e:/B23_20180404164901240.xlsx", 2, new RowHandler() {
-			@Override
-			public void handle(int sheetIndex, int rowIndex, List<Object> rowList) {
-				Console.log(rowList);
-			}
-		});
-	}
-
-	@Test
-	@Ignore
-	public void readBySaxTest3() {
-		ExcelUtil.readBySax("e:/excel/writeMapTest.xlsx", 0, new RowHandler() {
-
-			@Override
-			public void handle(int sheetIndex, int rowIndex, List<Object> rowList) {
-				Console.log(rowList);
-			}
-		});
-	}
 
 	@Test
 	public void excel07Test() {
@@ -81,26 +35,32 @@ public class ExcelSaxReadTest {
 
 	@Test
 	@Ignore
-	public void readBySaxTest4() {
-		ExcelUtil.readBySax("e:/excel/single_line.xlsx", 2, createRowHandler());
+	public void readBlankLineTest() {
+		ExcelUtil.readBySax("e:/ExcelBlankLine.xlsx", 0, (sheetIndex, rowIndex, rowList) -> {
+			if (StrUtil.isAllEmpty(Convert.toStrArray(rowList))) {
+				return;
+			}
+			Console.log(rowList);
+		});
 	}
-	
+
+	@Test
+	public void readBySaxTest() {
+		ExcelUtil.readBySax("blankAndDateTest.xlsx", 0, createRowHandler());
+	}
+
 	@Test
 	@Ignore
-	public void readBySaxTest5() {
-		ExcelUtil.readBySax("f:\\test\\222.xlsx", 0, createRowHandler());
+	public void readBySaxTest2() {
+		ExcelUtil.readBySax("e:/B23_20180404164901240.xlsx", 2, (sheetIndex, rowIndex, rowList) -> Console.log(rowList));
 	}
 
 	private RowHandler createRowHandler() {
-		return new RowHandler() {
-
-			@Override
-			public void handle(int sheetIndex, int rowIndex, List<Object> rowlist) {
+		return (sheetIndex, rowIndex, rowlist) -> {
 //				Console.log("[{}] [{}] {}", sheetIndex, rowIndex, rowlist);
-				if (5 != rowIndex && 6 != rowIndex) {
-					// 测试样例中除第五行、第六行都为非空行
-					Assert.assertTrue(CollUtil.isNotEmpty(rowlist));
-				}
+			if (5 != rowIndex && 6 != rowIndex) {
+				// 测试样例中除第五行、第六行都为非空行
+				Assert.assertTrue(CollUtil.isNotEmpty(rowlist));
 			}
 		};
 	}

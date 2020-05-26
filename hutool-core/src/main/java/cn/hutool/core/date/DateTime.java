@@ -4,6 +4,8 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.Calendar;
@@ -157,6 +159,17 @@ public class DateTime extends Date {
 	}
 
 	/**
+	 * 给定日期Instant的构造
+	 *
+	 * @param instant  {@link Instant} 对象
+	 * @param zoneId 时区ID
+	 * @since 5.0.5
+	 */
+	public DateTime(Instant instant, ZoneId zoneId) {
+		this(instant.toEpochMilli(), TimeZone.getTimeZone(ObjectUtil.defaultIfNull(zoneId, ZoneId.systemDefault())));
+	}
+
+	/**
 	 * 给定日期TemporalAccessor的构造
 	 *
 	 * @param temporalAccessor {@link TemporalAccessor} 对象
@@ -164,6 +177,16 @@ public class DateTime extends Date {
 	 */
 	public DateTime(TemporalAccessor temporalAccessor) {
 		this(DateUtil.toInstant(temporalAccessor));
+	}
+
+	/**
+	 * 给定日期ZonedDateTime的构造
+	 *
+	 * @param zonedDateTime {@link ZonedDateTime} 对象
+	 * @since 5.0.5
+	 */
+	public DateTime(ZonedDateTime zonedDateTime) {
+		this(zonedDateTime.toInstant(), zonedDateTime.getZone());
 	}
 
 	/**
@@ -185,9 +208,7 @@ public class DateTime extends Date {
 	 */
 	public DateTime(long timeMillis, TimeZone timeZone) {
 		super(timeMillis);
-		if (null != timeZone) {
-			this.timeZone = timeZone;
-		}
+		this.timeZone = ObjectUtil.defaultIfNull(timeZone, TimeZone.getDefault());
 	}
 
 	/**
@@ -215,12 +236,12 @@ public class DateTime extends Date {
 	/**
 	 * 构建DateTime对象
 	 *
-	 * @param dateStr Date字符串
+	 * @param dateStr   Date字符串
 	 * @param formatter 格式化器,{@link DateTimeFormatter}
 	 * @since 5.0.0
 	 */
 	public DateTime(CharSequence dateStr, DateTimeFormatter formatter) {
-		this(Instant.from(formatter.parse(dateStr)));
+		this(Instant.from(formatter.parse(dateStr)), formatter.getZone());
 	}
 
 	/**
@@ -247,7 +268,12 @@ public class DateTime extends Date {
 	 * @return 如果此对象为可变对象，返回自身，否则返回新对象
 	 */
 	public DateTime offset(DateField datePart, int offset) {
+		if(DateField.ERA == datePart){
+			throw new IllegalArgumentException("ERA is not support offset!");
+		}
+
 		final Calendar cal = toCalendar();
+		//noinspection MagicConstant
 		cal.add(datePart.getValue(), offset);
 
 		DateTime dt = mutable ? this : ObjectUtil.clone(this);
@@ -265,6 +291,7 @@ public class DateTime extends Date {
 	 */
 	public DateTime offsetNew(DateField datePart, int offset) {
 		final Calendar cal = toCalendar();
+		//noinspection MagicConstant
 		cal.add(datePart.getValue(), offset);
 
 		DateTime dt = ObjectUtil.clone(this);
@@ -573,6 +600,7 @@ public class DateTime extends Date {
 			locale = Locale.getDefault(Locale.Category.FORMAT);
 		}
 		final Calendar cal = (null != zone) ? Calendar.getInstance(zone, locale) : Calendar.getInstance(locale);
+		//noinspection MagicConstant
 		cal.setFirstDayOfWeek(firstDayOfWeek.getValue());
 		cal.setTime(this);
 		return cal;
@@ -771,6 +799,26 @@ public class DateTime extends Date {
 	}
 
 	/**
+	 * 获取时区
+	 *
+	 * @return 时区
+	 * @since 5.0.5
+	 */
+	public TimeZone getTimeZone(){
+		return this.timeZone;
+	}
+
+	/**
+	 * 获取时区ID
+	 *
+	 * @return 时区ID
+	 * @since 5.0.5
+	 */
+	public ZoneId getZoneId(){
+		return this.timeZone.toZoneId();
+	}
+
+	/**
 	 * 设置时区
 	 *
 	 * @param timeZone 时区
@@ -778,7 +826,7 @@ public class DateTime extends Date {
 	 * @since 4.1.2
 	 */
 	public DateTime setTimeZone(TimeZone timeZone) {
-		this.timeZone = timeZone;
+		this.timeZone = ObjectUtil.defaultIfNull(timeZone, TimeZone.getDefault());
 		return this;
 	}
 

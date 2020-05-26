@@ -1,13 +1,13 @@
 package cn.hutool.core.bean;
 
-import java.io.Serializable;
-import java.lang.reflect.Method;
-import java.util.Map;
-
 import cn.hutool.core.clone.CloneSupport;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.ClassUtil;
 import cn.hutool.core.util.ReflectUtil;
+
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.util.Map;
 
 /**
  * 动态Bean，通过反射对Bean的相关方法做操作<br>
@@ -19,8 +19,8 @@ import cn.hutool.core.util.ReflectUtil;
 public class DynaBean extends CloneSupport<DynaBean> implements Serializable{
 	private static final long serialVersionUID = 1L;
 
-	private Class<?> beanClass;
-	private Object bean;
+	private final Class<?> beanClass;
+	private final Object bean;
 	
 	/**
 	 * 创建一个{@link DynaBean}
@@ -114,7 +114,6 @@ public class DynaBean extends CloneSupport<DynaBean> implements Serializable{
 	public void set(String fieldName, Object value) throws BeanException{
 		if(Map.class.isAssignableFrom(beanClass)){
 			((Map)bean).put(fieldName, value);
-			return;
 		}else{
 			try {
 				final Method setter = BeanUtil.getBeanDesc(beanClass).getSetter(fieldName);
@@ -179,13 +178,8 @@ public class DynaBean extends CloneSupport<DynaBean> implements Serializable{
 		}
 		final DynaBean other = (DynaBean) obj;
 		if (bean == null) {
-			if (other.bean != null) {
-				return false;
-			}
-		} else if (!bean.equals(other.bean)) {
-			return false;
-		}
-		return true;
+			return other.bean == null;
+		} else return bean.equals(other.bean);
 	}
 
 	@Override

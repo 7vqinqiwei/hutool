@@ -6,7 +6,6 @@ import java.util.concurrent.CompletionService;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -48,7 +47,11 @@ public class ThreadUtil {
 	 * @return ExecutorService
 	 */
 	public static ExecutorService newSingleExecutor() {
-		return Executors.newSingleThreadExecutor();
+		return ExecutorBuilder.create()//
+				.setCorePoolSize(1)//
+				.setMaxPoolSize(1)//
+				.setKeepAliveTime(0)//
+				.buildFinalizable();
 	}
 
 	/**
@@ -101,13 +104,8 @@ public class ThreadUtil {
 	 * @param isDaemon 是否守护线程。守护线程会在主线程结束后自动结束
 	 * @return 执行的方法体
 	 */
-	public static Runnable excAsync(final Runnable runnable, boolean isDaemon) {
-		Thread thread = new Thread() {
-			@Override
-			public void run() {
-				runnable.run();
-			}
-		};
+	public static Runnable execAsync(final Runnable runnable, boolean isDaemon) {
+		Thread thread = new Thread(runnable);
 		thread.setDaemon(isDaemon);
 		thread.start();
 
@@ -228,11 +226,23 @@ public class ThreadUtil {
 		if (millis == null) {
 			return true;
 		}
+		return sleep(millis.longValue());
+	}
 
-		try {
-			Thread.sleep(millis.longValue());
-		} catch (InterruptedException e) {
-			return false;
+	/**
+	 * 挂起当前线程
+	 *
+	 * @param millis 挂起的毫秒数
+	 * @return 被中断返回false，否则true
+	 * @since 5.3.2
+	 */
+	public static boolean sleep(long millis) {
+		if (millis > 0) {
+			try {
+				Thread.sleep(millis);
+			} catch (InterruptedException e) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -245,15 +255,36 @@ public class ThreadUtil {
 	 * @see ThreadUtil#sleep(Number)
 	 */
 	public static boolean safeSleep(Number millis) {
-		long millisLong = millis.longValue();
+		if (millis == null) {
+			return true;
+		}
+
+		return safeSleep(millis.longValue());
+	}
+
+	/**
+	 * 考虑{@link Thread#sleep(long)}方法有可能时间不足给定毫秒数，此方法保证sleep时间不小于给定的毫秒数
+	 *
+	 * @param millis 给定的sleep时间
+	 * @return 被中断返回false，否则true
+	 * @see ThreadUtil#sleep(Number)
+	 * @since 5.3.2
+	 */
+	public static boolean safeSleep(long millis) {
 		long done = 0;
-		while (done < millisLong) {
-			long before = System.currentTimeMillis();
-			if (false == sleep(millisLong - done)) {
+		long before;
+		long spendTime;
+		while (done >= 0 && done < millis) {
+			before = System.currentTimeMillis();
+			if (false == sleep(millis - done)) {
 				return false;
 			}
-			long after = System.currentTimeMillis();
-			done += (after - before);
+			spendTime = System.currentTimeMillis() - before;
+			if (spendTime <= 0) {
+				// Sleep花费时间为0或者负数，说明系统时间被拨动
+				break;
+			}
+			done += spendTime;
 		}
 		return true;
 	}
@@ -318,6 +349,13 @@ public class ThreadUtil {
 				waitForDie(thread);
 			}
 		}
+	}
+
+	/**
+	 * 等待当前线程结束. 调用 {@link Thread#join()} 并忽略 {@link InterruptedException}
+	 */
+	public static void waitForDie() {
+		waitForDie(Thread.currentThread());
 	}
 
 	/**
@@ -437,6 +475,7 @@ public class ThreadUtil {
 	 * @param obj 对象所在线程
 	 * @since 4.5.6
 	 */
+	@SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
 	public static void sync(Object obj) {
 		synchronized (obj) {
 			try {

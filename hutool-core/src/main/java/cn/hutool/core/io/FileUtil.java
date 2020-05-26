@@ -1,23 +1,64 @@
 package cn.hutool.core.io;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.io.file.FileCopier;
+import cn.hutool.core.io.file.FileMode;
 import cn.hutool.core.io.file.FileReader;
-import cn.hutool.core.io.file.*;
-import cn.hutool.core.io.file.FileWriter;
 import cn.hutool.core.io.file.FileReader.ReaderHandler;
+import cn.hutool.core.io.file.FileWriter;
+import cn.hutool.core.io.file.LineSeparator;
+import cn.hutool.core.io.file.Tailer;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.*;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.CharUtil;
+import cn.hutool.core.util.CharsetUtil;
+import cn.hutool.core.util.ClassUtil;
+import cn.hutool.core.util.ReUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.URLUtil;
+import cn.hutool.core.util.ZipUtil;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.RandomAccessFile;
+import java.io.Reader;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.CopyOption;
+import java.nio.file.DirectoryStream;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
@@ -41,7 +82,7 @@ public class FileUtil {
 	/**
 	 * Windows下文件名中的无效字符
 	 */
-	private static Pattern FILE_NAME_INVALID_PATTERN_WIN = Pattern.compile("[\\\\/:*?\"<>|]");
+	private static final Pattern FILE_NAME_INVALID_PATTERN_WIN = Pattern.compile("[\\\\/:*?\"<>|]");
 
 	/**
 	 * Class文件扩展名
@@ -231,7 +272,7 @@ public class FileUtil {
 	 * @param start    起始路径，必须为目录
 	 * @param maxDepth 最大遍历深度，-1表示不限制深度
 	 * @param visitor  {@link FileVisitor} 接口，用于自定义在访问文件时，访问目录前后等节点做的操作
-	 * @see Files#walkFileTree(Path, Set, int, FileVisitor)
+	 * @see Files#walkFileTree(Path, java.util.Set, int, FileVisitor)
 	 * @since 4.6.3
 	 */
 	public static void walkFiles(Path start, int maxDepth, FileVisitor<? super Path> visitor) {
@@ -300,7 +341,8 @@ public class FileUtil {
 		JarFile jarFile = null;
 		try {
 			jarFile = new JarFile(path.substring(0, index));
-			return ZipUtil.listFileNames(jarFile, path.substring(index + 1));
+			// 防止出现jar!/cn/hutool/这类路径导致文件找不到
+			return ZipUtil.listFileNames(jarFile, StrUtil.removePrefix(path.substring(index + 1), "/"));
 		} catch (IOException e) {
 			throw new IORuntimeException(StrUtil.format("Can not read file path of [{}]", path), e);
 		} finally {
@@ -525,7 +567,7 @@ public class FileUtil {
 	 * @return 最后修改时间
 	 */
 	public static Date lastModifiedTime(File file) {
-		if (!exist(file)) {
+		if (false == exist(file)) {
 			return null;
 		}
 
@@ -547,13 +589,12 @@ public class FileUtil {
 	 * 当给定对象为文件时，直接调用 {@link File#length()}<br>
 	 * 当给定对象为目录时，遍历目录下的所有文件和目录，递归计算其大小，求和返回
 	 *
-	 * @param file 目录或文件
+	 * @param file 目录或文件,null或者文件不存在返回0
 	 * @return 总大小，bytes长度
 	 */
 	public static long size(File file) {
-		Assert.notNull(file, "file argument is null !");
-		if (false == file.exists()) {
-			throw new IllegalArgumentException(StrUtil.format("File [{}] not exist !", file.getAbsolutePath()));
+		if (null == file || false == file.exists()) {
+			return 0;
 		}
 
 		if (file.isDirectory()) {
@@ -562,8 +603,8 @@ public class FileUtil {
 			if (ArrayUtil.isEmpty(subFiles)) {
 				return 0L;// empty directory
 			}
-			for (int i = 0; i < subFiles.length; i++) {
-				size += size(subFiles[i]);
+			for (File subFile : subFiles) {
+				size += size(subFile);
 			}
 			return size;
 		} else {
@@ -629,6 +670,7 @@ public class FileUtil {
 		if (false == file.exists()) {
 			mkParentDirs(file);
 			try {
+				//noinspection ResultOfMethodCallIgnored
 				file.createNewFile();
 			} catch (Exception e) {
 				throw new IORuntimeException(e);
@@ -672,6 +714,7 @@ public class FileUtil {
 	public static File mkParentDirs(File file) {
 		final File parentFile = file.getParentFile();
 		if (null != parentFile && false == parentFile.exists()) {
+			//noinspection ResultOfMethodCallIgnored
 			parentFile.mkdirs();
 		}
 		return parentFile;
@@ -835,6 +878,7 @@ public class FileUtil {
 		final File[] files = directory.listFiles();
 		if (ArrayUtil.isEmpty(files)) {
 			// 空文件夹则删除之
+			//noinspection ResultOfMethodCallIgnored
 			directory.delete();
 		} else {
 			for (File childFile : files) {
@@ -871,6 +915,7 @@ public class FileUtil {
 			return null;
 		}
 		if (false == dir.exists()) {
+			//noinspection ResultOfMethodCallIgnored
 			dir.mkdirs();
 		}
 		return dir;
@@ -918,7 +963,9 @@ public class FileUtil {
 			try {
 				File file = File.createTempFile(prefix, suffix, dir).getCanonicalFile();
 				if (isReCreat) {
+					//noinspection ResultOfMethodCallIgnored
 					file.delete();
+					//noinspection ResultOfMethodCallIgnored
 					file.createNewFile();
 				}
 				return file;
@@ -1083,6 +1130,7 @@ public class FileUtil {
 		}
 
 		if (isOverride && dest.isFile()) {// 只有目标为文件的情况下覆盖之
+			//noinspection ResultOfMethodCallIgnored
 			dest.delete();
 		}
 
@@ -1127,7 +1175,10 @@ public class FileUtil {
 	 */
 	public static File rename(File file, String newName, boolean isRetainExt, boolean isOverride) {
 		if (isRetainExt) {
-			newName = newName.concat(".").concat(FileUtil.extName(file));
+			final String extName = FileUtil.extName(file);
+			if(StrUtil.isNotBlank(extName)){
+				newName = newName.concat(".").concat(extName);
+			}
 		}
 		final Path path = file.toPath();
 		final CopyOption[] options = isOverride ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{};
@@ -1238,7 +1289,7 @@ public class FileUtil {
 		}
 
 		// 给定的路径已经是绝对路径了
-		return StrUtil.C_SLASH == path.charAt(0) || path.matches("^[a-zA-Z]:[/\\\\].*");
+		return StrUtil.C_SLASH == path.charAt(0) || path.matches("^[a-zA-Z]:([/\\\\].*)?");
 	}
 
 	/**
@@ -1551,7 +1602,7 @@ public class FileUtil {
 		pathToUse = StrUtil.removePrefixIgnoreCase(pathToUse, URLUtil.FILE_URL_PREFIX);
 
 		// 识别home目录形式，并转换为绝对路径
-		if(pathToUse.startsWith("~")){
+		if (pathToUse.startsWith("~")) {
 			pathToUse = pathToUse.replace("~", getUserHomePath());
 		}
 
@@ -1874,6 +1925,12 @@ public class FileUtil {
 
 	/**
 	 * 根据文件流的头部信息获得文件类型
+	 *
+	 * <pre>
+	 *      1、无法识别类型默认按照扩展名识别
+	 *      2、xls、doc、msi头信息无法区分，按照扩展名区分
+	 *      3、zip可能为docx、xlsx、pptx、jar、war头信息无法区分，按照扩展名区分
+	 * </pre>
 	 *
 	 * @param file 文件 {@link File}
 	 * @return 类型，文件的扩展名，未找到为<code>null</code>
@@ -3198,10 +3255,10 @@ public class FileUtil {
 	 *
 	 * @param file 文件
 	 * @param out  流
-	 * @return 目标文件
+	 * @return 写出的流byte数
 	 * @throws IORuntimeException IO异常
 	 */
-	public static File writeToStream(File file, OutputStream out) throws IORuntimeException {
+	public static long writeToStream(File file, OutputStream out) throws IORuntimeException {
 		return FileReader.create(file).writeToStream(out);
 	}
 
@@ -3210,10 +3267,11 @@ public class FileUtil {
 	 *
 	 * @param fullFilePath 文件绝对路径
 	 * @param out          输出流
+	 * @return 写出的流byte数
 	 * @throws IORuntimeException IO异常
 	 */
-	public static void writeToStream(String fullFilePath, OutputStream out) throws IORuntimeException {
-		writeToStream(touch(fullFilePath), out);
+	public static long writeToStream(String fullFilePath, OutputStream out) throws IORuntimeException {
+		return writeToStream(touch(fullFilePath), out);
 	}
 
 	/**
@@ -3520,6 +3578,6 @@ public class FileUtil {
 	 * @param charset 编码
 	 */
 	public static void tail(File file, Charset charset) {
-		FileUtil.tail(file, charset, Tailer.CONSOLE_HANDLER);
+		tail(file, charset, Tailer.CONSOLE_HANDLER);
 	}
 }

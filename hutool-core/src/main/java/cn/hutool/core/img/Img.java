@@ -1,5 +1,17 @@
 package cn.hutool.core.img;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.io.resource.Resource;
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+
+import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
@@ -26,19 +38,6 @@ import java.io.Serializable;
 import java.net.URL;
 import java.nio.file.Path;
 
-import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.ImageOutputStream;
-
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IORuntimeException;
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.io.resource.Resource;
-import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.NumberUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-
 /**
  * 图像编辑器
  *
@@ -48,12 +47,12 @@ import cn.hutool.core.util.StrUtil;
 public class Img implements Serializable {
 	private static final long serialVersionUID = 1L;
 
-	private BufferedImage srcImage;
+	private final BufferedImage srcImage;
 	private Image targetImage;
 	/**
 	 * 目标图片文件格式，用于写出
 	 */
-	private String targetImageType = ImgUtil.IMAGE_TYPE_JPG;
+	private String targetImageType;
 	/**
 	 * 计算x,y坐标的时候是否从中心做为原始坐标开始计算
 	 */
@@ -140,7 +139,22 @@ public class Img implements Serializable {
 	 * @param srcImage 来源图片
 	 */
 	public Img(BufferedImage srcImage) {
+		this(srcImage, null);
+	}
+
+	/**
+	 * 构造
+	 *
+	 * @param srcImage 来源图片
+	 * @param targetImageType 目标图片类型
+	 * @since 5.0.7
+	 */
+	public Img(BufferedImage srcImage, String targetImageType) {
 		this.srcImage = srcImage;
+		if(null == targetImageType){
+			targetImageType = ImgUtil.IMAGE_TYPE_JPG;
+		}
+		this.targetImageType = targetImageType;
 	}
 
 	/**
@@ -277,15 +291,15 @@ public class Img implements Serializable {
 		int srcWidth = srcImage.getWidth(null);
 		double heightRatio = NumberUtil.div(height, srcHeight);
 		double widthRatio = NumberUtil.div(width, srcWidth);
-		if (heightRatio == widthRatio) {
-			// 长宽都按照相同比例缩放时，返回缩放后的图片
-			return scale(width, height);
-		}
 
-		// 宽缩放比例多就按照宽缩放，否则按照高缩放
-		if (widthRatio < heightRatio) {
+		if (widthRatio == heightRatio) {
+			// 长宽都按照相同比例缩放时，返回缩放后的图片
+			scale(width, height);
+		} else if (widthRatio < heightRatio) {
+			// 宽缩放比例多就按照宽缩放
 			scale(width, (int) (srcHeight * widthRatio));
 		} else {
+			// 否则按照高缩放
 			scale((int) (srcWidth * heightRatio), height);
 		}
 
@@ -294,15 +308,14 @@ public class Img implements Serializable {
 		srcHeight = srcImage.getHeight(null);
 		srcWidth = srcImage.getWidth(null);
 
-		if (null == fixedColor) {// 补白
-			fixedColor = Color.WHITE;
-		}
 		final BufferedImage image = new BufferedImage(width, height, getTypeInt());
 		Graphics2D g = image.createGraphics();
 
 		// 设置背景
-		g.setBackground(fixedColor);
-		g.clearRect(0, 0, width, height);
+		if(null != fixedColor){
+			g.setBackground(fixedColor);
+			g.clearRect(0, 0, width, height);
+		}
 
 		// 在中间贴图
 		g.drawImage(srcImage, (width - srcWidth) / 2, (height - srcHeight) / 2, srcWidth, srcHeight, fixedColor, null);
@@ -586,6 +599,7 @@ public class Img implements Serializable {
 		}
 
 		if (targetFile.exists()) {
+			//noinspection ResultOfMethodCallIgnored
 			targetFile.delete();
 		}
 
@@ -624,6 +638,7 @@ public class Img implements Serializable {
 	 * @see BufferedImage#TYPE_INT_RGB
 	 */
 	private int getTypeInt() {
+		//noinspection SwitchStatementWithTooFewBranches
 		switch (this.targetImageType) {
 			case ImgUtil.IMAGE_TYPE_PNG:
 				return BufferedImage.TYPE_INT_ARGB;
@@ -678,6 +693,7 @@ public class Img implements Serializable {
 		if (degree >= 90) {
 			if (degree / 90 % 2 == 1) {
 				int temp = height;
+				//noinspection SuspiciousNameCombination
 				height = width;
 				width = temp;
 			}

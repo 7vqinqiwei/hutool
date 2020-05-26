@@ -1,12 +1,5 @@
 package cn.hutool.crypto.test;
 
-import java.security.KeyPair;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.HexUtil;
@@ -16,7 +9,13 @@ import cn.hutool.crypto.SecureUtil;
 import cn.hutool.crypto.SmUtil;
 import cn.hutool.crypto.asymmetric.KeyType;
 import cn.hutool.crypto.asymmetric.SM2;
-import cn.hutool.crypto.asymmetric.SM2Engine.SM2Mode;
+import org.bouncycastle.crypto.engines.SM2Engine;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 /**
  * SM2算法单元测试
@@ -49,7 +48,7 @@ public class SM2Test {
 		byte[] publicKey = pair.getPublic().getEncoded();
 
 		SM2 sm2 = SmUtil.sm2(privateKey, publicKey);
-		sm2.setMode(SM2Mode.C1C3C2);
+		sm2.setMode(SM2Engine.Mode.C1C2C3);
 
 		// 公钥加密，私钥解密
 		byte[] encrypt = sm2.encrypt(StrUtil.bytes("我是一段测试aaaa", CharsetUtil.CHARSET_UTF_8), KeyType.PublicKey);
@@ -123,6 +122,17 @@ public class SM2Test {
 	}
 
 	@Test
+	public void sm2SignAndVerifyHexTest() {
+		String content = "我是Hanley.";
+
+		final SM2 sm2 = SmUtil.sm2();
+
+		String sign = sm2.signHex(HexUtil.encodeHexStr(content));
+		boolean verify = sm2.verifyHex(HexUtil.encodeHexStr(content), sign);
+		Assert.assertTrue(verify);
+	}
+
+	@Test
 	public void sm2SignAndVerifyUseKeyTest() {
 		String content = "我是Hanley.";
 
@@ -149,5 +159,38 @@ public class SM2Test {
 		PublicKey B64decode = KeyUtil.decodeECPoint(encodeB64, KeyUtil.SM2_DEFAULT_CURVE);
 		Assert.assertEquals(HexUtil.encodeHexStr(publicKey.getEncoded()), HexUtil.encodeHexStr(Hexdecode.getEncoded()));
 		Assert.assertEquals(HexUtil.encodeHexStr(publicKey.getEncoded()), HexUtil.encodeHexStr(B64decode.getEncoded()));
+	}
+
+	@Test
+	public void sm2WithPointTest(){
+		String d = "FAB8BBE670FAE338C9E9382B9FB6485225C11A3ECB84C938F10F20A93B6215F0";
+		String x = "9EF573019D9A03B16B0BE44FC8A5B4E8E098F56034C97B312282DD0B4810AFC3";
+		String y = "CC759673ED0FC9B9DC7E6FA38F0E2B121E02654BF37EA6B63FAF2A0D6013EADF";
+
+		String data = "434477813974bf58f94bcf760833c2b40f77a5fc360485b0b9ed1bd9682edb45";
+		String id = "31323334353637383132333435363738";
+
+		final SM2 sm2 = new SM2(d, x, y);
+		final String sign = sm2.signHex(data, id);
+		Assert.assertTrue(sm2.verifyHex(data, sign));
+	}
+
+	@Test
+	public void sm2PlainWithPointTest(){
+		// 测试地址：https://i.goto327.top/CryptTools/SM2.aspx?tdsourcetag=s_pctim_aiomsg
+
+		String d = "FAB8BBE670FAE338C9E9382B9FB6485225C11A3ECB84C938F10F20A93B6215F0";
+		String x = "9EF573019D9A03B16B0BE44FC8A5B4E8E098F56034C97B312282DD0B4810AFC3";
+		String y = "CC759673ED0FC9B9DC7E6FA38F0E2B121E02654BF37EA6B63FAF2A0D6013EADF";
+
+		String data = "434477813974bf58f94bcf760833c2b40f77a5fc360485b0b9ed1bd9682edb45";
+		String id = "31323334353637383132333435363738";
+
+		final SM2 sm2 = new SM2(d, x, y);
+		// 生成的签名是64位
+		sm2.usePlainEncoding();
+
+		String sign = "DCA0E80A7F46C93714B51C3EFC55A922BCEF7ECF0FE9E62B53BA6A7438B543A76C145A452CA9036F3CB70D7E6C67D4D9D7FE114E5367A2F6F5A4D39F2B10F3D6";
+		Assert.assertTrue(sm2.verifyHex(data, sign));
 	}
 }

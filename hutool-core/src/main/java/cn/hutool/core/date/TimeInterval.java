@@ -12,12 +12,19 @@ public class TimeInterval implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private long time;
-	private boolean isNano;
+	private final boolean isNano;
 
+	/**
+	 * 构造，默认使用毫秒计数
+	 */
 	public TimeInterval() {
 		this(false);
 	}
 
+	/**
+	 * 构造
+	 * @param isNano 是否使用纳秒计数，false则使用毫秒
+	 */
 	public TimeInterval(boolean isNano) {
 		this.isNano = isNano;
 		start();

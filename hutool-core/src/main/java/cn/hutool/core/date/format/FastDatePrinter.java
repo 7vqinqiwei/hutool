@@ -1,5 +1,7 @@
 package cn.hutool.core.date.format;
 
+import cn.hutool.core.date.DateException;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.text.DateFormatSymbols;
@@ -11,8 +13,6 @@ import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import cn.hutool.core.date.DateException;
 
 /**
  * {@link java.text.SimpleDateFormat} 的线程安全版本，用于将 {@link Date} 格式化输出<br>
@@ -48,7 +48,7 @@ class FastDatePrinter extends AbstractDateBasic implements DatePrinter {
 	 */
 	private void init() {
 		final List<Rule> rulesList = parsePattern();
-		rules = rulesList.toArray(new Rule[rulesList.size()]);
+		rules = rulesList.toArray(new Rule[0]);
 
 		int len = 0;
 		for (int i = rules.length; --i >= 0;) {
@@ -104,7 +104,7 @@ class FastDatePrinter extends AbstractDateBasic implements DatePrinter {
 					if (tokenLen == 2) {
 						rule = TwoDigitYearField.INSTANCE;
 					} else {
-						rule = selectNumberRule(Calendar.YEAR, tokenLen < 4 ? 4 : tokenLen);
+						rule = selectNumberRule(Calendar.YEAR, Math.max(tokenLen, 4));
 					}
 					if (c == 'Y') {
 						rule = new WeekYear((NumberRule) rule);

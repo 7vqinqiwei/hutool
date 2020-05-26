@@ -1,15 +1,17 @@
 package cn.hutool.core.convert.impl;
 
-import java.lang.reflect.Array;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
 import cn.hutool.core.collection.IterUtil;
 import cn.hutool.core.convert.AbstractConverter;
 import cn.hutool.core.convert.ConverterRegistry;
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * 数组转换器，包括原始类型数组
@@ -97,7 +99,7 @@ public class ArrayConverter extends AbstractConverter<Object> {
 		}
 
 		final ConverterRegistry converter = ConverterRegistry.getInstance();
-		Object result = null;
+		Object result;
 		if (value instanceof List) {
 			// List转数组
 			final List<?> list = (List<?>) value;
@@ -129,6 +131,9 @@ public class ArrayConverter extends AbstractConverter<Object> {
 			for (int i = 0; i < list.size(); i++) {
 				Array.set(result, i, converter.convert(targetComponentType, list.get(i)));
 			}
+		}else if (value instanceof Serializable && byte.class == targetComponentType) {
+			// 用户可能想序列化指定对象
+			result = ObjectUtil.serialize(value);
 		} else {
 			// everything else:
 			result = convertToSingleElementArray(value);

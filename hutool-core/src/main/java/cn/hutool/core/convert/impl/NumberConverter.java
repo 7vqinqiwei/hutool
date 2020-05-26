@@ -1,14 +1,14 @@
 package cn.hutool.core.convert.impl;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-
 import cn.hutool.core.convert.AbstractConverter;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * 数字转换器<br>
@@ -30,7 +30,7 @@ import cn.hutool.core.util.StrUtil;
 public class NumberConverter extends AbstractConverter<Number> {
 	private static final long serialVersionUID = 1L;
 
-	private Class<? extends Number> targetType;
+	private final Class<? extends Number> targetType;
 
 	public NumberConverter() {
 		this.targetType = Number.class;
@@ -50,7 +50,7 @@ public class NumberConverter extends AbstractConverter<Number> {
 		final Class<?> targetType = this.targetType;
 		if (Byte.class == targetType) {
 			if (value instanceof Number) {
-				return Byte.valueOf(((Number) value).byteValue());
+				return ((Number) value).byteValue();
 			} else if(value instanceof Boolean) {
 				return BooleanUtil.toByteObj((Boolean)value);
 			}
@@ -59,7 +59,7 @@ public class NumberConverter extends AbstractConverter<Number> {
 			
 		} else if (Short.class == targetType) {
 			if (value instanceof Number) {
-				return Short.valueOf(((Number) value).shortValue());
+				return ((Number) value).shortValue();
 			} else if(value instanceof Boolean) {
 				return BooleanUtil.toShortObj((Boolean)value);
 			}
@@ -68,52 +68,52 @@ public class NumberConverter extends AbstractConverter<Number> {
 
 		} else if (Integer.class == targetType) {
 			if (value instanceof Number) {
-				return Integer.valueOf(((Number) value).intValue());
+				return ((Number) value).intValue();
 			} else if(value instanceof Boolean) {
 				return BooleanUtil.toInteger((Boolean)value);
 			}
 			final String valueStr = convertToStr(value);
-			return StrUtil.isBlank(valueStr) ? null : Integer.valueOf(NumberUtil.parseInt(valueStr));
+			return StrUtil.isBlank(valueStr) ? null : NumberUtil.parseInt(valueStr);
 			
 		} else if (AtomicInteger.class == targetType) {
-			int intValue;
+			final AtomicInteger intValue = new AtomicInteger();
 			if (value instanceof Number) {
-				intValue = ((Number) value).intValue();
+				intValue.set(((Number) value).intValue());
 			} else if(value instanceof Boolean) {
-				intValue = BooleanUtil.toInt((Boolean)value);
+				intValue.set(BooleanUtil.toInt((Boolean) value));
 			}
 			final String valueStr = convertToStr(value);
 			if (StrUtil.isBlank(valueStr)) {
 				return null;
 			}
-			intValue = NumberUtil.parseInt(valueStr);
-			return new AtomicInteger(intValue);
+			intValue.set(NumberUtil.parseInt(valueStr));
+			return intValue;
 		} else if (Long.class == targetType) {
 			if (value instanceof Number) {
-				return Long.valueOf(((Number) value).longValue());
+				return ((Number) value).longValue();
 			} else if(value instanceof Boolean) {
 				return BooleanUtil.toLongObj((Boolean)value);
 			}
 			final String valueStr = convertToStr(value);
-			return StrUtil.isBlank(valueStr) ? null : Long.valueOf(NumberUtil.parseLong(valueStr));
+			return StrUtil.isBlank(valueStr) ? null : NumberUtil.parseLong(valueStr);
 
 		} else if (AtomicLong.class == targetType) {
-			long longValue;
+			final AtomicLong longValue = new AtomicLong();
 			if (value instanceof Number) {
-				longValue = ((Number) value).longValue();
+				longValue.set(((Number) value).longValue());
 			} else if(value instanceof Boolean) {
-				longValue = BooleanUtil.toLong((Boolean)value);
+				longValue.set(BooleanUtil.toLong((Boolean) value));
 			}
 			final String valueStr = convertToStr(value);
 			if (StrUtil.isBlank(valueStr)) {
 				return null;
 			}
-			longValue = NumberUtil.parseLong(valueStr);
-			return new AtomicLong(longValue);
+			longValue.set(NumberUtil.parseLong(valueStr));
+			return longValue;
 			
 		} else if (Float.class == targetType) {
 			if (value instanceof Number) {
-				return Float.valueOf(((Number) value).floatValue());
+				return ((Number) value).floatValue();
 			} else if(value instanceof Boolean) {
 				return BooleanUtil.toFloatObj((Boolean)value);
 			}
@@ -122,7 +122,7 @@ public class NumberConverter extends AbstractConverter<Number> {
 
 		} else if (Double.class == targetType) {
 			if (value instanceof Number) {
-				return Double.valueOf(((Number) value).doubleValue());
+				return ((Number) value).doubleValue();
 			} else if(value instanceof Boolean) {
 				return BooleanUtil.toDoubleObj((Boolean)value);
 			}

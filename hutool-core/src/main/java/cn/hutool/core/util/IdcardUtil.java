@@ -4,11 +4,13 @@ import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.lang.PatternPool;
 import cn.hutool.core.lang.Validator;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * 身份证相关工具类<br>
@@ -39,91 +41,91 @@ public class IdcardUtil {
 	/**
 	 * 省市代码表
 	 */
-	private static Map<String, String> cityCodes = new HashMap<>();
+	private static final Map<String, String> CITY_CODES = new HashMap<>();
 	/**
 	 * 台湾身份首字母对应数字
 	 */
-	private static Map<String, Integer> twFirstCode = new HashMap<>();
+	private static final Map<String, Integer> TW_FIRST_CODE = new HashMap<>();
 	/**
 	 * 香港身份首字母对应数字
 	 */
-	private static Map<String, Integer> hkFirstCode = new HashMap<>();
+	private static final Map<String, Integer> HK_FIRST_CODE = new HashMap<>();
 
 	static {
-		cityCodes.put("11", "北京");
-		cityCodes.put("12", "天津");
-		cityCodes.put("13", "河北");
-		cityCodes.put("14", "山西");
-		cityCodes.put("15", "内蒙古");
-		cityCodes.put("21", "辽宁");
-		cityCodes.put("22", "吉林");
-		cityCodes.put("23", "黑龙江");
-		cityCodes.put("31", "上海");
-		cityCodes.put("32", "江苏");
-		cityCodes.put("33", "浙江");
-		cityCodes.put("34", "安徽");
-		cityCodes.put("35", "福建");
-		cityCodes.put("36", "江西");
-		cityCodes.put("37", "山东");
-		cityCodes.put("41", "河南");
-		cityCodes.put("42", "湖北");
-		cityCodes.put("43", "湖南");
-		cityCodes.put("44", "广东");
-		cityCodes.put("45", "广西");
-		cityCodes.put("46", "海南");
-		cityCodes.put("50", "重庆");
-		cityCodes.put("51", "四川");
-		cityCodes.put("52", "贵州");
-		cityCodes.put("53", "云南");
-		cityCodes.put("54", "西藏");
-		cityCodes.put("61", "陕西");
-		cityCodes.put("62", "甘肃");
-		cityCodes.put("63", "青海");
-		cityCodes.put("64", "宁夏");
-		cityCodes.put("65", "新疆");
-		cityCodes.put("71", "台湾");
-		cityCodes.put("81", "香港");
-		cityCodes.put("82", "澳门");
-		cityCodes.put("91", "国外");
+		CITY_CODES.put("11", "北京");
+		CITY_CODES.put("12", "天津");
+		CITY_CODES.put("13", "河北");
+		CITY_CODES.put("14", "山西");
+		CITY_CODES.put("15", "内蒙古");
+		CITY_CODES.put("21", "辽宁");
+		CITY_CODES.put("22", "吉林");
+		CITY_CODES.put("23", "黑龙江");
+		CITY_CODES.put("31", "上海");
+		CITY_CODES.put("32", "江苏");
+		CITY_CODES.put("33", "浙江");
+		CITY_CODES.put("34", "安徽");
+		CITY_CODES.put("35", "福建");
+		CITY_CODES.put("36", "江西");
+		CITY_CODES.put("37", "山东");
+		CITY_CODES.put("41", "河南");
+		CITY_CODES.put("42", "湖北");
+		CITY_CODES.put("43", "湖南");
+		CITY_CODES.put("44", "广东");
+		CITY_CODES.put("45", "广西");
+		CITY_CODES.put("46", "海南");
+		CITY_CODES.put("50", "重庆");
+		CITY_CODES.put("51", "四川");
+		CITY_CODES.put("52", "贵州");
+		CITY_CODES.put("53", "云南");
+		CITY_CODES.put("54", "西藏");
+		CITY_CODES.put("61", "陕西");
+		CITY_CODES.put("62", "甘肃");
+		CITY_CODES.put("63", "青海");
+		CITY_CODES.put("64", "宁夏");
+		CITY_CODES.put("65", "新疆");
+		CITY_CODES.put("71", "台湾");
+		CITY_CODES.put("81", "香港");
+		CITY_CODES.put("82", "澳门");
+		CITY_CODES.put("91", "国外");
 
-		twFirstCode.put("A", 10);
-		twFirstCode.put("B", 11);
-		twFirstCode.put("C", 12);
-		twFirstCode.put("D", 13);
-		twFirstCode.put("E", 14);
-		twFirstCode.put("F", 15);
-		twFirstCode.put("G", 16);
-		twFirstCode.put("H", 17);
-		twFirstCode.put("J", 18);
-		twFirstCode.put("K", 19);
-		twFirstCode.put("L", 20);
-		twFirstCode.put("M", 21);
-		twFirstCode.put("N", 22);
-		twFirstCode.put("P", 23);
-		twFirstCode.put("Q", 24);
-		twFirstCode.put("R", 25);
-		twFirstCode.put("S", 26);
-		twFirstCode.put("T", 27);
-		twFirstCode.put("U", 28);
-		twFirstCode.put("V", 29);
-		twFirstCode.put("X", 30);
-		twFirstCode.put("Y", 31);
-		twFirstCode.put("W", 32);
-		twFirstCode.put("Z", 33);
-		twFirstCode.put("I", 34);
-		twFirstCode.put("O", 35);
+		TW_FIRST_CODE.put("A", 10);
+		TW_FIRST_CODE.put("B", 11);
+		TW_FIRST_CODE.put("C", 12);
+		TW_FIRST_CODE.put("D", 13);
+		TW_FIRST_CODE.put("E", 14);
+		TW_FIRST_CODE.put("F", 15);
+		TW_FIRST_CODE.put("G", 16);
+		TW_FIRST_CODE.put("H", 17);
+		TW_FIRST_CODE.put("J", 18);
+		TW_FIRST_CODE.put("K", 19);
+		TW_FIRST_CODE.put("L", 20);
+		TW_FIRST_CODE.put("M", 21);
+		TW_FIRST_CODE.put("N", 22);
+		TW_FIRST_CODE.put("P", 23);
+		TW_FIRST_CODE.put("Q", 24);
+		TW_FIRST_CODE.put("R", 25);
+		TW_FIRST_CODE.put("S", 26);
+		TW_FIRST_CODE.put("T", 27);
+		TW_FIRST_CODE.put("U", 28);
+		TW_FIRST_CODE.put("V", 29);
+		TW_FIRST_CODE.put("X", 30);
+		TW_FIRST_CODE.put("Y", 31);
+		TW_FIRST_CODE.put("W", 32);
+		TW_FIRST_CODE.put("Z", 33);
+		TW_FIRST_CODE.put("I", 34);
+		TW_FIRST_CODE.put("O", 35);
 
 		//来自http://shenfenzheng.bajiu.cn/?rid=40
-		hkFirstCode.put("A", 1);// 持证人拥有香港居留权
-		hkFirstCode.put("B", 2);// 持证人所报称的出生日期或地点自首次登记以后，曾作出更改
-		hkFirstCode.put("C", 3);// 持证人登记领证时在香港的居留受到入境事务处处长的限制
-		hkFirstCode.put("N", 14);// 持证人所报的姓名自首次登记以后，曾作出更改
-		hkFirstCode.put("O", 15);// 持证人报称在香港、澳门及中国以外其他地区或国家出生
-		hkFirstCode.put("R", 18);// 持证人拥有香港入境权
-		hkFirstCode.put("U", 21);// 持证人登记领证时在香港的居留不受入境事务处处长的限制
-		hkFirstCode.put("W", 23);// 持证人报称在澳门地区出生
-		hkFirstCode.put("X", 24);// 持证人报称在中国大陆出生
-		hkFirstCode.put("Z", 26);// 持证人报称在香港出生
+		HK_FIRST_CODE.put("A", 1);// 持证人拥有香港居留权
+		HK_FIRST_CODE.put("B", 2);// 持证人所报称的出生日期或地点自首次登记以后，曾作出更改
+		HK_FIRST_CODE.put("C", 3);// 持证人登记领证时在香港的居留受到入境事务处处长的限制
+		HK_FIRST_CODE.put("N", 14);// 持证人所报的姓名自首次登记以后，曾作出更改
+		HK_FIRST_CODE.put("O", 15);// 持证人报称在香港、澳门及中国以外其他地区或国家出生
+		HK_FIRST_CODE.put("R", 18);// 持证人拥有香港入境权
+		HK_FIRST_CODE.put("U", 21);// 持证人登记领证时在香港的居留不受入境事务处处长的限制
+		HK_FIRST_CODE.put("W", 23);// 持证人报称在澳门地区出生
+		HK_FIRST_CODE.put("X", 24);// 持证人报称在中国大陆出生
+		HK_FIRST_CODE.put("Z", 26);// 持证人报称在香港出生
 	}
 
 	/**
@@ -137,7 +139,7 @@ public class IdcardUtil {
 		if (idCard.length() != CHINA_ID_MIN_LENGTH) {
 			return null;
 		}
-		if (Validator.isNumber(idCard)) {
+		if (ReUtil.isMatch(PatternPool.NUMBERS, idCard)) {
 			// 获取出生年月日
 			String birthday = idCard.substring(6, 12);
 			Date birthDate = DateUtil.parse(birthday, "yyMMdd");
@@ -168,12 +170,12 @@ public class IdcardUtil {
 		int length = idCard.length();
 		switch (length) {
 			case 18:// 18位身份证
-				return isvalidCard18(idCard);
+				return isValidCard18(idCard);
 			case 15:// 15位身份证
-				return isvalidCard15(idCard);
+				return isValidCard15(idCard);
 			case 10: {// 10位身份证，港澳台地区
-				String[] cardval = isValidCard10(idCard);
-				return null != cardval && cardval[2].equals("true");
+				String[] cardVal = isValidCard10(idCard);
+				return null != cardVal && "true".equals(cardVal[2]);
 			}
 			default:
 				return false;
@@ -211,8 +213,14 @@ public class IdcardUtil {
 	 * @param idCard 待验证的身份证
 	 * @return 是否有效的18位身份证
 	 */
-	public static boolean isvalidCard18(String idCard) {
+	public static boolean isValidCard18(String idCard) {
 		if (CHINA_ID_MAX_LENGTH != idCard.length()) {
+			return false;
+		}
+
+		// 省份
+		final String proCode = idCard.substring(0, 2);
+		if (null == CITY_CODES.get(proCode)) {
 			return false;
 		}
 
@@ -225,7 +233,7 @@ public class IdcardUtil {
 		String code17 = idCard.substring(0, 17);
 		// 第18位
 		char code18 = Character.toLowerCase(idCard.charAt(17));
-		if (Validator.isNumber(code17)) {
+		if (ReUtil.isMatch(PatternPool.NUMBERS, code17)) {
 			// 获取校验位
 			char val = getCheckCode18(code17);
 			return val == code18;
@@ -239,14 +247,14 @@ public class IdcardUtil {
 	 * @param idCard 身份编码
 	 * @return 是否合法
 	 */
-	public static boolean isvalidCard15(String idCard) {
+	public static boolean isValidCard15(String idCard) {
 		if (CHINA_ID_MIN_LENGTH != idCard.length()) {
 			return false;
 		}
-		if (Validator.isNumber(idCard)) {
+		if (ReUtil.isMatch(PatternPool.NUMBERS, idCard)) {
 			// 省份
 			String proCode = idCard.substring(0, 2);
-			if (null == cityCodes.get(proCode)) {
+			if (null == CITY_CODES.get(proCode)) {
 				return false;
 			}
 
@@ -277,10 +285,10 @@ public class IdcardUtil {
 		}
 		if (idCard.matches("^[a-zA-Z][0-9]{9}$")) { // 台湾
 			info[0] = "台湾";
-			String char2 = idCard.substring(1, 2);
-			if (char2.equals("1")) {
+			char char2 = idCard.charAt(1);
+			if ('1' == char2) {
 				info[1] = "M";
-			} else if (char2.equals("2")) {
+			} else if ('2' == char2) {
 				info[1] = "F";
 			} else {
 				info[1] = "N";
@@ -312,7 +320,7 @@ public class IdcardUtil {
 			return false;
 		}
 		String start = idCard.substring(0, 1);
-		Integer iStart = twFirstCode.get(start);
+		Integer iStart = TW_FIRST_CODE.get(start);
 		if (null == iStart) {
 			return false;
 		}
@@ -322,10 +330,10 @@ public class IdcardUtil {
 		final char[] chars = mid.toCharArray();
 		int iflag = 8;
 		for (char c : chars) {
-			sum += Integer.valueOf(String.valueOf(c)) * iflag;
+			sum += Integer.parseInt(String.valueOf(c)) * iflag;
 			iflag--;
 		}
-		return (sum % 10 == 0 ? 0 : (10 - sum % 10)) == Integer.valueOf(end);
+		return (sum % 10 == 0 ? 0 : (10 - sum % 10)) == Integer.parseInt(end);
 	}
 
 	/**
@@ -350,7 +358,7 @@ public class IdcardUtil {
 			sum = 522 + (Character.toUpperCase(card.charAt(0)) - 55) * 8;
 		}
 		String start = idCard.substring(0, 1);
-		Integer iStart = hkFirstCode.get(start);
+		Integer iStart = HK_FIRST_CODE.get(start);
 		if (null == iStart) {
 			return false;
 		}
@@ -359,7 +367,7 @@ public class IdcardUtil {
 		char[] chars = mid.toCharArray();
 		int iflag = 7;
 		for (char c : chars) {
-			sum = sum + Integer.valueOf(String.valueOf(c)) * iflag;
+			sum = sum + Integer.parseInt(String.valueOf(c)) * iflag;
 			iflag--;
 		}
 		if ("A".equals(end.toUpperCase())) {
@@ -388,13 +396,15 @@ public class IdcardUtil {
 	 * @return 生日(yyyyMMdd)
 	 */
 	public static String getBirth(String idCard) {
+		Assert.notBlank(idCard, "id card must be not blank!");
 		final int len = idCard.length();
 		if (len < CHINA_ID_MIN_LENGTH) {
 			return null;
 		} else if (len == CHINA_ID_MIN_LENGTH) {
 			idCard = convert15To18(idCard);
 		}
-		return idCard.substring(6, 14);
+
+		return Objects.requireNonNull(idCard).substring(6, 14);
 	}
 
 	/**
@@ -443,7 +453,7 @@ public class IdcardUtil {
 		} else if (len == CHINA_ID_MIN_LENGTH) {
 			idCard = convert15To18(idCard);
 		}
-		return Short.valueOf(idCard.substring(6, 10));
+		return Short.valueOf(Objects.requireNonNull(idCard).substring(6, 10));
 	}
 
 	/**
@@ -459,7 +469,7 @@ public class IdcardUtil {
 		} else if (len == CHINA_ID_MIN_LENGTH) {
 			idCard = convert15To18(idCard);
 		}
-		return Short.valueOf(idCard.substring(10, 12));
+		return Short.valueOf(Objects.requireNonNull(idCard).substring(10, 12));
 	}
 
 	/**
@@ -475,7 +485,7 @@ public class IdcardUtil {
 		} else if (len == CHINA_ID_MIN_LENGTH) {
 			idCard = convert15To18(idCard);
 		}
-		return Short.valueOf(idCard.substring(12, 14));
+		return Short.valueOf(Objects.requireNonNull(idCard).substring(12, 14));
 	}
 
 	/**
@@ -494,7 +504,7 @@ public class IdcardUtil {
 		if (len == CHINA_ID_MIN_LENGTH) {
 			idCard = convert15To18(idCard);
 		}
-		char sCardChar = idCard.charAt(16);
+		char sCardChar = Objects.requireNonNull(idCard).charAt(16);
 		return (sCardChar % 2 != 0) ? 1 : 0;
 	}
 
@@ -508,7 +518,7 @@ public class IdcardUtil {
 		int len = idCard.length();
 		if (len == CHINA_ID_MIN_LENGTH || len == CHINA_ID_MAX_LENGTH) {
 			String sProvinNum = idCard.substring(0, 2);
-			return cityCodes.get(sProvinNum);
+			return CITY_CODES.get(sProvinNum);
 		}
 		return null;
 	}
@@ -585,7 +595,7 @@ public class IdcardUtil {
 		int iSum = 0;
 		if (power.length == iArr.length) {
 			for (int i = 0; i < iArr.length; i++) {
-				iSum += Integer.valueOf(String.valueOf(iArr[i])) * power[i];
+				iSum += Integer.parseInt(String.valueOf(iArr[i])) * power[i];
 			}
 		}
 		return iSum;

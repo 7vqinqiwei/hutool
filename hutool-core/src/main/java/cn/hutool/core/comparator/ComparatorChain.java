@@ -1,13 +1,14 @@
 package cn.hutool.core.comparator;
 
+import cn.hutool.core.lang.Chain;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-
-import cn.hutool.core.lang.Chain;
+import java.util.Objects;
 
 /**
  * 比较器链。此链包装了多个比较器，最终比较结果按照比较器顺序综合多个比较器结果。<br>
@@ -23,7 +24,7 @@ public class ComparatorChain<E> implements Chain<Comparator<E>, ComparatorChain<
 	/** 比较器链. */
 	private final List<Comparator<E>> chain;
 	/** 对应比较器位置是否反序. */
-	private BitSet orderingBits = null;
+	private final BitSet orderingBits;
 	/** 比较器是否被锁定。锁定的比较器链不能再添加新的比较器。比较器会在开始比较时开始加锁。 */
 	private boolean lock = false;
 
@@ -31,7 +32,7 @@ public class ComparatorChain<E> implements Chain<Comparator<E>, ComparatorChain<
 	 * 构造空的比较器链，必须至少有一个比较器，否则会在compare时抛出{@link UnsupportedOperationException}
 	 */
 	public ComparatorChain() {
-		this(new ArrayList<Comparator<E>>(), new BitSet());
+		this(new ArrayList<>(), new BitSet());
 	}
 
 	/**
@@ -50,7 +51,7 @@ public class ComparatorChain<E> implements Chain<Comparator<E>, ComparatorChain<
 	 * @param reverse 是否反序，true表示反序，false正序
 	 */
 	public ComparatorChain(final Comparator<E> comparator, final boolean reverse) {
-		chain = new ArrayList<Comparator<E>>(1);
+		chain = new ArrayList<>(1);
 		chain.add(comparator);
 		orderingBits = new BitSet(1);
 		if (reverse == true) {
@@ -248,8 +249,9 @@ public class ComparatorChain<E> implements Chain<Comparator<E>, ComparatorChain<
 		}
 		if (object.getClass().equals(this.getClass())) {
 			final ComparatorChain<?> otherChain = (ComparatorChain<?>) object;
-			return (null == orderingBits ? null == otherChain.orderingBits : this.orderingBits.equals(otherChain.orderingBits)) //
-					&& (null == otherChain ? null == otherChain.chain : this.chain.equals(otherChain.chain));
+			//
+			return Objects.equals(this.orderingBits, otherChain.orderingBits)
+					&& this.chain.equals(otherChain.chain);
 		}
 		return false;
 	}

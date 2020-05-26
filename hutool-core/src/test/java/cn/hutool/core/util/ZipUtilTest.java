@@ -26,10 +26,8 @@ public class ZipUtilTest {
 	@Test
 	@Ignore
 	public void unzipTest() {
-		File unzip = ZipUtil.unzip("E:\\aaa\\RongGenetor V1.0.0.zip", "e:\\aaa");
+		File unzip = ZipUtil.unzip("f:/test/apache-maven-3.6.2.zip", "f:\\test");
 		Console.log(unzip);
-		File unzip2 = ZipUtil.unzip("E:\\aaa\\RongGenetor V1.0.0.zip", "e:\\aaa");
-		Console.log(unzip2);
 	}
 	
 	@Test
@@ -42,7 +40,7 @@ public class ZipUtilTest {
 	@Test
 	@Ignore
 	public void unzipFromStreamTest() {
-		File unzip = ZipUtil.unzip(FileUtil.getInputStream("e:/test/antlr.zip"), FileUtil.file("e:/test/"), CharsetUtil.CHARSET_UTF_8);
+		File unzip = ZipUtil.unzip(FileUtil.getInputStream("e:/test/hutool-core-5.1.0.jar"), FileUtil.file("e:/test/"), CharsetUtil.CHARSET_UTF_8);
 		Console.log(unzip);
 	}
 	

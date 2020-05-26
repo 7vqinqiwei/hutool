@@ -1,19 +1,18 @@
 package cn.hutool.json;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
-import cn.hutool.core.lang.Console;
-import org.junit.Assert;
-import org.junit.Test;
-
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.Console;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.json.test.bean.Price;
 import cn.hutool.json.test.bean.UserA;
 import cn.hutool.json.test.bean.UserC;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JSONUtilTest {
 
@@ -24,6 +23,24 @@ public class JSONUtilTest {
 	public void parseTest(){
 		JSONArray jsonArray = JSONUtil.parseArray("[{\"a\":\"a\\x]");
 		Console.log(jsonArray);
+	}
+
+	/**
+	 * 数字解析为JSONArray报错
+	 */
+	@Test(expected = JSONException.class)
+	public void parseNumberTest(){
+		JSONArray json = JSONUtil.parseArray(123L);
+		Console.log(json);
+	}
+
+	/**
+	 * 数字解析为JSONObject忽略
+	 */
+	@Test
+	public void parseNumberTest2(){
+		JSONObject json = JSONUtil.parseObj(123L);
+		Assert.assertEquals(new JSONObject(), json);
 	}
 
 	@Test
@@ -68,19 +85,19 @@ public class JSONUtilTest {
 	public void toJsonStrTest3() {
 		// 验证某个字段为JSON字符串时转义是否规范
 		JSONObject object = new JSONObject(true);
-		object.put("name", "123123");
-		object.put("value", "\\");
-		object.put("value2", "</");
+		object.set("name", "123123");
+		object.set("value", "\\");
+		object.set("value2", "</");
 
 		HashMap<String, String> map = MapUtil.newHashMap();
 		map.put("user", object.toString());
 
 		JSONObject json = JSONUtil.parseObj(map);
-		Assert.assertEquals("{\"name\":\"123123\",\"value\":\"\\\\\",\"value2\":\"<\\/\"}", json.get("user"));
-		Assert.assertEquals("{\"user\":\"{\\\"name\\\":\\\"123123\\\",\\\"value\\\":\\\"\\\\\\\\\\\",\\\"value2\\\":\\\"<\\\\/\\\"}\"}", json.toString());
+		Assert.assertEquals("{\"name\":\"123123\",\"value\":\"\\\\\",\"value2\":\"</\"}", json.get("user"));
+		Assert.assertEquals("{\"user\":\"{\\\"name\\\":\\\"123123\\\",\\\"value\\\":\\\"\\\\\\\\\\\",\\\"value2\\\":\\\"</\\\"}\"}", json.toString());
 
 		JSONObject json2 = JSONUtil.parseObj(json.toString());
-		Assert.assertEquals("{\"name\":\"123123\",\"value\":\"\\\\\",\"value2\":\"<\\/\"}", json2.get("user"));
+		Assert.assertEquals("{\"name\":\"123123\",\"value\":\"\\\\\",\"value2\":\"</\"}", json2.get("user"));
 	}
 
 	/**

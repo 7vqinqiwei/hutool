@@ -1,19 +1,20 @@
 package cn.hutool.poi.excel;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import cn.hutool.core.exceptions.DependencyException;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.poi.PoiChecker;
+import cn.hutool.poi.excel.cell.CellLocation;
 import cn.hutool.poi.excel.sax.Excel03SaxReader;
 import cn.hutool.poi.excel.sax.Excel07SaxReader;
 import cn.hutool.poi.excel.sax.handler.RowHandler;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.InputStream;
 
 /**
  * Excel工具类
@@ -346,7 +347,7 @@ public class ExcelUtil {
 	// ------------------------------------------------------------------------------------------------ getWriter
 	/**
 	 * 获得{@link ExcelWriter}，默认写出到第一个sheet<br>
-	 * 不传入写出的Excel文件路径，只能调用{@link ExcelWriter#flush(OutputStream)}方法写出到流<br>
+	 * 不传入写出的Excel文件路径，只能调用ExcelWriter#flush(OutputStream)方法写出到流<br>
 	 * 若写出到文件，还需调用{@link ExcelWriter#setDestFile(File)}方法自定义写出的文件，然后调用{@link ExcelWriter#flush()}方法写出到文件
 	 * 
 	 * @return {@link ExcelWriter}
@@ -362,7 +363,7 @@ public class ExcelUtil {
 
 	/**
 	 * 获得{@link ExcelWriter}，默认写出到第一个sheet<br>
-	 * 不传入写出的Excel文件路径，只能调用{@link ExcelWriter#flush(OutputStream)}方法写出到流<br>
+	 * 不传入写出的Excel文件路径，只能调用ExcelWriter#flush(OutputStream)方法写出到流<br>
 	 * 若写出到文件，还需调用{@link ExcelWriter#setDestFile(File)}方法自定义写出的文件，然后调用{@link ExcelWriter#flush()}方法写出到文件
 	 * 
 	 * @param isXlsx 是否为xlsx格式
@@ -453,7 +454,7 @@ public class ExcelUtil {
 	// ------------------------------------------------------------------------------------------------ getBigWriter
 	/**
 	 * 获得{@link BigExcelWriter}，默认写出到第一个sheet<br>
-	 * 不传入写出的Excel文件路径，只能调用{@link BigExcelWriter#flush(OutputStream)}方法写出到流<br>
+	 * 不传入写出的Excel文件路径，只能调用ExcelWriter#flush(OutputStream)方法写出到流<br>
 	 * 若写出到文件，还需调用{@link BigExcelWriter#setDestFile(File)}方法自定义写出的文件，然后调用{@link BigExcelWriter#flush()}方法写出到文件
 	 * 
 	 * @return {@link BigExcelWriter}
@@ -469,7 +470,7 @@ public class ExcelUtil {
 
 	/**
 	 * 获得{@link BigExcelWriter}，默认写出到第一个sheet<br>
-	 * 不传入写出的Excel文件路径，只能调用{@link BigExcelWriter#flush(OutputStream)}方法写出到流<br>
+	 * 不传入写出的Excel文件路径，只能调用ExcelWriter#flush(OutputStream)方法写出到流<br>
 	 * 若写出到文件，还需调用{@link BigExcelWriter#setDestFile(File)}方法自定义写出的文件，然后调用{@link BigExcelWriter#flush()}方法写出到文件
 	 * 
 	 * @param rowAccessWindowSize 在内存中的行数
@@ -560,7 +561,7 @@ public class ExcelUtil {
 			}
 			int remainder = index % 26;
 			colName.append((char) (remainder + 'A'));
-			index = (int) ((index - remainder) / 26);
+			index = (index - remainder) / 26;
 		} while (index > 0);
 		return colName.reverse().toString();
 	}
@@ -584,5 +585,19 @@ public class ExcelUtil {
 			index = (index + 1) * 26 + (int) c - 'A';
 		}
 		return index;
+	}
+
+	/**
+	 * 将Excel中地址标识符（例如A11，B5）等转换为行列表示<br>
+	 * 例如：A11 -》 x:0,y:10，B5-》x:1,y:4
+	 *
+	 * @param locationRef 单元格地址标识符，例如A11，B5
+	 * @return 坐标点，x表示行，从0开始，y表示列，从0开始
+	 * @since 5.1.4
+	 */
+	public static CellLocation toLocation(String locationRef){
+		final int x = colNameToIndex(locationRef);
+		final int y = ReUtil.getFirstNumber(locationRef) -1;
+		return new CellLocation(x, y);
 	}
 }

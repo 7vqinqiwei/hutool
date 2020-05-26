@@ -1,11 +1,11 @@
 package cn.hutool.core.date;
 
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.StrUtil;
+
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.StrUtil;
 
 /**
  * 秒表封装<br>
@@ -68,7 +68,6 @@ public class StopWatch {
 	 * 总运行时间
 	 */
 	private long totalTimeNanos;
-
 	// ------------------------------------------------------------------------------------------- Constructor start
 
 	/**
@@ -338,8 +337,8 @@ public class StopWatch {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder(shortSummary());
-		if (null == this.taskList) {
-			for (TaskInfo task : getTaskInfo()) {
+		if (null != this.taskList) {
+			for (TaskInfo task : this.taskList) {
 				sb.append("; [").append(task.getTaskName()).append("] took ").append(task.getTimeNanos()).append(" ns");
 				long percent = Math.round(100.0 * task.getTimeNanos() / getTotalTimeNanos());
 				sb.append(" = ").append(percent).append("%");

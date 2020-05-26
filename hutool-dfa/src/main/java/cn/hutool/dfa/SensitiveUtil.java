@@ -1,12 +1,11 @@
 package cn.hutool.dfa;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import cn.hutool.core.thread.ThreadUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * 敏感词工具类
@@ -17,7 +16,7 @@ public final class SensitiveUtil {
 //	private static final Log log = LogFactory.get();
 	
 	public static final char DEFAULT_SEPARATOR = StrUtil.C_COMMA;
-	private static WordTree sensitiveTree = new WordTree();
+	private static final WordTree sensitiveTree = new WordTree();
 	
 	/**
 	 * @return 是否已经被初始化
@@ -33,13 +32,9 @@ public final class SensitiveUtil {
 	 */
 	public static void init(final Collection<String> sensitiveWords, boolean isAsync){
 		if(isAsync){
-			ThreadUtil.execAsync(new Callable<Boolean>(){
-				@Override
-				public Boolean call() throws Exception {
-					init(sensitiveWords);
-					return true;
-				}
-				
+			ThreadUtil.execAsync(() -> {
+				init(sensitiveWords);
+				return true;
 			});
 		}else{
 			init(sensitiveWords);

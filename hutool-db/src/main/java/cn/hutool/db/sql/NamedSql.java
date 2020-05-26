@@ -1,11 +1,11 @@
 package cn.hutool.db.sql;
 
+import cn.hutool.core.text.StrBuilder;
+import cn.hutool.core.util.StrUtil;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import cn.hutool.core.text.StrBuilder;
-import cn.hutool.core.util.StrUtil;
 
 /**
  * 使用命名占位符的SQL，例如：select * from table where field1=:name1<br>
@@ -22,7 +22,7 @@ import cn.hutool.core.util.StrUtil;
 public class NamedSql {
 
 	private String sql;
-	private List<Object> params;
+	private final List<Object> params;
 
 	/**
 	 * 构造
@@ -50,7 +50,7 @@ public class NamedSql {
 	 * @return 参数数组
 	 */
 	public Object[] getParams() {
-		return this.params.toArray(new Object[this.params.size()]);
+		return this.params.toArray(new Object[0]);
 	}
 
 	/**

@@ -1,17 +1,16 @@
 package cn.hutool.core.io;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-
+import cn.hutool.core.io.file.LineSeparator;
+import cn.hutool.core.lang.Console;
+import cn.hutool.core.util.CharsetUtil;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import cn.hutool.core.io.file.LineSeparator;
-import cn.hutool.core.lang.Console;
-import cn.hutool.core.util.CharsetUtil;
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 
 /**
  * {@link FileUtil} 单元测试类
@@ -38,12 +37,12 @@ public class FileUtilTest {
 		String absolutePath2 = FileUtil.getAbsolutePath(absolutePath);
 		Assert.assertNotNull(absolutePath2);
 		Assert.assertEquals(absolutePath, absolutePath2);
-	}
 
-	@Test
-	public void getAbsolutePathTest2() {
 		String path = FileUtil.getAbsolutePath("中文.xml");
 		Assert.assertTrue(path.contains("中文.xml"));
+
+		path = FileUtil.getAbsolutePath("d:");
+		Assert.assertEquals("d:", path);
 	}
 
 	@Test
@@ -87,11 +86,29 @@ public class FileUtilTest {
 
 	@Test
 	@Ignore
-	public void copyFilesFromDir() {
+	public void copyFilesFromDirTest() {
 		File srcFile = FileUtil.file("D:\\驱动");
 		File destFile = FileUtil.file("d:\\驱动备份");
 
 		FileUtil.copyFilesFromDir(srcFile, destFile, true);
+	}
+
+	@Test
+	@Ignore
+	public void copyDirTest() {
+		File srcFile = FileUtil.file("D:\\test");
+		File destFile = FileUtil.file("E:\\");
+
+		FileUtil.copy(srcFile, destFile, true);
+	}
+
+	@Test
+	@Ignore
+	public void moveDirTest() {
+		File srcFile = FileUtil.file("E:\\test2");
+		File destFile = FileUtil.file("D:\\");
+
+		FileUtil.move(srcFile, destFile, true);
 	}
 
 	@Test
@@ -134,6 +151,7 @@ public class FileUtilTest {
 		Assert.assertEquals("C:/bar", FileUtil.normalize("C:\\..\\bar"));
 		Assert.assertEquals("bar", FileUtil.normalize("../../bar"));
 		Assert.assertEquals("C:/bar", FileUtil.normalize("/C:/bar"));
+		Assert.assertEquals("C:", FileUtil.normalize("C:"));
 
 		Assert.assertEquals("\\/192.168.1.1/Share/", FileUtil.normalize("\\\\192.168.1.1\\Share\\"));
 	}
@@ -227,6 +245,15 @@ public class FileUtilTest {
 
 		names = FileUtil.listFileNames(".");
 		Assert.assertTrue(names.contains("hutool.jpg"));
+	}
+
+	@Test
+	@Ignore
+	public void listFileNamesInJarTest() {
+		List<String> names = FileUtil.listFileNames("d:/test/hutool-core-5.1.0.jar!/cn/hutool/core/util ");
+		for (String name : names) {
+			Console.log(name);
+		}
 	}
 	
 	@Test

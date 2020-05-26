@@ -3,9 +3,6 @@ package cn.hutool.core.util;
 import org.junit.Assert;
 import org.junit.Test;
 
-import cn.hutool.core.util.CharsetUtil;
-import cn.hutool.core.util.HexUtil;
-
 /**
  * HexUtil单元测试
  * @author Looly
@@ -37,5 +34,12 @@ public class HexUtilTest {
 		String a = "0x3544534F444";
 		boolean isHex = HexUtil.isHexNumber(a);
 		Assert.assertTrue(isHex);
+	}
+
+	@Test
+	public void decodeTest(){
+		String str = "e8c670380cb220095268f40221fc748fa6ac39d6e930e63c30da68bad97f885d";
+		Assert.assertArrayEquals(HexUtil.decodeHex(str),
+				HexUtil.decodeHex(str.toUpperCase()));
 	}
 }

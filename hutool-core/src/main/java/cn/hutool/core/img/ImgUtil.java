@@ -1,5 +1,27 @@
 package cn.hutool.core.img;
 
+import cn.hutool.core.codec.Base64;
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.exceptions.UtilException;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.io.resource.Resource;
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
+
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.ImageOutputStream;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontFormatException;
@@ -23,28 +45,6 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-
-import javax.imageio.IIOImage;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.ImageTypeSpecifier;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.ImageOutputStream;
-
-import cn.hutool.core.codec.Base64;
-import cn.hutool.core.convert.Convert;
-import cn.hutool.core.exceptions.UtilException;
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.io.IORuntimeException;
-import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.io.resource.Resource;
-import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.ArrayUtil;
-import cn.hutool.core.util.NumberUtil;
-import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.StrUtil;
 
 /**
  * 图片处理工具类：<br>
@@ -171,17 +171,20 @@ public class ImgUtil {
 
 	/**
 	 * 缩放图像（按高度和宽度缩放）<br>
-	 * 缩放后默认为jpeg格式
+	 * 缩放后默认格式与源图片相同，无法识别原图片默认JPG
 	 *
 	 * @param srcImageFile  源图像文件地址
 	 * @param destImageFile 缩放后的图像地址
 	 * @param width         缩放后的宽度
 	 * @param height        缩放后的高度
-	 * @param fixedColor    比例不对时补充的颜色，不补充为<code>null</code>
+	 * @param fixedColor    补充的颜色，不补充为<code>null</code>
 	 * @throws IORuntimeException IO异常
 	 */
 	public static void scale(File srcImageFile, File destImageFile, int width, int height, Color fixedColor) throws IORuntimeException {
-		write(scale(read(srcImageFile), width, height, fixedColor), destImageFile);
+		Img.from(srcImageFile)//
+				.setTargetImageType(FileUtil.extName(destImageFile))//
+				.scale(width, height, fixedColor)//
+				.write(destImageFile);
 	}
 
 	/**
@@ -397,12 +400,12 @@ public class ImgUtil {
 				if (srcWidth % destWidth == 0) {
 					cols = srcWidth / destWidth;
 				} else {
-					cols = (int) Math.floor(srcWidth / destWidth) + 1;
+					cols = (int) Math.floor((double) srcWidth / destWidth) + 1;
 				}
 				if (srcHeight % destHeight == 0) {
 					rows = srcHeight / destHeight;
 				} else {
-					rows = (int) Math.floor(srcHeight / destHeight) + 1;
+					rows = (int) Math.floor((double) srcHeight / destHeight) + 1;
 				}
 				// 循环建立切片
 				Image tag;
@@ -1247,6 +1250,18 @@ public class ImgUtil {
 	}
 
 	/**
+	 * 将图片对象转换为InputStream形式
+	 *
+	 * @param image     图片对象
+	 * @param imageType 图片类型
+	 * @return Base64的字符串表现形式
+	 * @since 4.2.4
+	 */
+	public static ByteArrayInputStream toStream(Image image, String imageType) {
+		return IoUtil.toStream(toBytes(image, imageType));
+	}
+
+	/**
 	 * 将图片对象转换为Base64形式
 	 *
 	 * @param image     图片对象
@@ -1255,9 +1270,21 @@ public class ImgUtil {
 	 * @since 4.1.8
 	 */
 	public static String toBase64(Image image, String imageType) {
+		return Base64.encode(toBytes(image, imageType));
+	}
+
+	/**
+	 * 将图片对象转换为bytes形式
+	 *
+	 * @param image     图片对象
+	 * @param imageType 图片类型
+	 * @return Base64的字符串表现形式
+	 * @since 5.2.4
+	 */
+	public static byte[] toBytes(Image image, String imageType) {
 		final ByteArrayOutputStream out = new ByteArrayOutputStream();
 		write(image, imageType, out);
-		return Base64.encode(out.toByteArray());
+		return out.toByteArray();
 	}
 
 	/**
@@ -1265,28 +1292,65 @@ public class ImgUtil {
 	 *
 	 * @param str             文字
 	 * @param font            字体{@link Font}
-	 * @param backgroundColor 背景颜色
-	 * @param fontColor       字体颜色
+	 * @param backgroundColor 背景颜色，默认透明
+	 * @param fontColor       字体颜色，默认黑色
 	 * @param out             图片输出地
 	 * @throws IORuntimeException IO异常
 	 */
 	public static void createImage(String str, Font font, Color backgroundColor, Color fontColor, ImageOutputStream out) throws IORuntimeException {
+		writePng(createImage(str, font, backgroundColor, fontColor, BufferedImage.TYPE_INT_ARGB), out);
+	}
+
+	/**
+	 * 根据文字创建图片
+	 *
+	 * @param str             文字
+	 * @param font            字体{@link Font}
+	 * @param backgroundColor 背景颜色，默认透明
+	 * @param fontColor       字体颜色，默认黑色
+	 * @param imageType 图片类型，见：{@link BufferedImage}
+	 * @return 图片
+	 * @throws IORuntimeException IO异常
+	 */
+	public static BufferedImage createImage(String str, Font font, Color backgroundColor, Color fontColor, int imageType) throws IORuntimeException {
 		// 获取font的样式应用在str上的整个矩形
-		Rectangle2D r = font.getStringBounds(str, new FontRenderContext(AffineTransform.getScaleInstance(1, 1), false, false));
-		int unitHeight = (int) Math.floor(r.getHeight());// 获取单个字符的高度
+		final Rectangle2D r = getRectangle(str, font);
+		// 获取单个字符的高度
+		int unitHeight = (int) Math.floor(r.getHeight());
 		// 获取整个str用了font样式的宽度这里用四舍五入后+1保证宽度绝对能容纳这个字符串作为图片的宽度
 		int width = (int) Math.round(r.getWidth()) + 1;
-		int height = unitHeight + 3;// 把单个字符的高度+3保证高度绝对能容纳字符串作为图片的高度
+		// 把单个字符的高度+3保证高度绝对能容纳字符串作为图片的高度
+		int height = unitHeight + 3;
+
 		// 创建图片
-		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_BGR);
-		Graphics g = image.getGraphics();
-		g.setColor(backgroundColor);
-		g.fillRect(0, 0, width, height);// 先用背景色填充整张图片,也就是背景
-		g.setColor(fontColor);
+		final BufferedImage image = new BufferedImage(width, height, imageType);
+		final Graphics g = image.getGraphics();
+		if (null != backgroundColor) {
+			// 先用背景色填充整张图片,也就是背景
+			g.setColor(backgroundColor);
+			g.fillRect(0, 0, width, height);
+		}
+		g.setColor(ObjectUtil.defaultIfNull(fontColor, Color.BLACK));
 		g.setFont(font);// 设置画笔字体
 		g.drawString(str, 0, font.getSize());// 画出字符串
 		g.dispose();
-		writePng(image, out);
+
+		return image;
+	}
+
+	/**
+	 * 获取font的样式应用在str上的整个矩形
+	 *
+	 * @param str 字符串，必须非空
+	 * @param font 字体，必须非空
+	 * @return {@link Rectangle2D}
+	 * @since 5.3.3
+	 */
+	public static Rectangle2D getRectangle(String str, Font font) {
+		return font.getStringBounds(str,
+				new FontRenderContext(AffineTransform.getScaleInstance(1, 1),
+						false,
+						false));
 	}
 
 	/**

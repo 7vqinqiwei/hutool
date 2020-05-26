@@ -1,5 +1,9 @@
 package cn.hutool.core.annotation;
 
+import cn.hutool.core.exceptions.UtilException;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.ReflectUtil;
+
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -7,16 +11,10 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
-
-import cn.hutool.core.exceptions.UtilException;
-import cn.hutool.core.lang.Filter;
-import cn.hutool.core.util.ArrayUtil;
-import cn.hutool.core.util.ReflectUtil;
 
 /**
  * 注解工具类<br>
@@ -68,7 +66,7 @@ public class AnnotationUtil {
 	 * 如果无指定的属性方法返回null
 	 *
 	 * @param <T>            注解值类型
-	 * @param annotationEle  {@link AccessibleObject}，可以是Class、Method、Field、Constructor、ReflectPermission
+	 * @param annotationEle  {@link AnnotatedElement}，可以是Class、Method、Field、Constructor、ReflectPermission
 	 * @param annotationType 注解类型
 	 * @return 注解对象
 	 * @throws UtilException 调用注解中的方法时执行异常
@@ -82,7 +80,7 @@ public class AnnotationUtil {
 	 * 如果无指定的属性方法返回null
 	 *
 	 * @param <T>            注解值类型
-	 * @param annotationEle  {@link AccessibleObject}，可以是Class、Method、Field、Constructor、ReflectPermission
+	 * @param annotationEle  {@link AnnotatedElement}，可以是Class、Method、Field、Constructor、ReflectPermission
 	 * @param annotationType 注解类型
 	 * @param propertyName   属性名，例如注解中定义了name()方法，则 此处传入name
 	 * @return 注解对象
@@ -116,19 +114,16 @@ public class AnnotationUtil {
 			return null;
 		}
 
-		final Method[] methods = ReflectUtil.getMethods(annotationType, new Filter<Method>() {
-			@Override
-			public boolean accept(Method t) {
-				if (ArrayUtil.isEmpty(t.getParameterTypes())) {
-					// 只读取无参方法
-					final String name = t.getName();
-					// 跳过自有的几个方法
-					return (false == "hashCode".equals(name)) //
-							&& (false == "toString".equals(name)) //
-							&& (false == "annotationType".equals(name));
-				}
-				return false;
+		final Method[] methods = ReflectUtil.getMethods(annotationType, t -> {
+			if (ArrayUtil.isEmpty(t.getParameterTypes())) {
+				// 只读取无参方法
+				final String name = t.getName();
+				// 跳过自有的几个方法
+				return (false == "hashCode".equals(name)) //
+						&& (false == "toString".equals(name)) //
+						&& (false == "annotationType".equals(name));
 			}
+			return false;
 		});
 
 		final HashMap<String, Object> result = new HashMap<>(methods.length, 1);

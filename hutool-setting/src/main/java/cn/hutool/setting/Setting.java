@@ -1,17 +1,5 @@
 package cn.hutool.setting;
 
-import java.io.File;
-import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.file.Path;
-import java.nio.file.WatchEvent;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.io.IoUtil;
@@ -29,6 +17,19 @@ import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.log.StaticLog;
 import cn.hutool.setting.dialect.Props;
+
+import java.io.File;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.WatchEvent;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * 设置工具类。 用于支持设置（配置）文件<br>
@@ -191,6 +192,16 @@ public class Setting extends AbsSetting implements Map<String, String> {
 	 * @param autoReload 是否自动加载
 	 */
 	public void autoLoad(boolean autoReload) {
+		autoLoad(autoReload, null);
+	}
+
+	/**
+	 * 在配置文件变更时自动加载
+	 *
+	 * @param callback   加载完成回调
+	 * @param autoReload 是否自动加载
+	 */
+	public void autoLoad(boolean autoReload, Consumer<Boolean> callback) {
 		if (autoReload) {
 			Assert.notNull(this.settingUrl, "Setting URL is null !");
 			if (null != this.watchMonitor) {
@@ -200,7 +211,11 @@ public class Setting extends AbsSetting implements Map<String, String> {
 			this.watchMonitor = WatchUtil.createModify(this.settingUrl, new SimpleWatcher() {
 				@Override
 				public void onModify(WatchEvent<?> event, Path currentPath) {
-					load();
+					boolean success = load();
+					// 如果有回调，加载完毕则执行回调
+					if (callback != null) {
+						callback.accept(success);
+					}
 				}
 			});
 			this.watchMonitor.start();
@@ -223,6 +238,7 @@ public class Setting extends AbsSetting implements Map<String, String> {
 	 *
 	 * @return 键值总数
 	 */
+	@Override
 	public int size() {
 		return this.groupedMap.size();
 	}
@@ -475,6 +491,20 @@ public class Setting extends AbsSetting implements Map<String, String> {
 	}
 
 	/**
+	 * 添加一个Stting到主配置中
+	 *
+	 * @param setting Setting配置
+	 * @return this
+	 * @since 5.2.4
+	 */
+	public Setting addSetting(Setting setting) {
+		for (Entry<String, LinkedHashMap<String, String>> e : setting.getGroupedMap().entrySet()) {
+			this.putAll(e.getKey(), e.getValue());
+		}
+		return this;
+	}
+
+	/**
 	 * 清除指定分组下的所有键值对
 	 *
 	 * @param group 分组
@@ -656,7 +686,7 @@ public class Setting extends AbsSetting implements Map<String, String> {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((charset == null) ? 0 : charset.hashCode());
-		result = prime * result + ((groupedMap == null) ? 0 : groupedMap.hashCode());
+		result = prime * result + groupedMap.hashCode();
 		result = prime * result + (isUseVariable ? 1231 : 1237);
 		result = prime * result + ((settingUrl == null) ? 0 : settingUrl.hashCode());
 		return result;
@@ -681,11 +711,7 @@ public class Setting extends AbsSetting implements Map<String, String> {
 		} else if (false == charset.equals(other.charset)) {
 			return false;
 		}
-		if (groupedMap == null) {
-			if (other.groupedMap != null) {
-				return false;
-			}
-		} else if (false == groupedMap.equals(other.groupedMap)) {
+		if (false == groupedMap.equals(other.groupedMap)) {
 			return false;
 		}
 		if (isUseVariable != other.isUseVariable) {

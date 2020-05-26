@@ -1,5 +1,10 @@
 package cn.hutool.core.lang;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.getter.BasicTypeGetter;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Time;
@@ -9,11 +14,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.convert.Convert;
-import cn.hutool.core.getter.BasicTypeGetter;
 
 /**
  * 字典对象，扩充了HashMap中的方法
@@ -117,7 +117,7 @@ public class Dict extends LinkedHashMap<String, Object> implements BasicTypeGett
 	 * @param m Map
 	 */
 	public Dict(Map<String, Object> m) {
-		super((null == m) ? new HashMap<String, Object>() : m);
+		super((null == m) ? new HashMap<>() : m);
 	}
 	// --------------------------------------------------------------- Constructor end
 
@@ -231,7 +231,7 @@ public class Dict extends LinkedHashMap<String, Object> implements BasicTypeGett
 	 * @param withoutNames 不需要去除的字段名
 	 */
 	public <T extends Dict> void removeEqual(T dict, String... withoutNames) {
-		HashSet<String> withoutSet = CollectionUtil.newHashSet(withoutNames);
+		HashSet<String> withoutSet = CollUtil.newHashSet(withoutNames);
 		for (Map.Entry<String, Object> entry : dict.entrySet()) {
 			if (withoutSet.contains(entry.getKey())) {
 				continue;
@@ -423,6 +423,7 @@ public class Dict extends LinkedHashMap<String, Object> implements BasicTypeGett
 	 * @param attr 字段名
 	 * @return 字段值
 	 */
+	@Override
 	public Date getDate(String attr) {
 		return get(attr, null);
 	}
@@ -451,6 +452,11 @@ public class Dict extends LinkedHashMap<String, Object> implements BasicTypeGett
 		return get(attr, null);
 	}
 	// -------------------------------------------------------------------- Get end
+
+	@Override
+	public Object get(Object key) {
+		return super.get(customKey((String)key));
+	}
 
 	@Override
 	public Object put(String key, Object value) {

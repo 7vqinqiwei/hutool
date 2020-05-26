@@ -1,12 +1,11 @@
 package cn.hutool.core.convert.impl;
 
-import java.lang.reflect.Type;
-import java.util.Collection;
-
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.convert.Converter;
 import cn.hutool.core.util.TypeUtil;
+
+import java.lang.reflect.Type;
+import java.util.Collection;
 
 /**
  * 各种集合类转换器
@@ -61,7 +60,7 @@ public class CollectionConverter implements Converter<Collection<?>> {
 
 	@Override
 	public Collection<?> convert(Object value, Collection<?> defaultValue) throws IllegalArgumentException {
-		Collection<?> result = null;
+		Collection<?> result;
 		try {
 			result = convertInternal(value);
 		} catch (RuntimeException e) {
@@ -77,7 +76,7 @@ public class CollectionConverter implements Converter<Collection<?>> {
 	 * @return 转换后的集合对象
 	 */
 	protected Collection<?> convertInternal(Object value) {
-		final Collection<Object> collection = CollectionUtil.create(TypeUtil.getClass(this.collectionType));
+		final Collection<Object> collection = CollUtil.create(TypeUtil.getClass(this.collectionType));
 		return CollUtil.addAll(collection, value, this.elementType);
 	}
 }

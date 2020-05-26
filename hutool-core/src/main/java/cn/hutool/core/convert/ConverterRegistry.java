@@ -93,7 +93,7 @@ public class ConverterRegistry implements Serializable{
 	/** 类级的内部类，也就是静态的成员式内部类，该内部类的实例与外部类的实例 没有绑定关系，而且只有被调用到才会装载，从而实现了延迟加载 */
 	private static class SingletonHolder {
 		/** 静态初始化器，由JVM来保证线程安全 */
-		private static ConverterRegistry instance = new ConverterRegistry();
+		private static final ConverterRegistry INSTANCE = new ConverterRegistry();
 	}
 
 	/**
@@ -102,7 +102,7 @@ public class ConverterRegistry implements Serializable{
 	 * @return {@link ConverterRegistry}
 	 */
 	public static ConverterRegistry getInstance() {
-		return SingletonHolder.instance;
+		return SingletonHolder.INSTANCE;
 	}
 
 	public ConverterRegistry() {
@@ -216,7 +216,7 @@ public class ConverterRegistry implements Serializable{
 		if(type instanceof TypeReference) {
 			type = ((TypeReference<?>)type).getType();
 		}
-		
+
 		// 标准转换器
 		final Converter<T> converter = getConverter(type, isCustomFirst);
 		if (null != converter) {
@@ -317,6 +317,11 @@ public class ConverterRegistry implements Serializable{
 			return (T) value;
 		}
 
+		// 枚举转换
+		if (rowType.isEnum()) {
+			return (T) new EnumConverter(rowType).convert(value, defaultValue);
+		}
+
 		// 数组转换
 		if (rowType.isArray()) {
 			final ArrayConverter arrayConverter = new ArrayConverter(rowType);
@@ -325,11 +330,6 @@ public class ConverterRegistry implements Serializable{
 			} catch (Exception e) {
 				// 数组转换失败进行下一步
 			}
-		}
-
-		// 枚举转换
-		if (rowType.isEnum()) {
-			return (T) new EnumConverter(rowType).convert(value, defaultValue);
 		}
 
 		// 表示非需要特殊转换的对象

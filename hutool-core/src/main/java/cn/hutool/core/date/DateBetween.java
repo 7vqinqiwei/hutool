@@ -1,10 +1,10 @@
 package cn.hutool.core.date;
 
+import cn.hutool.core.lang.Assert;
+
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
-
-import cn.hutool.core.lang.Assert;
 
 /**
  * 日期间隔
@@ -16,9 +16,9 @@ public class DateBetween implements Serializable{
 	private static final long serialVersionUID = 1L;
 
 	/** 开始日期 */
-	private Date begin;
+	private final Date begin;
 	/** 结束日期 */
-	private Date end;
+	private final Date end;
 
 	/**
 	 * 创建<br>
@@ -134,6 +134,16 @@ public class DateBetween implements Serializable{
 
 		int result = endCal.get(Calendar.YEAR) - beginCal.get(Calendar.YEAR);
 		if (false == isReset) {
+			// 考虑闰年的2月情况
+			if(Calendar.FEBRUARY == beginCal.get(Calendar.MONTH) && Calendar.FEBRUARY == endCal.get(Calendar.MONTH)){
+				if(beginCal.get(Calendar.DAY_OF_MONTH) == beginCal.getActualMaximum(Calendar.DAY_OF_MONTH)
+				&& endCal.get(Calendar.DAY_OF_MONTH) == endCal.getActualMaximum(Calendar.DAY_OF_MONTH)){
+					// 两个日期都位于2月的最后一天，此时月数按照相等对待，此时都设置为1号
+					beginCal.set(Calendar.DAY_OF_MONTH, 1);
+					endCal.set(Calendar.DAY_OF_MONTH, 1);
+				}
+			}
+
 			endCal.set(Calendar.YEAR, beginCal.get(Calendar.YEAR));
 			long between = endCal.getTimeInMillis() - beginCal.getTimeInMillis();
 			if (between < 0) {

@@ -1,19 +1,5 @@
 package cn.hutool.core.util;
 
-import java.awt.Color;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
-
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateTime;
@@ -22,6 +8,20 @@ import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.lang.WeightRandom;
 import cn.hutool.core.lang.WeightRandom.WeightObj;
+
+import java.awt.Color;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 随机工具类
@@ -352,6 +352,28 @@ public class RandomUtil {
 	}
 
 	/**
+	 * 随机获得列表中的一定量的元素，返回List<br>
+	 * 此方法与{@link #randomEles(List, int)} 不同点在于，不会获取重复位置的元素
+	 *
+	 * @param source 列表
+	 * @param count  随机取出的个数
+	 * @param <T>    元素类型
+	 * @return 随机列表
+	 * @since 5.2.1
+	 */
+	public static <T> List<T> randomEleList(List<T> source, int count) {
+		if (count >= source.size()) {
+			return source;
+		}
+		final int[] randomList = ArrayUtil.sub(randomInts(source.size()), 0, count);
+		List<T> result = new ArrayList<>();
+		for (int e : randomList) {
+			result.add(source.get(e));
+		}
+		return result;
+	}
+
+	/**
 	 * 随机获得列表中的一定量的不重复元素，返回Set
 	 *
 	 * @param <T>        元素类型
@@ -366,13 +388,29 @@ public class RandomUtil {
 			throw new IllegalArgumentException("Count is larger than collection distinct size !");
 		}
 
-		final HashSet<T> result = new HashSet<>(count);
+		final Set<T> result = new LinkedHashSet<>(count);
 		int limit = source.size();
 		while (result.size() < count) {
 			result.add(randomEle(source, limit));
 		}
 
 		return result;
+	}
+
+	/**
+	 * 创建指定长度的随机索引
+	 *
+	 * @param length 长度
+	 * @return 随机索引
+	 * @since 5.2.1
+	 */
+	public static int[] randomInts(int length) {
+		final int[] range = ArrayUtil.range(length);
+		for (int i = 0; i < length; i++) {
+			int random = randomInt(i, length);
+			ArrayUtil.swap(range, i, random);
+		}
+		return range;
 	}
 
 	/**
@@ -449,7 +487,7 @@ public class RandomUtil {
 	 * @return 随机数字字符
 	 * @since 3.1.2
 	 */
-	public static int randomNumber() {
+	public static char randomNumber() {
 		return randomChar(BASE_NUMBER);
 	}
 
