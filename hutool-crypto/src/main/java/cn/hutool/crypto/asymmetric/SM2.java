@@ -4,6 +4,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.HexUtil;
 import cn.hutool.crypto.BCUtil;
 import cn.hutool.crypto.CryptoException;
+import cn.hutool.crypto.KeyUtil;
 import cn.hutool.crypto.SecureUtil;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.Digest;
@@ -78,8 +79,8 @@ public class SM2 extends AbstractAsymmetricCrypto<SM2> {
 	 */
 	public SM2(byte[] privateKey, byte[] publicKey) {
 		this(//
-				SecureUtil.generatePrivateKey(ALGORITHM_SM2, privateKey), //
-				SecureUtil.generatePublicKey(ALGORITHM_SM2, publicKey)//
+				KeyUtil.generatePrivateKey(ALGORITHM_SM2, privateKey), //
+				KeyUtil.generatePublicKey(ALGORITHM_SM2, publicKey)//
 		);
 	}
 
@@ -498,8 +499,10 @@ public class SM2 extends AbstractAsymmetricCrypto<SM2> {
 	 */
 	private SM2Engine getEngine() {
 		if (null == this.engine) {
+			Assert.notNull(this.digest, "digest must be not null !");
 			this.engine = new SM2Engine(this.digest, this.mode);
 		}
+		this.digest.reset();
 		return this.engine;
 	}
 
@@ -510,8 +513,10 @@ public class SM2 extends AbstractAsymmetricCrypto<SM2> {
 	 */
 	private SM2Signer getSigner() {
 		if (null == this.signer) {
+			Assert.notNull(this.digest, "digest must be not null !");
 			this.signer = new SM2Signer(this.encoding, this.digest);
 		}
+		this.digest.reset();
 		return this.signer;
 	}
 	// ------------------------------------------------------------------------------------------------------------------------- Private method end

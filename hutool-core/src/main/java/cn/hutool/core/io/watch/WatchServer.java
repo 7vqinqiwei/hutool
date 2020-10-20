@@ -15,7 +15,6 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
@@ -129,39 +128,54 @@ public class WatchServer extends Thread implements Closeable, Serializable {
 	/**
 	 * 执行事件获取并处理
 	 *
-	 * @param watcher     {@link Watcher}
+	 * @param action     监听回调函数，实现此函数接口用于处理WatchEvent事件
 	 * @param watchFilter 监听过滤接口，通过实现此接口过滤掉不需要监听的情况，null表示不过滤
+	 * @since 5.4.0
 	 */
-	public void watch(Watcher watcher, Filter<WatchEvent<?>> watchFilter) {
+	public void watch(WatchAction action, Filter<WatchEvent<?>> watchFilter) {
 		WatchKey wk;
 		try {
 			wk = watchService.take();
 		} catch (InterruptedException | ClosedWatchServiceException e) {
 			// 用户中断
+			close();
 			return;
 		}
 
 		final Path currentPath = watchKeyPathMap.get(wk);
-		WatchEvent.Kind<?> kind;
-		for (WatchEvent<?> event : wk.pollEvents()) {
-			kind = event.kind();
 
+		for (WatchEvent<?> event : wk.pollEvents()) {
 			// 如果监听文件，检查当前事件是否与所监听文件关联
 			if (null != watchFilter && false == watchFilter.accept(event)) {
 				continue;
 			}
 
-			if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+			action.doAction(event, currentPath);
+		}
+
+		wk.reset();
+	}
+
+	/**
+	 * 执行事件获取并处理
+	 *
+	 * @param watcher     {@link Watcher}
+	 * @param watchFilter 监听过滤接口，通过实现此接口过滤掉不需要监听的情况，null表示不过滤
+	 */
+	public void watch(Watcher watcher, Filter<WatchEvent<?>> watchFilter) {
+		watch((event, currentPath)->{
+			final WatchEvent.Kind<?> kind = event.kind();
+
+			if (kind == WatchKind.CREATE.getValue()) {
 				watcher.onCreate(event, currentPath);
-			} else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+			} else if (kind == WatchKind.MODIFY.getValue()) {
 				watcher.onModify(event, currentPath);
-			} else if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+			} else if (kind == WatchKind.DELETE.getValue()) {
 				watcher.onDelete(event, currentPath);
-			} else if (kind == StandardWatchEventKinds.OVERFLOW) {
+			} else if (kind == WatchKind.OVERFLOW.getValue()) {
 				watcher.onOverflow(event, currentPath);
 			}
-		}
-		wk.reset();
+		}, watchFilter);
 	}
 
 	/**

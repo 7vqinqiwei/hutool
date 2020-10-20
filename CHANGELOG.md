@@ -3,6 +3,337 @@
 
 -------------------------------------------------------------------------------------------------------------
 
+# 5.4.5 (2020-10-18)
+
+### 新特性
+* 【core   】     ConsoleTable代码优化（pr#190@Gitee）
+* 【http   】     HttpRequest增加setProxy重载（pr#190@Gitee）
+* 【core   】     XmlUtil.cleanComment（pr#191@Gitee）
+* 【core   】     ArrayUtil.unWrap增加默认值（pr#1149@Github）
+* 【core   】     ArrayUtil.indexOf修改double的equals判断（pr#1147@Github）
+* 【core   】     优化StrUtil中部分参数校验以及逻辑处理（pr#1144@Github）
+* 【core   】     简化CreditCode逻辑去除无用Character.toUpperCase（pr#1145@Github）
+* 【core   】     NumberUtil增加generateRandomNumber重载，可自定义seed（issue#I1XTUT@Gitee）
+* 【core   】     DataSizeUtil支持小数（pr#1158@Github）
+* 【core   】     完善注释（pr#193@Gitee）
+* 【core   】     优化Combination.countAll（pr#1159@Github）
+* 【core   】     优化针对list的split方法（pr#194@Gitee）
+* 【poi    】     ExcelWriter增加setRowStyle方法
+* 【core   】     Assert增加函数接口（pr#1166@Github）
+* 【core   】     新增AtomicIntegerArray、AtomicLongArray转换
+* 【extra  】     PinyinUtil新增Bopomofo4j支持
+* 【core   】     新增TemporalUtil工具类，新增时间相关方法
+
+### Bug修复
+* 【core   】     解决农历判断节日未判断大小月导致的问题（issue#I1XHSF@Gitee）
+* 【core   】     解决ListUtil计算总量可能的int溢出问题（pr#1150@Github）
+* 【json   】     解决JSON中转换为double小数精度丢失问题（pr#192@Gitee）
+* 【core   】     修复CaseInsensitiveMap的remove等方法并没有忽略大小写的问题（pr#1163@Gitee）
+* 【poi    】     修复合并单元格值读取错误的问题
+* 【poi    】     修复NamedSql解析形如col::numeric出错问题（issue#I1YHBX@Gitee）
+* 【core   】     修复计算相差天数导致的问题
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.4.4 (2020-09-28)
+
+### 新特性
+* 【core   】     ServiceLoaderUtil改为使用contextClassLoader（pr#183@Gitee）
+* 【core   】     NetUtil增加getLocalHostName（pr#1103@Github）
+* 【extra  】     FTP增加stat方法（issue#I1W346@Gitee）
+* 【core   】     Convert.toNumber支持类似12.2F这种形式字符串转换（issue#I1VYLJ@Gitee）
+* 【core   】     使用静态变量替换999等（issue#I1W8IB@Gitee）
+* 【core   】     URLUtil自动trim（issue#I1W803@Gitee）
+* 【crypto 】     RC4增加ecrypt（pr#1108@Github）
+* 【core   】     CharUtil and StrUtil增加@（pr#1106@Github）
+* 【extra  】     优化EMOJ查询逻辑（pr#1112@Github）
+* 【extra  】     优化CollUtil交并集结果集合设置初始化大小，避免扩容成本（pr#1110@Github）
+* 【core   】     优化PageUtil彩虹算法（issue#1110@Github）
+* 【core   】     IoUtil增加readUtf8方法
+* 【core   】     优化全局邮箱账户初始化逻辑（pr#1114@Github）
+* 【http   】     SoapClient增加addSOAPHeader方法
+* 【http   】     完善StrUtil的注释（pr#186@Gitee）
+* 【aop    】     去除调试日志（issue#1116@Github）
+* 【core   】     增加&apos;反转义（pr#1121@Github）
+* 【poi    】     增加SheetReader和XXXRowHandler（issue#I1WHJP@Gitee）
+* 【dfa    】     增加过滤符号（pr#1122@Github）
+* 【dfa    】     SensitiveUtil增加setCharFilter方法（pr#1123@Github）
+* 【all    】     优化常量大小写规范（pr#188@Gitee）
+* 【core   】     优化NumberUtil中针对BigDecimal的一些处理逻辑（pr#1127@Github）
+* 【core   】     NumberUtil.factorial注释明确（pr#1126@Github）
+* 【core   】     NumberUtil增加isPowerOfTwo方法（pr#1132@Github）
+* 【core   】     优化BooleanUtil的校验逻辑（pr#1137@Github）
+* 【poi    】     改进sax方式读取逻辑，支持sheetId（issue#1141@Github）
+* 【core   】     XmlUtil增加readBySax方法
+
+### Bug修复
+* 【crypto 】     修复SM2验签后无法解密问题（issue#I1W0VP@Gitee）
+* 【core   】     修复新建默认TreeSet没有默认比较器导致的问题（issue#1101@Github）
+* 【core   】     修复Linux下使用Windows路径分隔符导致的解压错误（issue#I1MW0E@Gitee）
+* 【core   】     修复Word07Writer写出map问题（issue#I1W49R@Gitee）
+* 【script 】     修复函数库脚本执行问题
+* 【core   】     修复RGB随机颜色的上限值不对且API重复（pr#1136@Gihub）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.4.3 (2020-09-16)
+
+### 新特性
+* 【core   】     使用静态的of方法来new对象（pr#177@Gitee）
+* 【setting】     Setting增加store无参方法（issue#1072@Github）
+* 【setting】     StatementUtil增加null缓存（pr#1076@Github）
+* 【core   】     扩充Console功能，支持可变参数（issue#1077@Github）
+* 【crypto 】     增加ECKeyUtil（issue#I1UOF5@Gitee）
+* 【core   】     增加TransXXX（issue#I1TU1Y@Gitee）
+* 【core   】     增加Generator
+* 【db     】     Column增加是否主键、保留位数等字段
+* 【cache  】     Cache接口增加get重载（issue#1080@Github）
+* 【core   】     增加Interner和InternUtil（issue#I1TU1Y@Gitee）
+* 【core   】     增加Calculator（issue#1090@Github）
+* 【core   】     IdcardUtil增加getIdcardInfo方法（issue#1092@Github）
+* 【core   】     改进ObjectUtil.equal，支持BigDecimal判断
+* 【core   】     ArrayConverter增加可选是否忽略错误（issue#I1VNYQ@Gitee）
+* 【db     】     增加ConditionBuilder
+* 【setting】     Setting和Props增加create方法
+* 【log    】     增加TinyLog2支持（issue#1094@Github）
+
+### Bug修复
+* 【core   】     修复Dict.of错误（issue#I1UUO5@Gitee）
+* 【core   】     修复UrlBuilder地址参数问题（issue#I1UWCA@Gitee）
+* 【core   】     修复StrUtil.toSymbolCase转换问题（issue#1075@Github）
+* 【log    】     修复打印null对象显示{msg}异常问题（issue#1084@Github）
+* 【extra  】     修复ServletUtil.getReader中未关闭的问题
+* 【extra  】     修复QrCodeUtil在新版本zxing报错问题（issue#1088@Github）
+* 【core   】     修复LocalDateTimeUtil.parse无法解析yyyyMMddHHmmssSSS的bug（issue#1082@Github）
+* 【core   】     修复VersionComparator.equals递归调用问题（issue#1093@Github）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.4.2 (2020-09-09)
+
+### 新特性
+* 【core  】     lock放在try外边（pr#1050@Github）
+* 【core  】     MailUtil增加错误信息（issue#I1TAKJ@Gitee）
+* 【core  】     JschUtil添加远程转发功能（pr#171@Gitee）
+* 【db    】     AbstractDb增加executeBatch重载（issue#1053@Github）
+* 【extra 】     新增方便引入SpringUtil的注解@EnableSpringUtil（pr#172@Gitee）
+* 【poi   】     RowUtil增加插入和删除行（pr#1060@Github）
+* 【extra 】     SpringUtil增加注册bean（pr#174@Gitee）
+* 【core  】     修改NetUtil.getMacAddress避免空指针（issue#1057@Github）
+* 【core  】     增加EnumItem接口，枚举扩展转换，增加SPI自定义转换（pr#173@Github）
+* 【core  】     TypeUtil增加getActualType，增加ActualTypeMapperPool类（issue#I1TBWH@Gitee）
+* 【extra 】     QRConfig中添加qrVersion属性（pr#1068@Github）
+* 【core  】     ArrayUtil增加equals方法
+* 【core  】     BeanDesc增加方法
+* 【core  】     增加@PropIgnore注解（issue#I1U846@Gitee）
+
+### Bug修复
+* 【core  】     重新整理农历节假日，解决一个pr过来的玩笑导致的问题
+* 【poi   】     修复ExcelFileUtil.isXls判断问题（pr#1055@Github）
+* 【poi   】     修复CglibUtil.copyList参数错误导致的问题
+* 【http  】     修复GET请求附带body导致变POST的问题
+* 【core  】     修复double相等判断问题（pr#175@Gitee）
+* 【core  】     修复DateSizeUtil.format越界问题（issue#1069@Github）
+* 【core  】     修复ChineseDate.getChineseMonth问题（issue#I1UG72@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.4.1 (2020-08-29)
+
+### 新特性
+* 【core  】     StrUtil增加firstNonXXX方法（issue#1020@Github）
+* 【core  】     BeanCopier修改规则，可选bean拷贝空字段报错问题（pr#160@Gitee）
+* 【http  】     HttpUtil增加downloadFileFromUrl（pr#1023@Github）
+* 【core  】     增加toEpochMilli方法
+* 【core  】     Validator修改isCitizenId校验（pr#1032@Github）
+* 【core  】     增加PathUtil和FileNameUtil，分离FileUtil中部分方法
+* 【core  】     改造IndexedComparator，增加InstanceComparator
+* 【extra 】     增加CglibUtil
+* 【core  】     增加Ipv4Util（pr#161@Gitee）
+* 【core  】     增加CalendarUtil和DateUtil增加isSameMonth方法（pr#161@Gitee）
+* 【core  】     Dict增加of方法（issue#1035@Github）
+* 【core  】     StrUtil.wrapAll方法不明确修改改为wrapAllWithPair（issue#1042@Github）
+* 【core  】     EnumUtil.getEnumAt负数返回null（pr#167@Gitee）
+* 【core  】     ChineseDate增加天干地支和转换为公历方法（pr#169@Gitee）
+* 【core  】     Img增加stroke描边方法（issue#1033@Github）
+
+### Bug修复#
+* 【poi   】     修复ExcelBase.isXlsx方法判断问题（issue#I1S502@Gitee）
+* 【poi   】     修复Excel03SaxReader日期方法判断问题（pr#1026@Github）
+* 【core  】     修复StrUtil.indexOf空指针问题（issue#1038@Github）
+* 【extra 】     修复VelocityEngine编码问题和路径前缀问题（issue#I1T0IG@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.4.0 (2020-08-06)
+
+### 新特性
+* 【socket】     对NioServer和NioClient改造（pr#992@Github）
+* 【core  】     StrUtil增加filter方法（pr#149@Gitee）
+* 【core  】     DateUtil增加beginOfWeek重载
+* 【core  】     将有歧义的BeanUtil.mapToBean方法置为过期（使用toBean方法）
+* 【core  】     添加WatchAction（对Watcher的抽象）
+* 【core  】     修改UUID正则，更加严谨（issue#I1Q1IW@Gitee）
+* 【core  】     ArrayUtil增加isAllNull方法（issue#1004@Github）
+* 【core  】     CollUtil增加contains方法（pr#152@Gitee）
+* 【core  】     ArrayUtil增加isAllNotNull方法（pr#1008@Github）
+* 【poi   】     closeAfterRead参数无效，方法设为过期（issue#1007@Github）
+* 【core  】     CollUtil中部分方法返回null变更为返回empty
+* 【all   】     添加英文README（pr#153@Gitee）
+* 【extra 】     SpringUtil增加getBean(TypeReference)（pr#1009@Github）
+* 【core  】     Assert增加方法，支持自定义异常处理（pr#154@Gitee）
+* 【core  】     BooleanConverter增加数字转换规则（issue#I1R2AB@Gitee）
+* 【poi   】     sax方式读取增加一个sheet结束的回调（issue#155@Gitee）
+* 【db    】     增加BeeCP连接池支持
+* 【core  】     改进Img.pressImage方法，避免变色问题（issue#1001@Github）
+
+### Bug修复#
+* 【core  】     修复原始类型转换时，转换失败没有抛出异常的问题
+* 【core  】     修复BeanUtil.mapToBean中bean的class非空构造无法实例化问题
+* 【core  】     修复NamedSql多个连续变量出现替换问题
+* 【core  】     修复Bean重名字段（大小写区别）获取数据出错的问题（issue#I1QBQ4@Gitee）
+* 【http  】     修复SimpleServer响应头无效问题（issue#1006@Github）
+* 【core  】     修复ThreadLocalRandom共享seed导致获取随机数一样的问题（pr#151@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.3.11 (2020-08-01)
+
+### 新特性
+* 【captcha】     AbstractCaptcha增加getImageBase64Data方法（pr#985@Github）
+* 【core   】     增加PhoneUtil（pr#990@Github）
+* 【core   】     改进Img，目标图片类型未定义使用源图片类型（issue#I1PB0B@Gitee）
+* 【json   】     JSONConfig增加Transient选项（issue#I1PLHN@Gitee）
+* 【core   】     MapUtil增加getXXX的默认值重载（issue#I1PTGI@Gitee）
+* 【core   】     CalendarUtil增加parseByPatterns方法（issue#993@Github）
+
+### Bug修复#
+
+-------------------------------------------------------------------------------------------------------------
+
+## 5.3.10 (2020-07-23)
+
+### 新特性
+* 【db   】       增加DbUtil.setReturnGeneratedKeyGlobal（issue#I1NM0K@Gitee）
+* 【core 】       增加DataSize和DataSizeUtil（issue#967@Github）
+* 【core 】       ImgUtil增加异常，避免空指针（issue#I1NKXG@Gitee）
+* 【core 】       增加CRC16算法若干（pr#963@Github）
+* 【core 】       LocalDateTimeUtil增加format等方法（pr#140@Gitee）
+* 【http 】       UserAgentUtil增加Android原生浏览器识别（pr#975@Github）
+* 【crypto 】     增加ECIES算法类（issue#979@Github）
+* 【crypto 】     CollUtil增加padLeft和padRight方法（pr#141@Gitee）
+* 【core 】       IdCardUtil香港身份证去除首字母校验（issue#I1OOTB@Gitee）
+
+### Bug修复
+* 【core   】     修复ZipUtil中finish位于循环内的问题（issue#961@Github）
+* 【core   】     修复CollUtil.page未越界检查的问题（issue#I1O2LR@Gitee）
+* 【core   】     修复StrUtil.removeAny的bug（issue#977@Github）
+
+-------------------------------------------------------------------------------------------------------------
+
+## 5.3.9 (2020-07-12)
+
+### 新特性
+* 【core   】     DateUtil增加formatChineseDate（pr#932@Github）
+* 【core   】     ArrayUtil.isEmpty修改逻辑（pr#948@Github）
+* 【core   】     增强StrUtil中空判断后返回数据性能（pr#949@Github）
+* 【core   】     deprecate掉millsecond，改为millisecond（issue#I1M9P8@Gitee）
+* 【core   】     增加LocalDateTimeUtil（issue#I1KUVC@Gitee）
+* 【core   】     Month增加getLastDay方法
+* 【core   】     ChineseDate支持到2099年
+
+### Bug修复
+* 【core   】     修复NumberUtil.partValue有余数问题（issue#I1KX66@Gitee）
+* 【core   】     修复BeanUtil.isEmpty不能忽略static字段问题（issue#I1KZI6@Gitee）
+* 【core   】     修复StrUtil.brief长度问题（pr#930@Github）
+* 【socket 】     修复AioSession构造超时无效问题（pr#941@Github）
+* 【setting】     修复GroupSet.contains错误（pr#943@Github）
+* 【core   】     修复ZipUtil没有调用finish问题（issue#944@Github）
+* 【extra  】     修复Ftp中ArrayList长度为负问题（pr#136@Github）
+* 【core   】     修复Dict中putAll大小写问题（issue#I1MU5B@Gitee）
+* 【core   】     修复POI中sax读取数字判断错误问题（issue#931@Github）
+* 【core   】     修复DateUtil.endOfQuarter错误问题（issue#I1NGZ7@Gitee）
+* 【core   】     修复URL中有空格转为+问题（issue#I1NGW4@Gitee）
+* 【core   】     修复CollUtil.intersectionDistinct空集合结果错误问题
+* 【core   】     修复ChineseDate在1996年计算错误问题（issue#I1N96I@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
+## 5.3.8 (2020-06-16)
+
+### 新特性
+* 【core   】     增加ISO8601日期格式（issue#904@Github）
+* 【setting】     Props异常规则修改（issue#907@Github）
+* 【setting】     增加GIF支持
+* 【core   】     复制创建一个Bean对象, 并忽略某些属性(pr#130@Gitee)
+* 【core   】     DateUtil.parse支持更多日期格式(issue#I1KHTB@Gitee)
+* 【crypto 】     增加获取密钥空指针的检查(issue#925@Github)
+* 【core   】     增加StrUtil.removeAny方法(issue#923@Github)
+* 【db     】     增加部分Connection参数支持(issue#924@Github)
+* 【core   】     FileUtil增加别名方法(pr#926@Github)
+* 【poi    】     ExcelReader中增加read重载，提供每个单元格单独处理的方法(issue#I1JZTL@Gitee)
+
+### Bug修复
+* 【json   】     修复append方法导致的JSONConfig传递失效问题（issue#906@Github）
+* 【core   】     修复CollUtil.subtractToList判断错误（pr#915@Github）
+* 【poi    】     修复WordWriter写表格问题（pr#914@Github）
+* 【core   】     修复IoUtil.readBytes缓存数组长度问题（issue#I1KIUE@Gitee）
+* 【core   】     修复BigExcelWriter多次flush导致的问题（issue#920@Github）
+* 【extra  】     绕过Pinyin4j最后一个分隔符失效的bug（issue#921@Github）
+
+-------------------------------------------------------------------------------------------------------------
+
+## 5.3.7 (2020-06-03)
+
+### 新特性
+* 【core   】     ThreadFactoryBuilder的setUncaughtExceptionHandler返回this（issue#I1J4YJ@Gitee）
+
+### Bug修复
+* 【core   】     修复DateUtil.parse解析2020-5-8 3:12:13错误问题（issue#I1IZA3@Gitee）
+* 【core   】     修复Img.pressImg大小无效问题(issue#I1HSWU@Gitee)
+* 【core   】     修复CronUtil.stop没有清除任务的问题(issue#I1JACI@Gitee)
+
+-------------------------------------------------------------------------------------------------------------
+## 5.3.6 (2020-05-30)
+
+### 新特性
+* 【core   】     NumberConverter Long类型增加日期转换（pr#872@Github）
+* 【all    】     StrUtil and SymmetricCrypto注释修正（pr#873@Github）
+* 【core   】     CsvReader支持返回Bean（issue#869@Github）
+* 【core   】     Snowflake循环等待下一个时间时避免长时间循环，加入对时钟倒退的判断（pr#874@Github）
+* 【extra  】     新增 QRCode base64 编码形式返回（pr#878@Github）
+* 【core   】     ImgUtil增加toBase64DateUri，URLUtil增加getDataUri方法
+* 【core   】     IterUtil添加List转Map的工具方法（pr#123@Gitee）
+* 【core   】     BeanValueProvider转换失败时，返回原数据，而非null
+* 【core   】     支持BeanUtil.toBean(object, Map.class)转换（issue#I1I4HC@Gitee）
+* 【core   】     MapUtil和CollUtil增加clear方法（issue#I1I4HC@Gitee）
+* 【core   】     增加FontUtil，可定义pressText是否从中间（issue#I1HSWU@Gitee）
+* 【http   】     SoapClient支持自定义请求头（issue#I1I0AO@Gitee）
+* 【script 】     ScriptUtil增加evalInvocable和invoke方法（issue#I1HHCP@Gitee）
+* 【core   】     ImgUtil增加去除背景色的方法（pr#124@Gitee）
+* 【system 】     OshiUtil增加获取CPU使用率的方法（pr#124@Gitee）
+* 【crypto 】     AsymmetricAlgorithm去除EC（issue#887@Github）
+* 【cache  】     超时缓存使用的线程池大小默认为1（issue#890@Github）
+* 【poi    】     ExcelSaxReader支持handleCell方法
+* 【core   】     Snowflake容忍2秒内的时间回拨（issue#I1IGDX@Gitee）
+* 【core   】     StrUtil增加isAllNotEmpty、isAllNotBlank方法（pr#895@Github）
+* 【core   】     DateUtil增加dayOfYear方法（pr#895@Github）
+* 【core   】     DateUtil增加dayOfYear方法（pr#895@Github）
+* 【http   】     HttpUtil增加downloadBytes方法（pr#895@Github）
+* 【core   】     isMactchRegex失效标记，增加isMatchRegex（issue#I1IPJG@Gitee）
+* 【core   】     优化Validator.isChinese
+* 【core   】     ArrayUtil.addAll增加原始类型支持（issue#898@Github）
+* 【core   】     DateUtil.parse支持2020-1-1这类日期解析（issue#I1HGWW@Github）
+
+### Bug修复
+* 【core   】     修复SimpleCache死锁问题（issue#I1HOKB@Gitee）
+* 【core   】     修复SemaphoreRunnable释放问题（issue#I1HLQQ@Gitee）
+* 【poi    】     修复Sax方式读取Excel行号错误问题（issue#882@Github）
+* 【poi    】     修复Sax方式读取Excel日期类型数据03和07不一致问题（issue#I1HL1C@Gitee）
+* 【poi    】     修复CamelCaseLinkedMap构造错误（issue#I1IZ30@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
 ## 5.3.5 (2020-05-13)
 
 ### 新特性

@@ -150,6 +150,23 @@ public class ListUtil {
 	}
 
 	/**
+	 * 数组转为一个不可变List<br>
+	 * 类似于Java9中的List.of
+	 *
+	 * @param ts  对象
+	 * @param <T> 对象类型
+	 * @return 不可修改List
+	 * @since 5.4.3
+	 */
+	@SafeVarargs
+	public static <T> List<T> of(T... ts) {
+		if (ArrayUtil.isEmpty(ts)) {
+			return Collections.emptyList();
+		}
+		return Collections.unmodifiableList(toList(ts));
+	}
+
+	/**
 	 * 新建一个CopyOnWriteArrayList
 	 *
 	 * @param <T>        集合元素类型
@@ -235,10 +252,17 @@ public class ListUtil {
 				return new ArrayList<>(0);
 			}
 		}
+		// 相乘可能会导致越界 临时用long
+		if (((long) pageNo * pageSize) > resultSize) {
+			// 越界直接返回空
+			return new ArrayList<>(0);
+		}
+
 		final int[] startEnd = PageUtil.transToStartEnd(pageNo, pageSize);
 		if (startEnd[1] > resultSize) {
 			startEnd[1] = resultSize;
 		}
+
 		return list.subList(startEnd[0], startEnd[1]);
 	}
 
@@ -454,6 +478,9 @@ public class ListUtil {
 	 * @since 5.2.6
 	 */
 	public static <T> List<T> unmodifiable(List<T> list) {
+		if (null == list) {
+			return null;
+		}
 		return Collections.unmodifiableList(list);
 	}
 
@@ -466,5 +493,36 @@ public class ListUtil {
 	 */
 	public static <T> List<T> empty() {
 		return Collections.emptyList();
+	}
+
+	/**
+	 * 对集合按照指定长度分段，每一个段为单独的集合，返回这个集合的列表
+	 *
+	 * <p>
+	 * 需要特别注意的是，此方法调用{@link List#subList(int, int)}切分List，
+	 * 此方法返回的是原List的视图，也就是说原List有变更，切分后的结果也会变更。
+	 * </p>
+	 *
+	 * @param <T>  集合元素类型
+	 * @param list 列表
+	 * @param size 每个段的长度
+	 * @return 分段列表
+	 * @since 5.4.5
+	 */
+	public static <T> List<List<T>> split(List<T> list, int size) {
+		if (CollUtil.isEmpty(list)) {
+			return Collections.emptyList();
+		}
+
+		final int listSize = list.size();
+		final List<List<T>> result = new ArrayList<>(listSize / size + 1);
+		int offset = 0;
+		for (int toIdx = size; toIdx <= listSize; offset = toIdx, toIdx += size) {
+			result.add(list.subList(offset, toIdx));
+		}
+		if (offset < listSize) {
+			result.add(list.subList(offset, listSize));
+		}
+		return result;
 	}
 }

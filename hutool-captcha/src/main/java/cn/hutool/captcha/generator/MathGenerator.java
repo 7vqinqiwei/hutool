@@ -1,5 +1,6 @@
 package cn.hutool.captcha.generator;
 
+import cn.hutool.core.math.Calculator;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
@@ -59,25 +60,13 @@ public class MathGenerator implements CodeGenerator {
 			return false;
 		}
 
-		final int a = Integer.parseInt(StrUtil.sub(code, 0, this.numberLength).trim());
-		final char operator = code.charAt(this.numberLength);
-		final int b = Integer.parseInt(StrUtil.sub(code, this.numberLength + 1, this.numberLength + 1 + this.numberLength).trim());
-
-		switch (operator) {
-		case '+':
-			return (a + b) == result;
-		case '-':
-			return (a - b) == result;
-		case '*':
-			return (a * b) == result;
-		default:
-			return false;
-		}
+		final int calculateResult = (int) Calculator.conversion(code);
+		return result == calculateResult;
 	}
 
 	/**
-	 * 获取长度验证码
-	 * 
+	 * 获取验证码长度
+	 *
 	 * @return 验证码长度
 	 */
 	public int getLength() {

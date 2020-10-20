@@ -1,5 +1,6 @@
 package cn.hutool.core.date;
 
+import cn.hutool.core.util.StrUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,5 +36,63 @@ public class ChineseDateTest {
 	public void toStringNormalTest(){
 		ChineseDate date = new ChineseDate(DateUtil.parseDate("2020-03-1"));
 		Assert.assertEquals("2020-02-08", date.toStringNormal());
+	}
+
+	@Test
+	public void parseTest(){
+		ChineseDate date = new ChineseDate(DateUtil.parseDate("1996-07-14"));
+		Assert.assertEquals("丙子鼠年 五月廿九", date.toString());
+
+		date = new ChineseDate(DateUtil.parseDate("1996-07-15"));
+		Assert.assertEquals("丙子鼠年 五月三十", date.toString());
+	}
+	@Test
+	public void getCyclicalYMDTest(){
+		//通过公历构建
+		ChineseDate chineseDate = new ChineseDate(DateUtil.parseDate("1993-01-06"));
+		String cyclicalYMD = chineseDate.getCyclicalYMD();
+		Assert.assertEquals("壬申年癸丑月丁亥日",cyclicalYMD);
+	}
+
+	@Test
+	public void getCyclicalYMDTest2(){
+		//通过农历构建
+		ChineseDate chineseDate = new ChineseDate(1992,12,14);
+		String cyclicalYMD = chineseDate.getCyclicalYMD();
+		Assert.assertEquals("壬申年癸丑月丁亥日",cyclicalYMD);
+	}
+
+	@Test
+	public void getCyclicalYMDTest3(){
+		//通过公历构建
+		ChineseDate chineseDate = new ChineseDate(DateUtil.parseDate("2020-08-28"));
+		String cyclicalYMD = chineseDate.getCyclicalYMD();
+		Assert.assertEquals("庚子年甲申月癸卯日",cyclicalYMD);
+	}
+
+	@Test
+	public void getChineseMonthTest(){
+		ChineseDate chineseDate = new ChineseDate(2020,6,15);
+		Assert.assertEquals("六月", chineseDate.getChineseMonth());
+
+		chineseDate = new ChineseDate(2020,4,15);
+		Assert.assertEquals("闰四月", chineseDate.getChineseMonth());
+	}
+
+	@Test
+	public void getFestivalsTest(){
+		// issue#I1XHSF@Gitee，2023-01-20对应农历腊月29，非除夕
+		ChineseDate chineseDate = new ChineseDate(DateUtil.parseDate("2023-01-20"));
+		Assert.assertTrue(StrUtil.isEmpty(chineseDate.getFestivals()));
+	}
+
+	@Test
+	public void dateTest(){
+		// 修复这两个日期不正确的问题
+		// 问题出在计算与1900-01-31相差天数的问题上了，相差天数非整天
+		ChineseDate date = new ChineseDate(DateUtil.parseDate("1991-09-14"));
+		Assert.assertEquals("辛未羊年 八月初七", date.toString());
+		date = new ChineseDate(DateUtil.parseDate("1991-09-15"));
+		Assert.assertEquals("辛未羊年 八月初八", date.toString());
 	}
 }

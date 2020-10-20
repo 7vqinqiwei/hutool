@@ -3,7 +3,7 @@ package cn.hutool.crypto.asymmetric;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.crypto.CryptoException;
-import cn.hutool.crypto.SecureUtil;
+import cn.hutool.crypto.KeyUtil;
 
 import java.security.Key;
 import java.security.KeyPair;
@@ -89,7 +89,7 @@ public class BaseAsymmetric<T extends BaseAsymmetric<T>> {
 	 */
 	@SuppressWarnings("unchecked")
 	public T initKeys() {
-		KeyPair keyPair = SecureUtil.generateKeyPair(this.algorithm);
+		KeyPair keyPair = KeyUtil.generateKeyPair(this.algorithm);
 		this.publicKey = keyPair.getPublic();
 		this.privateKey = keyPair.getPrivate();
 		return (T) this;
@@ -143,7 +143,8 @@ public class BaseAsymmetric<T extends BaseAsymmetric<T>> {
 	 * @return 获得私钥
 	 */
 	public String getPrivateKeyBase64() {
-		return Base64.encode(getPrivateKey().getEncoded());
+		final PrivateKey privateKey = getPrivateKey();
+		return (null == privateKey) ? null : Base64.encode(privateKey.getEncoded());
 	}
 
 	/**
@@ -195,6 +196,6 @@ public class BaseAsymmetric<T extends BaseAsymmetric<T>> {
 				}
 				return this.publicKey;
 		}
-		throw new CryptoException("Uknown key type: " + type);
+		throw new CryptoException("Unsupported key type: " + type);
 	}
 }

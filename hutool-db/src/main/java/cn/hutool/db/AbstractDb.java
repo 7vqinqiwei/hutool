@@ -10,6 +10,7 @@ import cn.hutool.db.handler.RsHandler;
 import cn.hutool.db.handler.StringHandler;
 import cn.hutool.db.sql.Condition;
 import cn.hutool.db.sql.Condition.LikeType;
+import cn.hutool.db.sql.LogicalOperator;
 import cn.hutool.db.sql.Query;
 import cn.hutool.db.sql.SqlExecutor;
 import cn.hutool.db.sql.SqlUtil;
@@ -41,7 +42,7 @@ public abstract class AbstractDb implements Serializable {
 	/**
 	 * 是否大小写不敏感（默认大小写不敏感）
 	 */
-	protected boolean caseInsensitive = DbUtil.caseInsensitiveGlobal;
+	protected boolean caseInsensitive = GlobalDbConfig.caseInsensitive;
 	protected SqlConnRunner runner;
 
 	// ------------------------------------------------------- Constructor start
@@ -251,12 +252,49 @@ public abstract class AbstractDb implements Serializable {
 	/**
 	 * 批量执行非查询语句
 	 *
+	 * @param sql         SQL
+	 * @param paramsBatch 批量的参数
+	 * @return 每个SQL执行影响的行数
+	 * @throws SQLException SQL执行异常
+	 * @since 5.4.2
+	 */
+	public int[] executeBatch(String sql, Iterable<Object[]> paramsBatch) throws SQLException {
+		Connection conn = null;
+		try {
+			conn = this.getConnection();
+			return SqlExecutor.executeBatch(conn, sql, paramsBatch);
+		} finally {
+			this.closeConnection(conn);
+		}
+	}
+
+	/**
+	 * 批量执行非查询语句
+	 *
 	 * @param sqls SQL列表
 	 * @return 每个SQL执行影响的行数
 	 * @throws SQLException SQL执行异常
 	 * @since 4.5.6
 	 */
 	public int[] executeBatch(String... sqls) throws SQLException {
+		Connection conn = null;
+		try {
+			conn = this.getConnection();
+			return SqlExecutor.executeBatch(conn, sqls);
+		} finally {
+			this.closeConnection(conn);
+		}
+	}
+
+	/**
+	 * 批量执行非查询语句
+	 *
+	 * @param sqls SQL列表
+	 * @return 每个SQL执行影响的行数
+	 * @throws SQLException SQL执行异常
+	 * @since 5.4.2
+	 */
+	public int[] executeBatch(Iterable<String> sqls) throws SQLException {
 		Connection conn = null;
 		try {
 			conn = this.getConnection();
@@ -591,7 +629,7 @@ public abstract class AbstractDb implements Serializable {
 	 * 根据多个条件查询数据列表，返回所有字段
 	 *
 	 * @param tableName 表名
-	 * @param wheres    字段名
+	 * @param wheres    条件，多个条件的连接逻辑使用{@link Condition#setLinkOperator(LogicalOperator)} 定义
 	 * @return 数据对象列表
 	 * @throws SQLException SQL执行异常
 	 * @since 4.0.0

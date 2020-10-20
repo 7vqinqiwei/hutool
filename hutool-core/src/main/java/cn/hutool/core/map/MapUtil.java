@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.lang.Editor;
 import cn.hutool.core.lang.Filter;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -279,6 +280,24 @@ public class MapUtil {
 	}
 
 	/**
+	 * 根据给定的Pair数组创建Map对象
+	 *
+	 * @param <K>     键类型
+	 * @param <V>     值类型
+	 * @param pairs 键值对
+	 * @return Map
+	 * @since 5.4.1
+	 */
+	@SafeVarargs
+	public static <K, V> Map<K, V> of(Pair<K, V>... pairs) {
+		final Map<K, V> map = new HashMap<>();
+		for (Pair<K, V> pair : pairs) {
+			map.put(pair.getKey(), pair.getValue());
+		}
+		return map;
+	}
+
+	/**
 	 * 将数组转换为Map（HashMap），支持数组元素类型为：
 	 *
 	 * <pre>
@@ -289,7 +308,11 @@ public class MapUtil {
 	 * </pre>
 	 *
 	 * <pre>
-	 * Map&lt;Object, Object&gt; colorMap = MapUtil.of(new String[][] { { "RED", "#FF0000" }, { "GREEN", "#00FF00" }, { "BLUE", "#0000FF" } });
+	 * Map&lt;Object, Object&gt; colorMap = MapUtil.of(new String[][] {
+	 *    { "RED", "#FF0000" },
+	 *    { "GREEN", "#00FF00" },
+	 *    { "BLUE", "#0000FF" }
+	 * });
 	 * </pre>
 	 * <p>
 	 * 参考：commons-lang
@@ -305,7 +328,7 @@ public class MapUtil {
 		}
 		final HashMap<Object, Object> map = new HashMap<>((int) (array.length * 1.5));
 		for (int i = 0; i < array.length; i++) {
-			Object object = array[i];
+			final Object object = array[i];
 			if (object instanceof Map.Entry) {
 				Map.Entry entry = (Map.Entry) object;
 				map.put(entry.getKey(), entry.getValue());
@@ -315,7 +338,7 @@ public class MapUtil {
 					map.put(entry[0], entry[1]);
 				}
 			} else if (object instanceof Iterable) {
-				Iterator iter = ((Iterable) object).iterator();
+				final Iterator iter = ((Iterable) object).iterator();
 				if (iter.hasNext()) {
 					final Object key = iter.next();
 					if (iter.hasNext()) {
@@ -324,7 +347,7 @@ public class MapUtil {
 					}
 				}
 			} else if (object instanceof Iterator) {
-				Iterator iter = ((Iterator) object);
+				final Iterator iter = ((Iterator) object);
 				if (iter.hasNext()) {
 					final Object key = iter.next();
 					if (iter.hasNext()) {
@@ -526,7 +549,7 @@ public class MapUtil {
 	 * @since 5.0.4
 	 */
 	public static String sortJoin(Map<?, ?> params, String separator, String keyValueSeparator, boolean isIgnoreNull,
-	                              String... otherParams) {
+								  String... otherParams) {
 		return join(sort(params), separator, keyValueSeparator, isIgnoreNull, otherParams);
 	}
 
@@ -896,6 +919,19 @@ public class MapUtil {
 	}
 
 	/**
+	 * 获取Map指定key的值，并转换为字符串
+	 *
+	 * @param map          Map
+	 * @param key          键
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 5.3.11
+	 */
+	public static String getStr(Map<?, ?> map, Object key, String defaultValue) {
+		return get(map, key, String.class, defaultValue);
+	}
+
+	/**
 	 * 获取Map指定key的值，并转换为Integer
 	 *
 	 * @param map Map
@@ -905,6 +941,19 @@ public class MapUtil {
 	 */
 	public static Integer getInt(Map<?, ?> map, Object key) {
 		return get(map, key, Integer.class);
+	}
+
+	/**
+	 * 获取Map指定key的值，并转换为Integer
+	 *
+	 * @param map          Map
+	 * @param key          键
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 5.3.11
+	 */
+	public static Integer getInt(Map<?, ?> map, Object key, Integer defaultValue) {
+		return get(map, key, Integer.class, defaultValue);
 	}
 
 	/**
@@ -920,6 +969,19 @@ public class MapUtil {
 	}
 
 	/**
+	 * 获取Map指定key的值，并转换为Double
+	 *
+	 * @param map          Map
+	 * @param key          键
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 5.3.11
+	 */
+	public static Double getDouble(Map<?, ?> map, Object key, Double defaultValue) {
+		return get(map, key, Double.class, defaultValue);
+	}
+
+	/**
 	 * 获取Map指定key的值，并转换为Float
 	 *
 	 * @param map Map
@@ -929,6 +991,19 @@ public class MapUtil {
 	 */
 	public static Float getFloat(Map<?, ?> map, Object key) {
 		return get(map, key, Float.class);
+	}
+
+	/**
+	 * 获取Map指定key的值，并转换为Float
+	 *
+	 * @param map          Map
+	 * @param key          键
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 5.3.11
+	 */
+	public static Float getFloat(Map<?, ?> map, Object key, Float defaultValue) {
+		return get(map, key, Float.class, defaultValue);
 	}
 
 	/**
@@ -944,6 +1019,19 @@ public class MapUtil {
 	}
 
 	/**
+	 * 获取Map指定key的值，并转换为Short
+	 *
+	 * @param map          Map
+	 * @param key          键
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 5.3.11
+	 */
+	public static Short getShort(Map<?, ?> map, Object key, Short defaultValue) {
+		return get(map, key, Short.class, defaultValue);
+	}
+
+	/**
 	 * 获取Map指定key的值，并转换为Bool
 	 *
 	 * @param map Map
@@ -953,6 +1041,19 @@ public class MapUtil {
 	 */
 	public static Boolean getBool(Map<?, ?> map, Object key) {
 		return get(map, key, Boolean.class);
+	}
+
+	/**
+	 * 获取Map指定key的值，并转换为Bool
+	 *
+	 * @param map          Map
+	 * @param key          键
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 5.3.11
+	 */
+	public static Boolean getBool(Map<?, ?> map, Object key, Boolean defaultValue) {
+		return get(map, key, Boolean.class, defaultValue);
 	}
 
 	/**
@@ -968,6 +1069,19 @@ public class MapUtil {
 	}
 
 	/**
+	 * 获取Map指定key的值，并转换为Character
+	 *
+	 * @param map          Map
+	 * @param key          键
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 5.3.11
+	 */
+	public static Character getChar(Map<?, ?> map, Object key, Character defaultValue) {
+		return get(map, key, Character.class, defaultValue);
+	}
+
+	/**
 	 * 获取Map指定key的值，并转换为Long
 	 *
 	 * @param map Map
@@ -977,6 +1091,19 @@ public class MapUtil {
 	 */
 	public static Long getLong(Map<?, ?> map, Object key) {
 		return get(map, key, Long.class);
+	}
+
+	/**
+	 * 获取Map指定key的值，并转换为Long
+	 *
+	 * @param map          Map
+	 * @param key          键
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 5.3.11
+	 */
+	public static Long getLong(Map<?, ?> map, Object key, Long defaultValue) {
+		return get(map, key, Long.class, defaultValue);
 	}
 
 	/**
@@ -992,6 +1119,19 @@ public class MapUtil {
 	}
 
 	/**
+	 * 获取Map指定key的值，并转换为{@link Date}
+	 *
+	 * @param map          Map
+	 * @param key          键
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 4.1.2
+	 */
+	public static Date getDate(Map<?, ?> map, Object key, Date defaultValue) {
+		return get(map, key, Date.class, defaultValue);
+	}
+
+	/**
 	 * 获取Map指定key的值，并转换为指定类型
 	 *
 	 * @param <T>  目标值类型
@@ -1002,7 +1142,22 @@ public class MapUtil {
 	 * @since 4.0.6
 	 */
 	public static <T> T get(Map<?, ?> map, Object key, Class<T> type) {
-		return null == map ? null : Convert.convert(type, map.get(key));
+		return get(map, key, type, null);
+	}
+
+	/**
+	 * 获取Map指定key的值，并转换为指定类型
+	 *
+	 * @param <T>          目标值类型
+	 * @param map          Map
+	 * @param key          键
+	 * @param type         值类型
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 5.3.11
+	 */
+	public static <T> T get(Map<?, ?> map, Object key, Class<T> type, T defaultValue) {
+		return null == map ? null : Convert.convert(type, map.get(key), defaultValue);
 	}
 
 	/**
@@ -1016,7 +1171,22 @@ public class MapUtil {
 	 * @since 4.5.12
 	 */
 	public static <T> T get(Map<?, ?> map, Object key, TypeReference<T> type) {
-		return null == map ? null : Convert.convert(type, map.get(key));
+		return get(map, key, type, null);
+	}
+
+	/**
+	 * 获取Map指定key的值，并转换为指定类型
+	 *
+	 * @param <T>          目标值类型
+	 * @param map          Map
+	 * @param key          键
+	 * @param type         值类型
+	 * @param defaultValue 默认值
+	 * @return 值
+	 * @since 5.3.11
+	 */
+	public static <T> T get(Map<?, ?> map, Object key, TypeReference<T> type, T defaultValue) {
+		return null == map ? null : Convert.convert(type, map.get(key), defaultValue);
 	}
 
 	/**
@@ -1114,5 +1284,18 @@ public class MapUtil {
 
 		// 不支持空集合的集合类型
 		throw new IllegalArgumentException(StrUtil.format("[{}] is not support to get empty!", mapClass));
+	}
+
+	/**
+	 * 清除一个或多个Map集合内的元素，每个Map调用clear()方法
+	 *
+	 * @param maps 一个或多个Map
+	 */
+	public static void clear(Map<?, ?>... maps) {
+		for (Map<?, ?> map : maps) {
+			if (isNotEmpty(map)) {
+				map.clear();
+			}
+		}
 	}
 }

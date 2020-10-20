@@ -7,6 +7,7 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.IdcardUtil;
 
 import java.net.MalformedURLException;
 import java.util.regex.Matcher;
@@ -51,10 +52,12 @@ public class Validator {
 	 * 移动电话
 	 */
 	public final static Pattern MOBILE = PatternPool.MOBILE;
+
 	/**
 	 * 身份证号码
 	 */
 	public final static Pattern CITIZEN_ID = PatternPool.CITIZEN_ID;
+
 	/**
 	 * 邮编
 	 */
@@ -328,17 +331,6 @@ public class Validator {
 	}
 
 	/**
-	 * 通过正则表达式验证
-	 *
-	 * @param regex 正则
-	 * @param value 值
-	 * @return 是否匹配正则
-	 */
-	public static boolean isMactchRegex(String regex, CharSequence value) {
-		return ReUtil.isMatch(regex, value);
-	}
-
-	/**
 	 * 通过正则表达式验证<br>
 	 * 不符合正则抛出{@link ValidateException} 异常
 	 *
@@ -350,7 +342,7 @@ public class Validator {
 	 * @throws ValidateException 验证异常
 	 */
 	public static <T extends CharSequence> T validateMatchRegex(String regex, T value, String errorMsg) throws ValidateException {
-		if (false == isMactchRegex(regex, value)) {
+		if (false == isMatchRegex(regex, value)) {
 			throw new ValidateException(errorMsg);
 		}
 		return value;
@@ -372,12 +364,36 @@ public class Validator {
 	/**
 	 * 通过正则表达式验证
 	 *
+	 * @param regex 正则
+	 * @param value 值
+	 * @return 是否匹配正则
+	 * @deprecated 拼写错误，请使用{@link #isMatchRegex(String, CharSequence)}
+	 */
+	@Deprecated
+	public static boolean isMactchRegex(String regex, CharSequence value) {
+		return ReUtil.isMatch(regex, value);
+	}
+
+	/**
+	 * 通过正则表达式验证
+	 *
 	 * @param pattern 正则模式
 	 * @param value   值
 	 * @return 是否匹配正则
 	 */
 	public static boolean isMatchRegex(Pattern pattern, CharSequence value) {
 		return ReUtil.isMatch(pattern, value);
+	}
+
+	/**
+	 * 通过正则表达式验证
+	 *
+	 * @param regex 正则
+	 * @param value 值
+	 * @return 是否匹配正则
+	 */
+	public static boolean isMatchRegex(String regex, CharSequence value) {
+		return ReUtil.isMatch(regex, value);
 	}
 
 	/**
@@ -422,7 +438,7 @@ public class Validator {
 		if (max <= 0) {
 			reg = "^\\w{" + min + ",}$";
 		}
-		return isMactchRegex(reg, value);
+		return isMatchRegex(reg, value);
 	}
 
 	/**
@@ -662,7 +678,7 @@ public class Validator {
 	 * 验证是否为可用邮箱地址
 	 *
 	 * @param value 值
-	 * @return 否为可用邮箱地址
+	 * @return true为可用邮箱地址
 	 */
 	public static boolean isEmail(CharSequence value) {
 		return isMatchRegex(EMAIL, value);
@@ -711,19 +727,17 @@ public class Validator {
 	}
 
 	/**
-	 * 验证是否为身份证号码（18位中国）<br>
-	 * 出生日期只支持到到2999年
+	 * 验证是否为身份证号码（支持18位、15位和港澳台的10位）
 	 *
-	 * @param value 值
-	 * @return 是否为身份证号码（18位中国）
+	 * @param value 身份证号，支持18位、15位和港澳台的10位
+	 * @return 是否为有效身份证号码
 	 */
 	public static boolean isCitizenId(CharSequence value) {
-		return isMatchRegex(CITIZEN_ID, value);
+		return IdcardUtil.isValidCard(String.valueOf(value));
 	}
 
 	/**
-	 * 验证是否为身份证号码（18位中国）<br>
-	 * 出生日期只支持到到2999年
+	 * 验证是否为身份证号码（支持18位、15位和港澳台的10位）
 	 *
 	 * @param <T>      字符串类型
 	 * @param value    值
@@ -954,13 +968,13 @@ public class Validator {
 	}
 
 	/**
-	 * 验证是否为汉字
+	 * 验证是否都为汉字
 	 *
 	 * @param value 值
 	 * @return 是否为汉字
 	 */
 	public static boolean isChinese(CharSequence value) {
-		return isMactchRegex("^" + ReUtil.RE_CHINESES + "$", value);
+		return isMatchRegex(PatternPool.CHINESES, value);
 	}
 
 	/**

@@ -55,11 +55,13 @@ public class PatternPool {
 	/**
 	 * 移动电话
 	 */
-	public final static Pattern MOBILE = Pattern.compile("(?:0|86|\\+86)?1[3456789]\\d{9}");
+	public final static Pattern MOBILE = Pattern.compile("(?:0|86|\\+86)?1[3-9]\\d{9}");
+
 	/**
 	 * 18位身份证号码
 	 */
 	public final static Pattern CITIZEN_ID = Pattern.compile("[1-9]\\d{5}[1-2]\\d{3}((0\\d)|(1[0-2]))(([012]\\d)|3[0-1])\\d{3}(\\d|X|x)");
+
 	/**
 	 * 邮编
 	 */
@@ -83,11 +85,11 @@ public class PatternPool {
 	/**
 	 * UUID
 	 */
-	public final static Pattern UUID = Pattern.compile("^[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}$");
+	public final static Pattern UUID = Pattern.compile("^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", Pattern.CASE_INSENSITIVE);
 	/**
 	 * 不带横线的UUID
 	 */
-	public final static Pattern UUID_SIMPLE = Pattern.compile("^[0-9a-z]{32}$");
+	public final static Pattern UUID_SIMPLE = Pattern.compile("^[0-9a-f]{32}$", Pattern.CASE_INSENSITIVE);
 	/**
 	 * MAC地址正则
 	 */

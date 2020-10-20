@@ -229,6 +229,7 @@ public class ZipUtil {
 				zip(srcFile, srcRootDir, zipOutputStream, filter);
 				zipOutputStream.flush();
 			}
+			zipOutputStream.finish();
 		} catch (IOException e) {
 			throw new IORuntimeException(e);
 		}
@@ -388,7 +389,8 @@ public class ZipUtil {
 	 * @since 3.2.2
 	 */
 	public static File unzip(File zipFile, Charset charset) throws UtilException {
-		return unzip(zipFile, FileUtil.file(zipFile.getParentFile(), FileUtil.mainName(zipFile)), charset);
+		final File destDir = FileUtil.file(zipFile.getParentFile(), FileUtil.mainName(zipFile));
+		return unzip(zipFile, destDir, charset);
 	}
 
 	/**
@@ -459,6 +461,9 @@ public class ZipUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public static File unzip(ZipFile zipFile, File outFile) throws IORuntimeException {
+		if(outFile.exists() && outFile.isFile()){
+			throw new UtilException("Target path [{}] exist!", outFile.getAbsolutePath());
+		}
 		try {
 			final Enumeration<ZipEntry> em = (Enumeration<ZipEntry>) zipFile.entries();
 			ZipEntry zipEntry;
@@ -1111,6 +1116,8 @@ public class ZipUtil {
 	 * @since 5.0.5
 	 */
 	private static File buildFile(File outFile, String fileName) {
+		// 替换Windows路径分隔符为Linux路径分隔符，便于统一处理
+		fileName = fileName.replace('\\', '/');
 		if (false == FileUtil.isWindows()
 				// 检查文件名中是否包含"/"，不考虑以"/"结尾的情况
 				&& fileName.lastIndexOf(CharUtil.SLASH, fileName.length() - 2) > 0) {

@@ -1,5 +1,12 @@
 package cn.hutool.core.date;
 
+import cn.hutool.core.date.format.DateParser;
+import cn.hutool.core.date.format.DatePrinter;
+import cn.hutool.core.date.format.FastDateFormat;
+import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -12,13 +19,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import cn.hutool.core.date.format.DateParser;
-import cn.hutool.core.date.format.DatePrinter;
-import cn.hutool.core.date.format.FastDateFormat;
-import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 
 /**
  * 包装java.util.Date
@@ -80,7 +80,7 @@ public class DateTime extends Date {
 	 *
 	 * @param dateStr Date字符串
 	 * @param format  格式
-	 * @return {@link DateTime}
+	 * @return this
 	 * @see DatePattern
 	 */
 	public static DateTime of(String dateStr, String format) {
@@ -161,8 +161,8 @@ public class DateTime extends Date {
 	/**
 	 * 给定日期Instant的构造
 	 *
-	 * @param instant  {@link Instant} 对象
-	 * @param zoneId 时区ID
+	 * @param instant {@link Instant} 对象
+	 * @param zoneId  时区ID
 	 * @since 5.0.5
 	 */
 	public DateTime(Instant instant, ZoneId zoneId) {
@@ -268,7 +268,7 @@ public class DateTime extends Date {
 	 * @return 如果此对象为可变对象，返回自身，否则返回新对象
 	 */
 	public DateTime offset(DateField datePart, int offset) {
-		if(DateField.ERA == datePart){
+		if (DateField.ERA == datePart) {
 			throw new IllegalArgumentException("ERA is not support offset!");
 		}
 
@@ -282,7 +282,7 @@ public class DateTime extends Date {
 
 	/**
 	 * 调整日期和时间<br>
-	 * 返回调整后的新{@link DateTime}，不影响原对象
+	 * 返回调整后的新DateTime，不影响原对象
 	 *
 	 * @param datePart 调整的部分 {@link DateField}
 	 * @param offset   偏移量，正数为向后偏移，负数为向前偏移
@@ -329,7 +329,7 @@ public class DateTime extends Date {
 	 *
 	 * @param field 表示日期的哪个部分的枚举 {@link DateField}
 	 * @param value 值
-	 * @return {@link DateTime}
+	 * @return this
 	 */
 	public DateTime setField(DateField field, int value) {
 		return setField(field.getValue(), value);
@@ -341,7 +341,7 @@ public class DateTime extends Date {
 	 *
 	 * @param field 表示日期的哪个部分的int值 {@link Calendar}
 	 * @param value 值
-	 * @return {@link DateTime}
+	 * @return this
 	 */
 	public DateTime setField(int field, int value) {
 		final Calendar calendar = toCalendar();
@@ -400,6 +400,16 @@ public class DateTime extends Date {
 	}
 
 	/**
+	 * 获取月，从1开始计数
+	 *
+	 * @return 月份，1表示一月
+	 * @since 5.4.1
+	 */
+	public int monthBaseOne() {
+		return month() + 1;
+	}
+
+	/**
 	 * 获得月份，从1开始计数<br>
 	 * 由于{@link Calendar} 中的月份按照0开始计数，导致某些需求容易误解，因此如果想用1表示一月，2表示二月则调用此方法
 	 *
@@ -446,12 +456,22 @@ public class DateTime extends Date {
 	}
 
 	/**
-	 * 获得指定日期是这个日期所在月份的第几天<br>
+	 * 获得指定日期是这个日期所在月份的第几天，从1开始
 	 *
-	 * @return 天
+	 * @return 天，1表示第一天
 	 */
 	public int dayOfMonth() {
 		return getField(DateField.DAY_OF_MONTH);
+	}
+
+	/**
+	 * 获得指定日期是这个日期所在年份的第几天，从1开始
+	 *
+	 * @return 天，1表示第一天
+	 * @since 5.3.6
+	 */
+	public int dayOfYear() {
+		return getField(DateField.DAY_OF_YEAR);
 	}
 
 	/**
@@ -515,6 +535,17 @@ public class DateTime extends Date {
 	 *
 	 * @return 毫秒数
 	 */
+	public int millisecond() {
+		return getField(DateField.MILLISECOND);
+	}
+
+	/**
+	 * 获得指定日期的毫秒数部分<br>
+	 *
+	 * @return 毫秒数
+	 * @deprecated 拼写错误，请使用{@link #millisecond()}
+	 */
+	@Deprecated
 	public int millsecond() {
 		return getField(DateField.MILLISECOND);
 	}
@@ -804,7 +835,7 @@ public class DateTime extends Date {
 	 * @return 时区
 	 * @since 5.0.5
 	 */
-	public TimeZone getTimeZone(){
+	public TimeZone getTimeZone() {
 		return this.timeZone;
 	}
 
@@ -814,7 +845,7 @@ public class DateTime extends Date {
 	 * @return 时区ID
 	 * @since 5.0.5
 	 */
-	public ZoneId getZoneId(){
+	public ZoneId getZoneId() {
 		return this.timeZone.toZoneId();
 	}
 
@@ -833,10 +864,10 @@ public class DateTime extends Date {
 	// -------------------------------------------------------------------- toString start
 
 	/**
-	 * 转为"yyyy-MM-dd yyyy-MM-dd HH:mm:ss " 格式字符串<br>
+	 * 转为"yyyy-MM-dd HH:mm:ss" 格式字符串<br>
 	 * 如果时区被设置，会转换为其时区对应的时间，否则转换为当前地点对应的时区
 	 *
-	 * @return "yyyy-MM-dd yyyy-MM-dd HH:mm:ss " 格式字符串
+	 * @return "yyyy-MM-dd HH:mm:ss" 格式字符串
 	 */
 	@Override
 	public String toString() {
@@ -844,10 +875,10 @@ public class DateTime extends Date {
 	}
 
 	/**
-	 * 转为"yyyy-MM-dd yyyy-MM-dd HH:mm:ss " 格式字符串<br>
+	 * 转为"yyyy-MM-dd HH:mm:ss" 格式字符串<br>
 	 * 时区使用当前地区的默认时区
 	 *
-	 * @return "yyyy-MM-dd yyyy-MM-dd HH:mm:ss " 格式字符串
+	 * @return "yyyy-MM-dd HH:mm:ss" 格式字符串
 	 * @since 4.1.14
 	 */
 	public String toStringDefaultTimeZone() {
@@ -855,11 +886,11 @@ public class DateTime extends Date {
 	}
 
 	/**
-	 * 转为"yyyy-MM-dd yyyy-MM-dd HH:mm:ss " 格式字符串<br>
+	 * 转为"yyyy-MM-dd HH:mm:ss" 格式字符串<br>
 	 * 如果时区不为{@code null}，会转换为其时区对应的时间，否则转换为当前时间对应的时区
 	 *
 	 * @param timeZone 时区
-	 * @return "yyyy-MM-dd yyyy-MM-dd HH:mm:ss " 格式字符串
+	 * @return "yyyy-MM-dd HH:mm:ss" 格式字符串
 	 * @since 4.1.14
 	 */
 	public String toString(TimeZone timeZone) {
@@ -872,9 +903,9 @@ public class DateTime extends Date {
 	}
 
 	/**
-	 * 转为"yyyy-MM-dd " 格式字符串
+	 * 转为"yyyy-MM-dd" 格式字符串
 	 *
-	 * @return "yyyy-MM-dd " 格式字符串
+	 * @return "yyyy-MM-dd" 格式字符串
 	 * @since 4.0.0
 	 */
 	public String toDateStr() {

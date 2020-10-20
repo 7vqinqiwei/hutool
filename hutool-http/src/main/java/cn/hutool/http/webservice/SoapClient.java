@@ -3,10 +3,10 @@ package cn.hutool.http.webservice;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.XmlUtil;
+import cn.hutool.http.HttpBase;
 import cn.hutool.http.HttpGlobalConfig;
 import cn.hutool.http.HttpRequest;
 import cn.hutool.http.HttpResponse;
@@ -19,7 +19,6 @@ import javax.xml.soap.Name;
 import javax.xml.soap.SOAPBodyElement;
 import javax.xml.soap.SOAPElement;
 import javax.xml.soap.SOAPException;
-import javax.xml.soap.SOAPHeader;
 import javax.xml.soap.SOAPHeaderElement;
 import javax.xml.soap.SOAPMessage;
 import java.io.IOException;
@@ -51,7 +50,7 @@ import java.util.Map.Entry;
  * @author looly
  * @since 4.5.4
  */
-public class SoapClient {
+public class SoapClient extends HttpBase<SoapClient> {
 
 	/**
 	 * XML消息体的Content-Type
@@ -62,10 +61,7 @@ public class SoapClient {
 	 * 请求的URL地址
 	 */
 	private String url;
-	/**
-	 * 编码
-	 */
-	private Charset charset = CharsetUtil.CHARSET_UTF_8;
+
 	/**
 	 * 默认连接超时
 	 */
@@ -96,7 +92,7 @@ public class SoapClient {
 	 * 创建SOAP客户端，默认使用soap1.1版本协议
 	 *
 	 * @param url WS的URL地址
-	 * @return {@link SoapClient}
+	 * @return this
 	 */
 	public static SoapClient create(String url) {
 		return new SoapClient(url);
@@ -107,7 +103,7 @@ public class SoapClient {
 	 *
 	 * @param url      WS的URL地址
 	 * @param protocol 协议，见{@link SoapProtocol}
-	 * @return {@link SoapClient}
+	 * @return this
 	 */
 	public static SoapClient create(String url, SoapProtocol protocol) {
 		return new SoapClient(url, protocol);
@@ -119,7 +115,7 @@ public class SoapClient {
 	 * @param url          WS的URL地址
 	 * @param protocol     协议，见{@link SoapProtocol}
 	 * @param namespaceURI 方法上的命名空间URI
-	 * @return {@link SoapClient}
+	 * @return this
 	 * @since 4.5.6
 	 */
 	public static SoapClient create(String url, SoapProtocol protocol, String namespaceURI) {
@@ -203,11 +199,17 @@ public class SoapClient {
 	 *
 	 * @param charset 编码
 	 * @return this
+	 * @see #charset(Charset)
 	 */
 	public SoapClient setCharset(Charset charset) {
-		this.charset = charset;
+		return this.charset(charset);
+	}
+
+	@Override
+	public SoapClient charset(Charset charset) {
+		super.charset(charset);
 		try {
-			this.message.setProperty(SOAPMessage.CHARACTER_SET_ENCODING, this.charset.toString());
+			this.message.setProperty(SOAPMessage.CHARACTER_SET_ENCODING, this.charset());
 			this.message.setProperty(SOAPMessage.WRITE_XML_DECLARATION, "true");
 		} catch (SOAPException e) {
 			// ignore
@@ -228,17 +230,32 @@ public class SoapClient {
 	}
 
 	/**
-	 * 设置头信息
+	 * 设置SOAP头信息
 	 *
 	 * @param name 头信息标签名
 	 * @return this
+	 * @deprecated 为了和Http Hrader区分，请使用{@link #addSOAPHeader(QName)}
 	 */
+	@Deprecated
 	public SoapClient setHeader(QName name) {
-		return setHeader(name, null, null, null, null);
+		return setSOAPHeader(name, null, null, null, null);
 	}
 
 	/**
-	 * 设置头信息
+	 * 设置SOAP头信息
+	 *
+	 * @param name 头信息标签名
+	 * @return this
+	 * @deprecated 为了便于设置子节点或者value值，请使用{@link #addSOAPHeader(QName)}
+	 */
+	@Deprecated
+	public SoapClient setSOAPHeader(QName name) {
+		addSOAPHeader(name);
+		return this;
+	}
+
+	/**
+	 * 设置SOAP头信息
 	 *
 	 * @param name           头信息标签名
 	 * @param actorURI       中间的消息接收者
@@ -246,13 +263,45 @@ public class SoapClient {
 	 * @param mustUnderstand 标题项对于要对其进行处理的接收者来说是强制的还是可选的
 	 * @param relay          relay属性
 	 * @return this
+	 * @deprecated 为了和Http Header区分，请使用{@link #addSOAPHeader(QName, String, String, Boolean, Boolean)}
 	 */
+	@Deprecated
 	public SoapClient setHeader(QName name, String actorURI, String roleUri, Boolean mustUnderstand, Boolean relay) {
-		SOAPHeader header;
-		SOAPHeaderElement ele;
+		return setSOAPHeader(name, actorURI, roleUri, mustUnderstand, relay);
+	}
+
+	/**
+	 * 设置SOAP头信息
+	 *
+	 * @param name           头信息标签名
+	 * @param actorURI       中间的消息接收者
+	 * @param roleUri        Role的URI
+	 * @param mustUnderstand 标题项对于要对其进行处理的接收者来说是强制的还是可选的
+	 * @param relay          relay属性
+	 * @return this
+	 * @deprecated 为了便于设置子节点或者value值，请使用{@link #addSOAPHeader(QName, String, String, Boolean, Boolean)}
+	 */
+	@Deprecated
+	public SoapClient setSOAPHeader(QName name, String actorURI, String roleUri, Boolean mustUnderstand, Boolean relay) {
+		addSOAPHeader(name, actorURI, roleUri, mustUnderstand, relay);
+
+		return this;
+	}
+
+	/**
+	 * 增加SOAP头信息，方法返回{@link SOAPHeaderElement}可以设置具体属性和子节点
+	 *
+	 * @param name           头信息标签名
+	 * @param actorURI       中间的消息接收者
+	 * @param roleUri        Role的URI
+	 * @param mustUnderstand 标题项对于要对其进行处理的接收者来说是强制的还是可选的
+	 * @param relay          relay属性
+	 * @return {@link SOAPHeaderElement}
+	 * @since 5.4.4
+	 */
+	public SOAPHeaderElement addSOAPHeader(QName name, String actorURI, String roleUri, Boolean mustUnderstand, Boolean relay) {
+		final SOAPHeaderElement ele = addSOAPHeader(name);
 		try {
-			header = this.message.getSOAPHeader();
-			ele = header.addHeaderElement(name);
 			if (StrUtil.isNotBlank(roleUri)) {
 				ele.setRole(roleUri);
 			}
@@ -270,7 +319,24 @@ public class SoapClient {
 			ele.setMustUnderstand(mustUnderstand);
 		}
 
-		return this;
+		return ele;
+	}
+
+	/**
+	 * 增加SOAP头信息，方法返回{@link SOAPHeaderElement}可以设置具体属性和子节点
+	 *
+	 * @param name 头节点名称
+	 * @return {@link SOAPHeaderElement}
+	 * @since 5.4.4
+	 */
+	public SOAPHeaderElement addSOAPHeader(QName name){
+		SOAPHeaderElement ele;
+		try {
+			ele = this.message.getSOAPHeader().addHeaderElement(name);
+		} catch (SOAPException e) {
+			throw new SoapRuntimeException(e);
+		}
+		return ele;
 	}
 
 	/**
@@ -548,6 +614,7 @@ public class SoapClient {
 				.setConnectionTimeout(this.connectionTimeout)
 				.setReadTimeout(this.readTimeout)
 				.contentType(getXmlContentType())//
+				.header(this.headers())
 				.body(getMsgStr(false))//
 				.executeAsync();
 	}

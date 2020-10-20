@@ -20,9 +20,8 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.log.Log;
-import cn.hutool.log.LogFactory;
 import cn.hutool.log.StaticLog;
+import cn.hutool.setting.Setting;
 import cn.hutool.setting.SettingRuntimeException;
 
 import java.io.BufferedReader;
@@ -46,12 +45,21 @@ import java.util.Properties;
  */
 public final class Props extends Properties implements BasicTypeGetter<String>, OptBasicTypeGetter<String> {
 	private static final long serialVersionUID = 1935981579709590740L;
-	private final static Log log = LogFactory.get();
 
 	/**
 	 * 默认配置文件扩展名
 	 */
 	public final static String EXT_NAME = "properties";
+
+	/**
+	 * 构建一个空的Props，用于手动加入参数
+	 *
+	 * @return Setting
+	 * @since 5.4.3
+	 */
+	public static Props create() {
+		return new Props();
+	}
 
 	// ----------------------------------------------------------------------- 私有属性 start
 	/** 属性文件的URL */
@@ -257,11 +265,11 @@ public final class Props extends Properties implements BasicTypeGetter<String>, 
 		if (null == this.propertiesFileUrl) {
 			throw new SettingRuntimeException("Can not find properties file: [{}]", urlResource);
 		}
-		log.debug("Load properties [{}]", propertiesFileUrl.getPath());
+
 		try (final BufferedReader reader = urlResource.getReader(charset)) {
 			super.load(reader);
-		} catch (Exception e) {
-			log.error(e, "Load properties error!");
+		} catch (IOException e) {
+			throw new IORuntimeException(e);
 		}
 	}
 

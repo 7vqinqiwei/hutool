@@ -70,7 +70,7 @@ public class FileUtilTest {
 	@Test
 	@Ignore
 	public void renameTest() {
-		FileUtil.rename(FileUtil.file("hutool.jpg"), "b.png", false, false);
+		FileUtil.rename(FileUtil.file("d:/test/3.jpg"), "2.jpg", false);
 	}
 
 	@Test
@@ -273,7 +273,7 @@ public class FileUtilTest {
 			Console.log(file.getPath());
 		}
 	}
-	
+
 	@Test
 	@Ignore
 	public void loopFilesWithDepthTest() {

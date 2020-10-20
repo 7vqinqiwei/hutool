@@ -1,13 +1,15 @@
 package cn.hutool.core.util;
 
-import java.io.File;
-
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.lang.Console;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.lang.Console;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 /**
  * {@link ZipUtil}单元测试
@@ -36,7 +38,7 @@ public class ZipUtilTest {
 		File unzip = ZipUtil.unzip("f:/test/各种资源.zip", "f:/test/各种资源", CharsetUtil.CHARSET_GBK);
 		Console.log(unzip);
 	}
-	
+
 	@Test
 	@Ignore
 	public void unzipFromStreamTest() {
@@ -89,5 +91,19 @@ public class ZipUtilTest {
 		byte[] unGzip2 = ZipUtil.unZlib(gzip);
 		//保证正常还原
 		Assert.assertEquals(data, StrUtil.utf8Str(unGzip2));
+	}
+
+	@Test
+	@Ignore
+	public void zipStreamTest(){
+		//https://github.com/looly/hutool/issues/944
+		String dir = "d:/test";
+		String zip = "d:/test.zip";
+		try (OutputStream out = new FileOutputStream(zip)){
+			//实际应用中, out 为 HttpServletResponse.getOutputStream
+			ZipUtil.zip(out, Charset.defaultCharset(), false, null, new File(dir));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
+import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -28,7 +29,7 @@ public class ScriptUtil {
 	 * @return {@link ScriptEngine} 实例
 	 */
 	public static ScriptEngine getScript(String nameOrExtOrMime) {
-		return CACHE.get(nameOrExtOrMime, ()-> createScript(nameOrExtOrMime));
+		return CACHE.get(nameOrExtOrMime, () -> createScript(nameOrExtOrMime));
 	}
 
 	/**
@@ -150,7 +151,36 @@ public class ScriptUtil {
 	}
 
 	/**
-	 * 执行Javascript脚本
+	 * 执行Javascript脚本，返回Invocable，此方法分为两种情况：
+	 *
+	 * <ol>
+	 *     <li>执行的脚本返回值是可执行的脚本方法</li>
+	 *     <li>脚本为函数库，则ScriptEngine本身为可执行方法</li>
+	 * </ol>
+	 *
+	 * @param script 脚本内容
+	 * @return 执行结果
+	 * @throws ScriptRuntimeException 脚本异常
+	 * @since 5.3.6
+	 */
+	public static Invocable evalInvocable(String script) throws ScriptRuntimeException {
+		final ScriptEngine jsEngine = getJsEngine();
+		final Object eval;
+		try {
+			eval = jsEngine.eval(script);
+		} catch (ScriptException e) {
+			throw new ScriptRuntimeException(e);
+		}
+		if(eval instanceof Invocable){
+			return (Invocable)eval;
+		} else if(jsEngine instanceof Invocable){
+			return (Invocable)jsEngine;
+		}
+		throw new ScriptRuntimeException("Script is not invocable !");
+	}
+
+	/**
+	 * 执行有返回值的Javascript脚本
 	 *
 	 * @param script 脚本内容
 	 * @return 执行结果
@@ -166,7 +196,7 @@ public class ScriptUtil {
 	}
 
 	/**
-	 * 执行脚本
+	 * 执行有返回值的脚本
 	 *
 	 * @param script  脚本内容
 	 * @param context 脚本上下文
@@ -183,7 +213,7 @@ public class ScriptUtil {
 	}
 
 	/**
-	 * 执行脚本
+	 * 执行有返回值的脚本
 	 *
 	 * @param script   脚本内容
 	 * @param bindings 绑定的参数
@@ -195,6 +225,24 @@ public class ScriptUtil {
 		try {
 			return getJsEngine().eval(script, bindings);
 		} catch (ScriptException e) {
+			throw new ScriptRuntimeException(e);
+		}
+	}
+
+	/**
+	 * 执行JS脚本中的指定方法
+	 *
+	 * @param script js脚本
+	 * @param func 方法名
+	 * @param args 方法参数
+	 * @return 结果
+	 * @since 5.3.6
+	 */
+	public static Object invoke(String script, String func, Object... args) {
+		final Invocable eval = evalInvocable(script);
+		try {
+			return eval.invokeFunction(func, args);
+		} catch (ScriptException | NoSuchMethodException e) {
 			throw new ScriptRuntimeException(e);
 		}
 	}

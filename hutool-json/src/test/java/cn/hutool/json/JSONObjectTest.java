@@ -1,6 +1,7 @@
 package cn.hutool.json;
 
 import cn.hutool.core.annotation.Alias;
+import cn.hutool.core.annotation.PropIgnore;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DatePattern;
@@ -8,6 +9,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.lang.Console;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.test.bean.JSONBean;
 import cn.hutool.json.test.bean.ResultDto;
@@ -26,9 +28,13 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * JSONObject单元测试
@@ -50,6 +56,7 @@ public class JSONObjectTest {
 	@Test
 	public void toStringTest2() {
 		String str = "{\"test\":\"关于开展2018年度“文明集体”、“文明职工”评选表彰活动的通知\"}";
+		//noinspection MismatchedQueryAndUpdateOfCollection
 		JSONObject json = new JSONObject(str);
 		Assert.assertEquals(str, json.toString());
 	}
@@ -112,6 +119,7 @@ public class JSONObjectTest {
 	@Test
 	public void parseStringTest2() {
 		String jsonStr = "{\"file_name\":\"RMM20180127009_731.000\",\"error_data\":\"201121151350701001252500000032 18973908335 18973908335 13601893517 201711211700152017112115135420171121 6594000000010100000000000000000000000043190101701001910072 100001100 \",\"error_code\":\"F140\",\"error_info\":\"最早发送时间格式错误，该字段可以为空，当不为空时正确填写格式为“YYYYMMDDHHMISS”\",\"app_name\":\"inter-pre-check\"}";
+		//noinspection MismatchedQueryAndUpdateOfCollection
 		JSONObject json = new JSONObject(jsonStr);
 		Assert.assertEquals("F140", json.getStr("error_code"));
 		Assert.assertEquals("最早发送时间格式错误，该字段可以为空，当不为空时正确填写格式为“YYYYMMDDHHMISS”", json.getStr("error_info"));
@@ -120,6 +128,7 @@ public class JSONObjectTest {
 	@Test
 	public void parseStringTest3() {
 		String jsonStr = "{\"test\":\"体”、“文\"}";
+		//noinspection MismatchedQueryAndUpdateOfCollection
 		JSONObject json = new JSONObject(jsonStr);
 		Assert.assertEquals("体”、“文", json.getStr("test"));
 	}
@@ -127,6 +136,7 @@ public class JSONObjectTest {
 	@Test
 	public void parseStringTest4() {
 		String jsonStr = "{'msg':'这里还没有内容','data':{'cards':[]},'ok':0}";
+		//noinspection MismatchedQueryAndUpdateOfCollection
 		JSONObject json = new JSONObject(jsonStr);
 		Assert.assertEquals(new Integer(0), json.getInt("ok"));
 		Assert.assertEquals(new JSONArray(), json.getJSONObject("data").getJSONArray("cards"));
@@ -146,6 +156,7 @@ public class JSONObjectTest {
 	public void parseStringWithSlashTest() {
 		//在5.3.2之前，</div>中的/会被转义，修复此bug的单元测试
 		String jsonStr = "{\"a\":\"<div>aaa</div>\"}";
+		//noinspection MismatchedQueryAndUpdateOfCollection
 		JSONObject json = new JSONObject(jsonStr);
 		Assert.assertEquals("<div>aaa</div>", json.get("a"));
 		Assert.assertEquals(jsonStr, json.toString());
@@ -263,7 +274,9 @@ public class JSONObjectTest {
 	 */
 	@Test
 	public void toBeanTest7() {
-		String jsonStr = " {\"result\":{\"phone\":\"15926297342\",\"appKey\":\"e1ie12e1ewsdqw1\",\"secret\":\"dsadadqwdqs121d1e2\",\"message\":\"hello world\"},\"code\":100,\"message\":\"validate message\"}";
+		String jsonStr = " {\"result\":{\"phone\":\"15926297342\",\"appKey\":\"e1ie12e1ewsdqw1\"," +
+				"\"secret\":\"dsadadqwdqs121d1e2\",\"message\":\"hello world\"},\"code\":100,\"" +
+				"message\":\"validate message\"}";
 		ResultDto<?> dto = JSONUtil.toBean(jsonStr, ResultDto.class);
 		Assert.assertEquals("validate message", dto.getMessage());
 	}
@@ -404,6 +417,27 @@ public class JSONObjectTest {
 		Assert.assertEquals(new Integer(35), bean.getValue2());
 	}
 
+	@Test
+	public void setDateFormatTest(){
+		JSONConfig jsonConfig = JSONConfig.create();
+		jsonConfig.setDateFormat("yyyy-MM-dd HH:mm:ss");
+		jsonConfig.setOrder(true);
+
+		JSONObject json = new JSONObject(jsonConfig);
+		json.append("date", DateUtil.parse("2020-06-05 11:16:11"));
+		json.append("bbb", "222");
+		json.append("aaa", "123");
+		Assert.assertEquals("{\"date\":[\"2020-06-05 11:16:11\"],\"bbb\":[\"222\"],\"aaa\":[\"123\"]}", json.toString());
+	}
+
+	@Test
+	public void getTimestampTest(){
+		String timeStr = "1970-01-01 00:00:00";
+		final JSONObject jsonObject = JSONUtil.createObj().set("time", timeStr);
+		final Timestamp time = jsonObject.get("time", Timestamp.class);
+		Assert.assertEquals("1970-01-01 00:00:00.0", time.toString());
+	}
+
 	public enum TestEnum {
 		TYPE_A, TYPE_B
 	}
@@ -440,5 +474,50 @@ public class JSONObjectTest {
 		private String value1;
 		@Alias("age")
 		private Integer value2;
+	}
+
+	@Test
+	public void parseBeanSameNameTest(){
+		final SameNameBean sameNameBean = new SameNameBean();
+		final JSONObject parse = JSONUtil.parseObj(sameNameBean);
+		Assert.assertEquals("123", parse.getStr("username"));
+		Assert.assertEquals("abc", parse.getStr("userName"));
+
+		// 测试ignore注解是否有效
+		Assert.assertNull(parse.getStr("fieldToIgnore"));
+	}
+
+	/**
+	 * 测试子Bean
+	 *
+	 * @author Looly
+	 */
+	@SuppressWarnings("FieldCanBeLocal")
+	public static class SameNameBean {
+		private final String username = "123";
+		private final String userName = "abc";
+		public String getUsername() {
+			return username;
+		}
+		@PropIgnore
+		private final String fieldToIgnore = "sfdsdads";
+
+		public String getUserName() {
+			return userName;
+		}
+
+		public String getFieldToIgnore(){
+			return this.fieldToIgnore;
+		}
+	}
+
+	@Test
+	public void setEntryTest(){
+		final HashMap<String, String> of = MapUtil.of("test", "testValue");
+		final Set<Map.Entry<String, String>> entries = of.entrySet();
+		final Map.Entry<String, String> next = entries.iterator().next();
+
+		final JSONObject jsonObject = JSONUtil.parseObj(next);
+		Console.log(jsonObject);
 	}
 }

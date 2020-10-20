@@ -1,10 +1,12 @@
 package cn.hutool.core.util;
 
+import cn.hutool.core.convert.Convert;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Set;
 
 /**
  * {@link NumberUtil} 单元测试类
@@ -241,15 +243,40 @@ public class NumberUtilTest {
 		long factorial = NumberUtil.factorial(0);
 		Assert.assertEquals(1, factorial);
 
+		Assert.assertEquals(1L, NumberUtil.factorial(1));
+		Assert.assertEquals(1307674368000L, NumberUtil.factorial(15));
+		Assert.assertEquals(2432902008176640000L, NumberUtil.factorial(20));
+
 		factorial = NumberUtil.factorial(5, 0);
 		Assert.assertEquals(120, factorial);
 		factorial = NumberUtil.factorial(5, 1);
 		Assert.assertEquals(120, factorial);
+    
+		Assert.assertEquals(5, NumberUtil.factorial(5, 4));
+		Assert.assertEquals(2432902008176640000L, NumberUtil.factorial(20, 0));
 	}
 
 	@Test
 	public void mulTest(){
 		final BigDecimal mul = NumberUtil.mul(new BigDecimal("10"), null);
 		Assert.assertEquals(BigDecimal.ZERO, mul);
+	}
+	
+	
+	@Test
+	public void isPowerOfTwoTest() {
+		Assert.assertFalse(NumberUtil.isPowerOfTwo(-1));
+		Assert.assertTrue(NumberUtil.isPowerOfTwo(16));
+		Assert.assertTrue(NumberUtil.isPowerOfTwo(65536));
+		Assert.assertTrue(NumberUtil.isPowerOfTwo(1));
+		Assert.assertFalse(NumberUtil.isPowerOfTwo(17));
+	}
+
+	@Test
+	public void generateRandomNumberTest(){
+		final int[] ints = NumberUtil.generateRandomNumber(10, 20, 5);
+		Assert.assertEquals(5, ints.length);
+		final Set<?> set = Convert.convert(Set.class, ints);
+		Assert.assertEquals(5, set.size());
 	}
 }

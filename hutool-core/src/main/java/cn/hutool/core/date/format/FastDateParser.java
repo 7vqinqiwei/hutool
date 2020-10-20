@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * @see FastDatePrinter
  * @since 2.16.2
  */
-class FastDateParser extends AbstractDateBasic implements DateParser {
+public class FastDateParser extends AbstractDateBasic implements DateParser {
 	private static final long serialVersionUID = -3199383897950947498L;
 
 	static final Locale JAPANESE_IMPERIAL = new Locale("ja", "JP", "JP");
@@ -60,7 +60,7 @@ class FastDateParser extends AbstractDateBasic implements DateParser {
 	 * @param timeZone non-null time zone to use
 	 * @param locale   non-null locale
 	 */
-	protected FastDateParser(final String pattern, final TimeZone timeZone, final Locale locale) {
+	public FastDateParser(String pattern, TimeZone timeZone, Locale locale) {
 		this(pattern, timeZone, locale, null);
 	}
 
@@ -74,7 +74,7 @@ class FastDateParser extends AbstractDateBasic implements DateParser {
 	 * @param locale       non-null locale
 	 * @param centuryStart The start of the century for 2 digit year parsing
 	 */
-	protected FastDateParser(final String pattern, final TimeZone timeZone, final Locale locale, final Date centuryStart) {
+	public FastDateParser(final String pattern, final TimeZone timeZone, final Locale locale, final Date centuryStart) {
 		super(pattern, timeZone, locale);
 		final Calendar definingCalendar = Calendar.getInstance(timeZone, locale);
 
@@ -447,7 +447,7 @@ class FastDateParser extends AbstractDateBasic implements DateParser {
 	}
 
 	@SuppressWarnings("unchecked") // OK because we are creating an array with no entries
-	private static final ConcurrentMap<Locale, Strategy>[] caches = new ConcurrentMap[Calendar.FIELD_COUNT];
+	private static final ConcurrentMap<Locale, Strategy>[] CACHES = new ConcurrentMap[Calendar.FIELD_COUNT];
 
 	/**
 	 * Get a cache of Strategies for a particular field
@@ -456,11 +456,11 @@ class FastDateParser extends AbstractDateBasic implements DateParser {
 	 * @return a cache of Locale to Strategy
 	 */
 	private static ConcurrentMap<Locale, Strategy> getCache(final int field) {
-		synchronized (caches) {
-			if (caches[field] == null) {
-				caches[field] = new ConcurrentHashMap<>(3);
+		synchronized (CACHES) {
+			if (CACHES[field] == null) {
+				CACHES[field] = new ConcurrentHashMap<>(3);
 			}
-			return caches[field];
+			return CACHES[field];
 		}
 	}
 

@@ -294,7 +294,7 @@ public class Ftp extends AbstractFtp {
 			return ListUtil.empty();
 		}
 
-		final List<FTPFile> result = new ArrayList<>(ftpFiles.length - 2);
+		final List<FTPFile> result = new ArrayList<>(ftpFiles.length - 2 <= 0 ? ftpFiles.length : ftpFiles.length - 2);
 		String fileName;
 		for (FTPFile ftpFile : ftpFiles) {
 			fileName = ftpFile.getName();
@@ -337,6 +337,20 @@ public class Ftp extends AbstractFtp {
 	public boolean mkdir(String dir) {
 		try {
 			return this.client.makeDirectory(dir);
+		} catch (IOException e) {
+			throw new FtpException(e);
+		}
+	}
+
+	/**
+	 * 获取服务端目录状态。
+	 * @param path 路径
+	 * @return 状态int，服务端不同，返回不同
+	 * @since 5.4.3
+	 */
+	public int stat(String path) {
+		try {
+			return this.client.stat(path);
 		} catch (IOException e) {
 			throw new FtpException(e);
 		}

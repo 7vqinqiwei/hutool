@@ -1,6 +1,7 @@
 package cn.hutool.core.lang;
 
 import cn.hutool.core.exceptions.ValidateException;
+import cn.hutool.core.util.IdUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -70,8 +71,17 @@ public class ValidatorTest {
 
 	@Test
 	public void isCitizenIdTest() {
-		boolean b = Validator.isCitizenId("150218199012123389");
+		// 18为身份证号码验证
+		boolean b = Validator.isCitizenId("110101199003074477");
 		Assert.assertTrue(b);
+
+		// 15位身份证号码验证
+		boolean b1 = Validator.isCitizenId("410001910101123");
+		Assert.assertTrue(b1);
+
+		// 10位身份证号码验证
+		boolean b2 = Validator.isCitizenId("U193683453");
+		Assert.assertTrue(b2);
 	}
 
 	@Test(expected = ValidateException.class)
@@ -135,5 +145,20 @@ public class ValidatorTest {
 	public void isPlateNumberTest(){
 		Assert.assertTrue(Validator.isPlateNumber("粤BA03205"));
 		Assert.assertTrue(Validator.isPlateNumber("闽20401领"));
+	}
+
+	@Test
+	public void isChineseTest(){
+		Assert.assertTrue(Validator.isChinese("全都是中文"));
+		Assert.assertFalse(Validator.isChinese("not全都是中文"));
+	}
+
+	@Test
+	public void isUUIDTest(){
+		Assert.assertTrue(Validator.isUUID(IdUtil.randomUUID()));
+		Assert.assertTrue(Validator.isUUID(IdUtil.fastSimpleUUID()));
+
+		Assert.assertTrue(Validator.isUUID(IdUtil.randomUUID().toUpperCase()));
+		Assert.assertTrue(Validator.isUUID(IdUtil.fastSimpleUUID().toUpperCase()));
 	}
 }

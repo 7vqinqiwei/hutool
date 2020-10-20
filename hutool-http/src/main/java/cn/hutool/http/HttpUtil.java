@@ -5,6 +5,7 @@ import cn.hutool.core.io.FastByteArrayOutputStream;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.StreamProgress;
+import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.net.url.UrlQuery;
 import cn.hutool.core.text.StrBuilder;
@@ -50,6 +51,17 @@ public class HttpUtil {
 	 */
 	public static boolean isHttps(String url) {
 		return url.toLowerCase().startsWith("https");
+	}
+
+	/**
+	 * 检测是否http
+	 *
+	 * @param url URL
+	 * @return 是否https
+	 * @since 5.3.8
+	 */
+	public static boolean isHttp(String url) {
+		return url.toLowerCase().startsWith("http");
 	}
 
 	/**
@@ -303,25 +315,111 @@ public class HttpUtil {
 	 * @since 4.0.4
 	 */
 	public static long downloadFile(String url, File destFile, int timeout, StreamProgress streamProgress) {
-		if (StrUtil.isBlank(url)) {
-			throw new NullPointerException("[url] is null!");
-		}
-		if (null == destFile) {
-			throw new NullPointerException("[destFile] is null!");
-		}
-		final HttpResponse response = HttpRequest.get(url).timeout(timeout).executeAsync();
-		if (false == response.isOk()) {
-			throw new HttpException("Server response error with status code: [{}]", response.getStatus());
-		}
-		return response.writeBody(destFile, streamProgress);
+		return requestDownloadFile(url, destFile, timeout).writeBody(destFile, streamProgress);
 	}
+	
+	/**
+	 * 下载远程文件
+	 *
+	 * @param url  请求的url
+	 * @param dest 目标文件或目录，当为目录时，取URL中的文件名，取不到使用编码后的URL做为文件名
+	 *
+	 * @return 下载的文件对象
+	 * @since 5.4.1
+	 */
+	public static File downloadFileFromUrl(String url, String dest) {
+		return downloadFileFromUrl(url, FileUtil.file(dest));
+	}
+	
+	/**
+	 * 下载远程文件
+	 *
+	 * @param url      请求的url
+	 * @param destFile 目标文件或目录，当为目录时，取URL中的文件名，取不到使用编码后的URL做为文件名
+	 *
+	 * @return 下载的文件对象
+	 * @since 5.4.1
+	 */
+	public static File downloadFileFromUrl(String url, File destFile) {
+		return downloadFileFromUrl(url, destFile, null);
+	}
+	
+	/**
+	 * 下载远程文件
+	 *
+	 * @param url      请求的url
+	 * @param destFile 目标文件或目录，当为目录时，取URL中的文件名，取不到使用编码后的URL做为文件名
+	 * @param timeout  超时，单位毫秒，-1表示默认超时
+	 *
+	 * @return 下载的文件对象
+	 * @since 5.4.1
+	 */
+	public static File downloadFileFromUrl(String url, File destFile, int timeout) {
+		return downloadFileFromUrl(url, destFile, timeout, null);
+	}
+	
+	/**
+	 * 下载远程文件
+	 *
+	 * @param url            请求的url
+	 * @param destFile       目标文件或目录，当为目录时，取URL中的文件名，取不到使用编码后的URL做为文件名
+	 * @param streamProgress 进度条
+	 *
+	 * @return 下载的文件对象
+	 * @since 5.4.1
+	 */
+	public static File downloadFileFromUrl(String url, File destFile, StreamProgress streamProgress) {
+		return downloadFileFromUrl(url, destFile, -1, streamProgress);
+	}
+	
+	/**
+	 * 下载远程文件
+	 *
+	 * @param url            请求的url
+	 * @param destFile       目标文件或目录，当为目录时，取URL中的文件名，取不到使用编码后的URL做为文件名
+	 * @param timeout        超时，单位毫秒，-1表示默认超时
+	 * @param streamProgress 进度条
+	 *
+	 * @return 下载的文件对象
+	 * @since 5.4.1
+	 */
+	public static File downloadFileFromUrl(String url, File destFile, int timeout, StreamProgress streamProgress) {
+		HttpResponse response = requestDownloadFile(url, destFile, timeout);
+		
+		final File outFile = response.completeFileNameFromHeader(destFile);
+		long writeBytes = response.writeBody(outFile, streamProgress);
+		return outFile;
+	}
+	
+	/**
+	 * 请求下载文件
+	 *
+	 * @param url      请求下载文件地址
+	 * @param destFile 目标目录或者目标文件
+	 * @param timeout  超时时间
+	 *
+	 * @return HttpResponse
+	 * @since 5.4.1
+	 */
+	private static HttpResponse requestDownloadFile(String url, File destFile, int timeout) {
+		Assert.notBlank(url, "[url] is blank !");
+		Assert.notNull(url, "[destFile] is null !");
 
+		final HttpResponse response = HttpRequest.get(url).timeout(timeout).executeAsync();
+		if (response.isOk()) {
+			return response;
+		}
+
+		throw new HttpException("Server response error with status code: [{}]", response.getStatus());
+	}
+	
 	/**
 	 * 下载远程文件
 	 *
 	 * @param url        请求的url
 	 * @param out        将下载内容写到输出流中 {@link OutputStream}
 	 * @param isCloseOut 是否关闭输出流
+	 *
 	 * @return 文件大小
 	 */
 	public static long download(String url, OutputStream out, boolean isCloseOut) {
@@ -344,16 +442,38 @@ public class HttpUtil {
 		if (null == out) {
 			throw new NullPointerException("[out] is null!");
 		}
-
+		
 		final HttpResponse response = HttpRequest.get(url).executeAsync();
-		if (false == response.isOk()) {
+		if (!response.isOk()) {
 			throw new HttpException("Server response error with status code: [{}]", response.getStatus());
 		}
 		return response.writeBody(out, isCloseOut, streamProgress);
 	}
+	
+	/**
+	 * 下载远程文件数据，支持30x跳转
+	 *
+	 * @param url 请求的url
+	 *
+	 * @return 文件数据
+	 *
+	 * @since 5.3.6
+	 */
+	public static byte[] downloadBytes(String url) {
+		if (StrUtil.isBlank(url)) {
+			throw new NullPointerException("[url] is null!");
+		}
+		
+		final HttpResponse response = HttpRequest.get(url)
+				.setFollowRedirects(true).executeAsync();
+		if (!response.isOk()) {
+			throw new HttpException("Server response error with status code: [{}]", response.getStatus());
+		}
+		return response.bodyBytes();
+	}
 
 	/**
-	 * 将Map形式的Form表单数据转换为Url参数形式，不做编码
+	 * 将Map形式的Form表单数据转换为Url参数形式，会自动url编码键和值
 	 *
 	 * @param paramMap 表单数据
 	 * @return url参数

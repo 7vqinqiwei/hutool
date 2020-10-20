@@ -9,7 +9,7 @@
 	<parent>
 		<groupId>cn.hutool</groupId>
 		<artifactId>hutool-parent</artifactId>
-		<version>5.3.5</version>
+		<version>5.4.5</version>
 	</parent>
 
 	<artifactId>hutool-extra</artifactId>
@@ -19,18 +19,19 @@
 	<properties>
 		<!-- versions -->
 		<velocity.version>2.2</velocity.version>
-		<beetl.version>3.1.2.RELEASE</beetl.version>
+		<beetl.version>3.2.1.RELEASE</beetl.version>
 		<rythm.version>1.3.0</rythm.version>
 		<freemarker.version>2.3.30</freemarker.version>
-		<enjoy.version>4.8</enjoy.version>
+		<enjoy.version>4.9.01</enjoy.version>
 		<thymeleaf.version>3.0.11.RELEASE</thymeleaf.version>
 		<mail.version>1.6.2</mail.version>
 		<jsch.version>0.1.55</jsch.version>
-		<zxing.version>3.4.0</zxing.version>
-		<net.version>3.6</net.version>
+		<zxing.version>3.4.1</zxing.version>
+		<net.version>3.7</net.version>
 		<emoji-java.version>5.1.1</emoji-java.version>
 		<servlet-api.version>4.0.1</servlet-api.version>
-		<spring-boot.version>2.2.6.RELEASE</spring-boot.version>
+		<spring-boot.version>2.3.4.RELEASE</spring-boot.version>
+		<cglib.version>3.3.0</cglib.version>
 	</properties>
 
 	<dependencies>
@@ -186,13 +187,13 @@
 		<dependency>
 			<groupId>com.hankcs</groupId>
 			<artifactId>hanlp</artifactId>
-			<version>portable-1.7.7</version>
+			<version>portable-1.7.8</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-analyzers-smartcn</artifactId>
-			<version>8.4.1</version>
+			<version>8.6.2</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>
@@ -230,6 +231,19 @@
 			<groupId>com.github.stuxuhai</groupId>
 			<artifactId>jpinyin</artifactId>
 			<version>1.1.8</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.rnkrsoft.bopomofo4j</groupId>
+			<artifactId>bopomofo4j</artifactId>
+			<version>1.0.0</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>cglib</artifactId>
+			<version>${cglib.version}</version>
+			<scope>compile</scope>
 			<optional>true</optional>
 		</dependency>
 		<dependency>

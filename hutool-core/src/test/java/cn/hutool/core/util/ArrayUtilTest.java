@@ -42,6 +42,11 @@ public class ArrayUtilTest {
 		isEmpty = ArrayUtil.isEmpty(d);
 		//noinspection ConstantConditions
 		Assert.assertTrue(isEmpty);
+
+		// Object数组
+		Object[] e = new Object[]{"1", "2", 3, 4D};
+		final boolean empty = ArrayUtil.isEmpty(e);
+		Assert.assertFalse(empty);
 	}
 
 	@Test
@@ -277,5 +282,19 @@ public class ArrayUtilTest {
 		Assert.assertEquals("B", array[1]);
 		Assert.assertEquals("C", array[2]);
 		Assert.assertEquals("D", array[3]);
+	}
+
+	@Test
+	public void addAllTest(){
+		final int[] ints = ArrayUtil.addAll(new int[]{1, 2, 3}, new int[]{4, 5, 6});
+		Assert.assertArrayEquals(new int[]{1,2,3,4,5,6}, ints);
+	}
+
+	@Test
+	public void isAllNotNullTest(){
+		String[] allNotNull = {"aa", "bb", "cc", "dd", "bb", "dd"};
+		Assert.assertTrue(ArrayUtil.isAllNotNull(allNotNull));
+		String[] hasNull = {"aa", "bb", "cc", null, "bb", "dd"};
+		Assert.assertFalse(ArrayUtil.isAllNotNull(hasNull));
 	}
 }

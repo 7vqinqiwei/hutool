@@ -11,24 +11,44 @@ import cn.hutool.core.text.ASCIIStrCache;
  */
 public class CharUtil {
 
+	/** 字符常量：空格符 {@code ' '} */
 	public static final char SPACE = ' ';
+	/** 字符常量：制表符 {@code '\t'} */
 	public static final char TAB = '	';
+	/** 字符常量：点 {@code '.'} */
 	public static final char DOT = '.';
+	/** 字符常量：斜杠 {@code '/'} */
 	public static final char SLASH = '/';
+	/** 字符常量：反斜杠 {@code '\\'} */
 	public static final char BACKSLASH = '\\';
+	/** 字符常量：回车符 {@code '\r'} */
 	public static final char CR = '\r';
+	/** 字符常量：换行符 {@code '\n'} */
 	public static final char LF = '\n';
-	public static final char UNDERLINE = '_';
+	/** 字符常量：减号（连接符） {@code '-'} */
 	public static final char DASHED = '-';
+	/** 字符常量：下划线 {@code '_'} */
+	public static final char UNDERLINE = '_';
+	/** 字符常量：逗号 {@code ','} */
 	public static final char COMMA = ',';
+	/** 字符常量：花括号（左） <code>'{'</code> */
 	public static final char DELIM_START = '{';
+	/** 字符常量：花括号（右） <code>'}'</code> */
 	public static final char DELIM_END = '}';
+	/** 字符常量：中括号（左） {@code '['} */
 	public static final char BRACKET_START = '[';
+	/** 字符常量：中括号（右） {@code ']'} */
 	public static final char BRACKET_END = ']';
-	public static final char COLON = ':';
+	/** 字符常量：双引号 {@code '"'} */
 	public static final char DOUBLE_QUOTES = '"';
+	/** 字符常量：单引号 {@code '\''} */
 	public static final char SINGLE_QUOTE = '\'';
+	/** 字符常量：与 {@code '&'} */
 	public static final char AMP = '&';
+	/** 字符常量：冒号 {@code ':'} */
+	public static final char COLON = ':';
+	/** 字符常量：艾特 <code>'@'</code> */
+	public static final char AT = '@';
 
 	/**
 	 * 是否为ASCII字符，ASCII字符位于0~127之间
@@ -187,7 +207,7 @@ public class CharUtil {
 	}
 
 	/**
-	 * 是否为字符或数字，包括A~Z、a~z、0~9
+	 * 是否为字母或数字，包括A~Z、a~z、0~9
 	 *
 	 * <pre>
 	 *   CharUtil.isLetterOrNumber('a')  = true
@@ -199,7 +219,7 @@ public class CharUtil {
 	 * </pre>
 	 *
 	 * @param ch 被检查的字符
-	 * @return true表示为字符或数字，包括A~Z、a~z、0~9
+	 * @return true表示为字母或数字，包括A~Z、a~z、0~9
 	 */
 	public static boolean isLetterOrNumber(final char ch) {
 		return isLetter(ch) || isNumber(ch);
@@ -273,7 +293,10 @@ public class CharUtil {
 	 * @since 4.0.10
 	 */
 	public static boolean isBlankChar(int c) {
-		return Character.isWhitespace(c) || Character.isSpaceChar(c) || c == '\ufeff' || c == '\u202a';
+		return Character.isWhitespace(c)
+				|| Character.isSpaceChar(c)
+				|| c == '\ufeff'
+				|| c == '\u202a';
 	}
 
 	/**

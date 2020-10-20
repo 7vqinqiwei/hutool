@@ -2,6 +2,7 @@ package cn.hutool.json;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.TemporalAccessorUtil;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -9,6 +10,7 @@ import cn.hutool.core.util.StrUtil;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.time.temporal.TemporalAccessor;
 import java.util.Calendar;
 import java.util.Collection;
@@ -139,12 +141,14 @@ final class InternalJSONUtil {
 	 * @return A simple JSON value.
 	 */
 	protected static Object stringToValue(String string) {
+		// null处理
 		if (null == string || "null".equalsIgnoreCase(string)) {
 			return JSONNull.NULL;
 		}
 
-		if (StrUtil.EMPTY.equals(string)) {
-			return string;
+		// boolean处理
+		if (0 == string.length()) {
+			return StrUtil.EMPTY;
 		}
 		if ("true".equalsIgnoreCase(string)) {
 			return Boolean.TRUE;
@@ -153,20 +157,22 @@ final class InternalJSONUtil {
 			return Boolean.FALSE;
 		}
 
-		/* If it might be a number, try converting it. If a number cannot be produced, then the value will just be a string. */
+		// Number处理
 		char b = string.charAt(0);
 		if ((b >= '0' && b <= '9') || b == '-') {
 			try {
-				if (string.indexOf('.') > -1 || string.indexOf('e') > -1 || string.indexOf('E') > -1) {
-					double d = Double.parseDouble(string);
-					if (false == Double.isInfinite(d) && false == Double.isNaN(d)) {
-						return d;
-					}
+				if (StrUtil.containsAnyIgnoreCase(string, ".", "e")) {
+					// pr#192@Gitee，Double会出现小数精度丢失问题，此处使用BigDecimal
+					//double d = Double.parseDouble(string);
+					//if (false == Double.isInfinite(d) && false == Double.isNaN(d)) {
+					//	return d;
+					//}
+					return new BigDecimal(string);
 				} else {
-					Long myLong = new Long(string);
-					if (string.equals(myLong.toString())) {
-						if (myLong == myLong.intValue()) {
-							return myLong.intValue();
+					final long myLong = Long.parseLong(string);
+					if (string.equals(Long.toString(myLong))) {
+						if (myLong == (int) myLong) {
+							return (int) myLong;
 						} else {
 							return myLong;
 						}
@@ -175,6 +181,8 @@ final class InternalJSONUtil {
 			} catch (Exception ignore) {
 			}
 		}
+
+		// 其它情况返回原String值下
 		return string;
 	}
 
@@ -232,6 +240,9 @@ final class InternalJSONUtil {
 	 */
 	private static String formatDate(Object dateObj, String format) {
 		if (StrUtil.isNotBlank(format)) {
+			if(dateObj instanceof TemporalAccessor){
+				return TemporalAccessorUtil.format((TemporalAccessor) dateObj, format);
+			}
 			//用户定义了日期格式
 			return JSONUtil.quote(DateUtil.format(Convert.toDate(dateObj), format));
 		}

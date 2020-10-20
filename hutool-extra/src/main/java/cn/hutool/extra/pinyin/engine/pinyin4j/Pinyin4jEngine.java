@@ -1,6 +1,8 @@
 package cn.hutool.extra.pinyin.engine.pinyin4j;
 
+import cn.hutool.core.text.StrBuilder;
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinEngine;
 import cn.hutool.extra.pinyin.PinyinException;
 import net.sourceforge.pinyin4j.PinyinHelper;
@@ -82,11 +84,27 @@ public class Pinyin4jEngine implements PinyinEngine {
 
 	@Override
 	public String getPinyin(String str, String separator) {
+		final StrBuilder result = StrUtil.strBuilder();
+		boolean isFirst = true;
+		final int strLen = str.length();
 		try {
-			return PinyinHelper.toHanYuPinyinString(str, format, separator, true);
+			for(int i = 0; i < strLen; i++){
+				if(isFirst){
+					isFirst = false;
+				} else{
+					result.append(separator);
+				}
+				final String[] pinyinStringArray = PinyinHelper.toHanyuPinyinStringArray(str.charAt(i), format);
+				if(ArrayUtil.isEmpty(pinyinStringArray)){
+					result.append(str.charAt(i));
+				} else{
+					result.append(pinyinStringArray[0]);
+				}
+			}
 		} catch (BadHanyuPinyinOutputFormatCombination e) {
 			throw new PinyinException(e);
 		}
-	}
 
+		return result.toString();
+	}
 }

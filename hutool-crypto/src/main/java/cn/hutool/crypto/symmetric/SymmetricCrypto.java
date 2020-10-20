@@ -204,7 +204,7 @@ public class SymmetricCrypto implements Serializable {
 			} else {
 				cipher.init(Cipher.ENCRYPT_MODE, secretKey, params);
 			}
-			return cipher.doFinal(paddingDataWithZero(data, cipher.getBlockSize()));
+				return cipher.doFinal(paddingDataWithZero(data, cipher.getBlockSize()));
 		} catch (Exception e) {
 			throw new CryptoException(e);
 		} finally {
@@ -436,7 +436,7 @@ public class SymmetricCrypto implements Serializable {
 	}
 
 	/**
-	 * 解密Hex表示的字符串，默认UTF-8编码
+	 * 解密Hex（16进制）或Base64表示的字符串，默认UTF-8编码
 	 *
 	 * @param data 被解密的String
 	 * @return 解密后的String

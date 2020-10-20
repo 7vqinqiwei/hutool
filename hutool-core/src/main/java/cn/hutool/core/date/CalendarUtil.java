@@ -1,13 +1,19 @@
 package cn.hutool.core.date;
 
 import cn.hutool.core.comparator.CompareUtil;
+import cn.hutool.core.convert.NumberChineseFormatter;
+import cn.hutool.core.date.format.FastDateParser;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 
+import java.text.ParsePosition;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * 针对{@link Calendar} 对象封装工具类
@@ -236,11 +242,15 @@ public class CalendarUtil {
 	 * @return {@link Calendar}
 	 * @since 4.1.0
 	 */
+	@SuppressWarnings({"MagicConstant", "ConstantConditions"})
 	public static Calendar endOfQuarter(Calendar calendar) {
-		//noinspection MagicConstant
-		calendar.set(Calendar.MONTH, calendar.get(DateField.MONTH.getValue()) / 3 * 3 + 2);
-		calendar.set(Calendar.DAY_OF_MONTH, calendar.getActualMaximum(Calendar.DAY_OF_MONTH));
-		return endOfDay(calendar);
+		final int year = calendar.get(Calendar.YEAR);
+		final int month = calendar.get(DateField.MONTH.getValue()) / 3 * 3 + 2;
+
+		final Calendar resultCal = Calendar.getInstance(calendar.getTimeZone());
+		resultCal.set(year, month, Month.of(month).getLastDay(DateUtil.isLeapYear(year)));
+
+		return endOfDay(resultCal);
 	}
 
 	/**
@@ -277,6 +287,43 @@ public class CalendarUtil {
 		return cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR) && //
 				cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && //
 				cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA);
+	}
+
+	/**
+	 * 比较两个日期是否为同一月
+	 *
+	 * @param cal1 日期1
+	 * @param cal2 日期2
+	 * @return 是否为同一月
+	 * @since 5.4.1
+	 */
+	public static boolean isSameMonth(Calendar cal1, Calendar cal2) {
+		if (cal1 == null || cal2 == null) {
+			throw new IllegalArgumentException("The date must not be null");
+		}
+		return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && //
+				cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH);
+	}
+
+	/**
+	 * <p>检查两个Calendar时间戳是否相同。</p>
+	 *
+	 * <p>此方法检查两个Calendar的毫秒数时间戳是否相同。</p>
+	 *
+	 * @param date1  时间1
+	 * @param date2  时间2
+	 * @return 两个Calendar时间戳是否相同。如果两个时间都为{@code null}返回true，否则有{@code null}返回false
+	 * @since 5.3.11
+	 */
+	public static boolean isSameInstant(Calendar date1, Calendar date2) {
+		if (null == date1) {
+			return null == date2;
+		}
+		if (null == date2) {
+			return false;
+		}
+
+		return date1.getTimeInMillis() == date2.getTimeInMillis();
 	}
 
 	/**
@@ -319,6 +366,19 @@ public class CalendarUtil {
 	 * @param dateField {@link DateField}
 	 * @return 字段最小值
 	 * @see Calendar#getActualMinimum(int)
+	 * @since 5.4.2
+	 */
+	public static int getBeginValue(Calendar calendar, DateField dateField) {
+		return getBeginValue(calendar, dateField.getValue());
+	}
+
+	/**
+	 * 获取指定日期字段的最小值，例如分钟的最小值是0
+	 *
+	 * @param calendar  {@link Calendar}
+	 * @param dateField {@link DateField}
+	 * @return 字段最小值
+	 * @see Calendar#getActualMinimum(int)
 	 * @since 4.5.7
 	 */
 	public static int getBeginValue(Calendar calendar, int dateField) {
@@ -326,6 +386,19 @@ public class CalendarUtil {
 			return calendar.getFirstDayOfWeek();
 		}
 		return calendar.getActualMinimum(dateField);
+	}
+
+	/**
+	 * 获取指定日期字段的最大值，例如分钟的最大值是59
+	 *
+	 * @param calendar  {@link Calendar}
+	 * @param dateField {@link DateField}
+	 * @return 字段最大值
+	 * @see Calendar#getActualMaximum(int)
+	 * @since 5.4.2
+	 */
+	public static int getEndValue(Calendar calendar, DateField dateField) {
+		return getEndValue(calendar, dateField.getValue());
 	}
 
 	/**
@@ -390,6 +463,58 @@ public class CalendarUtil {
 	}
 
 	/**
+	 * 将指定Calendar时间格式化为纯中文形式，比如：
+	 *
+	 * <pre>
+	 *     2018-02-24 12:13:14转换为 二〇一八年二月二十四日（withTime为false）
+	 *     2018-02-24 12:13:14 转换为 二〇一八年二月二十四日一十二时一十三分一十四秒（withTime为true）
+	 * </pre>
+	 *
+	 * @param calendar {@link Calendar}
+	 * @param withTime 是否包含时间部分
+	 * @return 格式化后的字符串
+	 * @since 5.3.9
+	 */
+	public static String formatChineseDate(Calendar calendar, boolean withTime) {
+		final StringBuilder result = StrUtil.builder();
+
+		// 年
+		String year = String.valueOf(calendar.get(Calendar.YEAR));
+		final int length = year.length();
+		for (int i = 0; i < length; i++) {
+			result.append(NumberChineseFormatter.numberCharToChinese(year.charAt(i), false));
+		}
+		result.append('年');
+
+		// 月
+		int month = calendar.get(Calendar.MONTH) + 1;
+		result.append(NumberChineseFormatter.format(month, false));
+		result.append('月');
+
+		// 日
+		int day = calendar.get(Calendar.DAY_OF_MONTH);
+		result.append(NumberChineseFormatter.format(day, false));
+		result.append('日');
+
+		if (withTime) {
+			// 时
+			int hour = calendar.get(Calendar.HOUR_OF_DAY);
+			result.append(NumberChineseFormatter.format(hour, false));
+			result.append('时');
+			// 分
+			int minute = calendar.get(Calendar.MINUTE);
+			result.append(NumberChineseFormatter.format(minute, false));
+			result.append('分');
+			// 秒
+			int second = calendar.get(Calendar.SECOND);
+			result.append(NumberChineseFormatter.format(second, false));
+			result.append('秒');
+		}
+
+		return result.toString().replace('零', '〇');
+	}
+
+	/**
 	 * 计算相对于dateToCompare的年龄，长用于计算指定生日在某年的年龄
 	 *
 	 * @param birthday      生日
@@ -427,5 +552,80 @@ public class CalendarUtil {
 		}
 
 		return age;
+	}
+
+	/**
+	 * 通过给定的日期格式解析日期时间字符串。<br>
+	 * 传入的日期格式会逐个尝试，直到解析成功，返回{@link Calendar}对象，否则抛出{@link DateException}异常。
+	 * 方法来自：Apache Commons-Lang3
+	 *
+	 * @param str           日期时间字符串，非空
+	 * @param parsePatterns 需要尝试的日期时间格式数组，非空, 见SimpleDateFormat
+	 * @return 解析后的Calendar
+	 * @throws IllegalArgumentException if the date string or pattern array is null
+	 * @throws DateException            if none of the date patterns were suitable
+	 * @since 5.3.11
+	 */
+	public static Calendar parseByPatterns(String str, String... parsePatterns) throws DateException {
+		return parseByPatterns(str, null, parsePatterns);
+	}
+
+	/**
+	 * 通过给定的日期格式解析日期时间字符串。<br>
+	 * 传入的日期格式会逐个尝试，直到解析成功，返回{@link Calendar}对象，否则抛出{@link DateException}异常。
+	 * 方法来自：Apache Commons-Lang3
+	 *
+	 * @param str           日期时间字符串，非空
+	 * @param locale        地区，当为{@code null}时使用{@link Locale#getDefault()}
+	 * @param parsePatterns 需要尝试的日期时间格式数组，非空, 见SimpleDateFormat
+	 * @return 解析后的Calendar
+	 * @throws IllegalArgumentException if the date string or pattern array is null
+	 * @throws DateException            if none of the date patterns were suitable
+	 * @since 5.3.11
+	 */
+	public static Calendar parseByPatterns(String str, Locale locale, String... parsePatterns) throws DateException {
+		return parseByPatterns(str, locale, true, parsePatterns);
+	}
+
+	/**
+	 * 通过给定的日期格式解析日期时间字符串。<br>
+	 * 传入的日期格式会逐个尝试，直到解析成功，返回{@link Calendar}对象，否则抛出{@link DateException}异常。
+	 * 方法来自：Apache Commons-Lang3
+	 *
+	 * @param str           日期时间字符串，非空
+	 * @param locale        地区，当为{@code null}时使用{@link Locale#getDefault()}
+	 * @param lenient       日期时间解析是否使用严格模式
+	 * @param parsePatterns 需要尝试的日期时间格式数组，非空, 见SimpleDateFormat
+	 * @return 解析后的Calendar
+	 * @throws IllegalArgumentException if the date string or pattern array is null
+	 * @throws DateException            if none of the date patterns were suitable
+	 * @see java.util.Calendar#isLenient()
+	 * @since 5.3.11
+	 */
+	public static Calendar parseByPatterns(String str, Locale locale, boolean lenient, String... parsePatterns) throws DateException {
+		if (str == null || parsePatterns == null) {
+			throw new IllegalArgumentException("Date and Patterns must not be null");
+		}
+
+		final TimeZone tz = TimeZone.getDefault();
+		final Locale lcl = ObjectUtil.defaultIfNull(locale, Locale.getDefault());
+		final ParsePosition pos = new ParsePosition(0);
+		final Calendar calendar = Calendar.getInstance(tz, lcl);
+		calendar.setLenient(lenient);
+
+		for (final String parsePattern : parsePatterns) {
+			final FastDateParser fdp = new FastDateParser(parsePattern, tz, lcl);
+			calendar.clear();
+			try {
+				if (fdp.parse(str, pos, calendar) && pos.getIndex() == str.length()) {
+					return calendar;
+				}
+			} catch (final IllegalArgumentException ignore) {
+				// leniency is preventing calendar from being set
+			}
+			pos.setIndex(0);
+		}
+
+		throw new DateException("Unable to parse the date: {}", str);
 	}
 }

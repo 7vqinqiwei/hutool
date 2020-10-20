@@ -236,7 +236,8 @@ public class HttpUtilTest {
 		map = HttpUtil.decodeParams(a, CharsetUtil.UTF_8);
 		Assert.assertEquals("b", map.get("a").get(0));
 		Assert.assertEquals("d", map.get("c").get(0));
-		Assert.assertEquals("", map.get("e").get(0));
+		Assert.assertNull(map.get("e").get(0));
+		Assert.assertNull(map.get("").get(0));
 
 		// 被编码的键和值被还原
 		a = "a=bbb&c=%E4%BD%A0%E5%A5%BD&%E5%93%88%E5%96%BD=";
@@ -309,6 +310,14 @@ public class HttpUtilTest {
 	public void getWeixinTest(){
 		// 测试特殊URL，即URL中有&amp;情况是否请求正常
 		String url = "https://mp.weixin.qq.com/s?__biz=MzI5NjkyNTIxMg==&amp;mid=100000465&amp;idx=1&amp;sn=1044c0d19723f74f04f4c1da34eefa35&amp;chksm=6cbda3a25bca2ab4516410db6ce6e125badaac2f8c5548ea6e18eab6dc3c5422cb8cbe1095f7";
+		final String s = HttpUtil.get(url);
+		Console.log(s);
+	}
+
+	@Test
+	@Ignore
+	public void getNocovTest(){
+		String url = "https://qiniu.nocov.cn/medical-manage%2Ftest%2FBANNER_IMG%2F444004467954556928%2F1595215173047icon.png~imgReduce?e=1597081986&token=V2lJYVgQgAv_sbypfEZ0qpKs6TzD1q5JIDVr0Tw8:89cbBkLLwEc9JsMoCLkAEOu820E=";
 		final String s = HttpUtil.get(url);
 		Console.log(s);
 	}
