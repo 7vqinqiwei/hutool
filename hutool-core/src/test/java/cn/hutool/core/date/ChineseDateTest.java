@@ -46,29 +46,6 @@ public class ChineseDateTest {
 		date = new ChineseDate(DateUtil.parseDate("1996-07-15"));
 		Assert.assertEquals("丙子鼠年 五月三十", date.toString());
 	}
-	@Test
-	public void getCyclicalYMDTest(){
-		//通过公历构建
-		ChineseDate chineseDate = new ChineseDate(DateUtil.parseDate("1993-01-06"));
-		String cyclicalYMD = chineseDate.getCyclicalYMD();
-		Assert.assertEquals("壬申年癸丑月丁亥日",cyclicalYMD);
-	}
-
-	@Test
-	public void getCyclicalYMDTest2(){
-		//通过农历构建
-		ChineseDate chineseDate = new ChineseDate(1992,12,14);
-		String cyclicalYMD = chineseDate.getCyclicalYMD();
-		Assert.assertEquals("壬申年癸丑月丁亥日",cyclicalYMD);
-	}
-
-	@Test
-	public void getCyclicalYMDTest3(){
-		//通过公历构建
-		ChineseDate chineseDate = new ChineseDate(DateUtil.parseDate("2020-08-28"));
-		String cyclicalYMD = chineseDate.getCyclicalYMD();
-		Assert.assertEquals("庚子年甲申月癸卯日",cyclicalYMD);
-	}
 
 	@Test
 	public void getChineseMonthTest(){
@@ -94,5 +71,11 @@ public class ChineseDateTest {
 		Assert.assertEquals("辛未羊年 八月初七", date.toString());
 		date = new ChineseDate(DateUtil.parseDate("1991-09-15"));
 		Assert.assertEquals("辛未羊年 八月初八", date.toString());
+	}
+
+	@Test
+	public void dateTest2(){
+		ChineseDate date = new ChineseDate(DateUtil.parse("2020-10-19 11:12:23"));
+		Assert.assertEquals("庚子鼠年 九月初三", date.toString());
 	}
 }

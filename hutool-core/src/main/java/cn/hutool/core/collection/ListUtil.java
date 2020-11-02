@@ -231,7 +231,7 @@ public class ListUtil {
 	 * 对指定List分页取值
 	 *
 	 * @param <T>      集合元素类型
-	 * @param pageNo   页码，从0开始计数，0表示第一页
+	 * @param pageNo   页码，第一页的页码取决于{@link PageUtil#getFirstPageNo()}，默认0
 	 * @param pageSize 每页的条目数
 	 * @param list     列表
 	 * @return 分页后的段落内容
@@ -245,7 +245,7 @@ public class ListUtil {
 		int resultSize = list.size();
 		// 每页条目数大于总数直接返回所有
 		if (resultSize <= pageSize) {
-			if (pageNo < 1) {
+			if (pageNo < (PageUtil.getFirstPageNo()+1)) {
 				return Collections.unmodifiableList(list);
 			} else {
 				// 越界直接返回空
@@ -253,7 +253,7 @@ public class ListUtil {
 			}
 		}
 		// 相乘可能会导致越界 临时用long
-		if (((long) pageNo * pageSize) > resultSize) {
+		if (((long) (pageNo-PageUtil.getFirstPageNo()) * pageSize) > resultSize) {
 			// 越界直接返回空
 			return new ArrayList<>(0);
 		}

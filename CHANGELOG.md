@@ -3,6 +3,46 @@
 
 -------------------------------------------------------------------------------------------------------------
 
+# 5.4.7 (2020-10-31)
+
+### 新特性
+* 【core   】     增加OptionalBean（pr#1182@Github）
+* 【core   】     Ganzhi增加方法（issue#1186@Github）
+* 【core   】     CollUtil增加forEach重载（issue#I22NA4@Gitee）
+* 【core   】     CollUtil.map忽略空值改规则为原数组中的元素和处理后的元素都会忽略空值（issue#I22N08@Gitee）
+* 【http   】     增加SoapClient增加addSOAPHeader重载
+* 【http   】     ArrayUtil增加containsAll方法
+* 【http   】     增加CharsetDetector
+* 【cron   】     增加CronTask，监听支持获取id（issue#I23315@Gitee）
+
+### Bug修复
+* 【core   】     修复BeanUtil.beanToMap方法中editor返回null没有去掉的问题
+* 【core   】     修复ImgUtil.toBufferedImage颜色模式的问题（issue#1194@Github）
+* 【cron   】     修复TimeZone设置无效的问题（issue#I23315@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.4.6 (2020-10-23)
+
+### 新特性
+* 【http   】     HttpRequest增加basicProxyAuth方法（issue#I1YQGM@Gitee）
+* 【core   】     NumberUtil.toStr修改逻辑，去掉BigDecimal的科学计数表示（pr#196@Gitee）
+* 【core   】     ListUtil.page第一页页码使用PageUtil（pr#198@Gitee）
+* 【http   】     增加微信、企业微信ua识别（pr#1179@Github）
+* 【core   】     ObjectUtil增加defaultIfXXX（pr#199@Gitee）
+* 【json   】     JSONObject构建时不支持的对象类型抛出异常
+
+### Bug修复
+* 【core   】     修复ChineseDate没有忽略时分秒导致计算错误问题（issue#I1YW12@Gitee）
+* 【core   】     修复FileUtil中，copyFile方法断言判断参数传递错误（issue#I1Z2NY@Gitee）
+* 【core   】     修复BeanDesc读取父类属性覆盖子类属性导致的问题（pr#1175@Github）
+* 【aop    】     修复SimpleAspect一个重载导致的问题，去掉重载的after方法（issue#I1YUG9@Gitee）
+* 【poi    】     修复03 sax读取日期问题（issue#I1Z83N@Gitee）
+* 【core   】     修复FileUtil.size软链导致的问题（pr#200@Gitee）
+* 【core   】     修复JSONObject构造时传入JSONArray结果出错问题（issue#I22FDS@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
 # 5.4.5 (2020-10-18)
 
 ### 新特性

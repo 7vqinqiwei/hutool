@@ -511,7 +511,7 @@ public class FileUtil extends PathUtil {
 	 * @return 总大小，bytes长度
 	 */
 	public static long size(File file) {
-		if (null == file || false == file.exists()) {
+		if (null == file || false == file.exists() || isSymlink(file)) {
 			return 0;
 		}
 
@@ -862,7 +862,7 @@ public class FileUtil extends PathUtil {
 	 */
 	public static File copyFile(String src, String dest, StandardCopyOption... options) throws IORuntimeException {
 		Assert.notBlank(src, "Source File path is blank !");
-		Assert.notNull(src, "Destination File path is null !");
+		Assert.notBlank(dest, "Destination File path is blank !");
 		return copyFile(Paths.get(src), Paths.get(dest), options).toFile();
 	}
 

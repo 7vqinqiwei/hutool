@@ -74,8 +74,8 @@ public class ImgUtilTest {
 	@Ignore
 	public void pressTextTest() {
 		ImgUtil.pressText(//
-				FileUtil.file("d:/test/617180969474805871.jpg"), //
-				FileUtil.file("d:/test/test2_result.png"), //
+				FileUtil.file("d:/test/2.jpg"), //
+				FileUtil.file("d:/test/2_result.png"), //
 				"版权所有", Color.RED, //
 				new Font("黑体", Font.BOLD, 100), //
 				0, //
@@ -98,7 +98,8 @@ public class ImgUtilTest {
 	@Test
 	@Ignore
 	public void writeTest() {
-		ImgUtil.write(ImgUtil.read("e:/test2.png"), FileUtil.file("e:/test2Write.jpg"));
+		final byte[] bytes = ImgUtil.toBytes(ImgUtil.read("d:/test/logo_484.png"), "png");
+		FileUtil.writeBytes(bytes, "d:/test/result.png");
 	}
 	
 	@Test

@@ -120,19 +120,19 @@ Each module can be introduced individually, or all modules can be introduced by 
 <dependency>
     <groupId>cn.hutool</groupId>
     <artifactId>hutool-all</artifactId>
-    <version>5.4.5</version>
+    <version>5.4.7</version>
 </dependency>
 ```
 
 ### Gradle
 ```
-compile 'cn.hutool:hutool-all:5.4.5'
+compile 'cn.hutool:hutool-all:5.4.7'
 ```
 
 ## Download
 
-- [Maven1](https://repo1.maven.org/maven2/cn/hutool/hutool-all/5.4.5/)
-- [Maven2](http://repo2.maven.org/maven2/cn/hutool/hutool-all/5.4.5/)
+- [Maven1](https://repo1.maven.org/maven2/cn/hutool/hutool-all/5.4.7/)
+- [Maven2](http://repo2.maven.org/maven2/cn/hutool/hutool-all/5.4.7/)
 
 > note:
 > Hutool 5.x supports JDK8+ and is not tested on Android platforms, and cannot guarantee that all tool classes or tool methods are available.
@@ -187,3 +187,9 @@ Hutool welcomes anyone to contribute code to Hutool, but the author suffers from
 If you think Hutool is good, you can donate to buy tshe author a pack of chili~, thanks in advance ^_^.
 
 [gitee donate](https://gitee.com/loolly/hutool)
+
+## WeChat Official Account
+
+Welcome to the official account of Hutool cooperation.
+
+![Java2B](https://cdn.jsdelivr.net/gh/looly/hutool-site/images/qrcode.jpg)
