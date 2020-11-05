@@ -19,6 +19,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+/**
+ * @author qinqw
+ */
 public class ListUtil {
 	/**
 	 * 新建一个空List

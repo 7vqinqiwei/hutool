@@ -306,6 +306,21 @@ public class BeanUtil {
 	}
 
 	/**
+	 * 将source对象中转变成map再将值设值到有相同字段的目标对象target上
+	 */
+	public static <T> T setFieldValue(Object source, T target) {
+		Map<String,Object> map = BeanUtil.beanToMap(source,Boolean.FALSE,Boolean.TRUE);
+		if (MapUtil.isNotEmpty(map)) {
+			map.keySet().forEach(key -> {
+				if (ReflectUtil.hasField(target.getClass(),key)) {
+					BeanUtil.setFieldValue(target,key,map.get(key));
+				}
+			});
+		}
+		return target;
+	}
+
+	/**
 	 * 解析Bean中的属性值
 	 *
 	 * @param <T>        属性值类型

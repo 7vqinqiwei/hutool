@@ -192,7 +192,9 @@ public class DynaBean extends CloneSupport<DynaBean> implements Serializable {
 		final DynaBean other = (DynaBean) obj;
 		if (bean == null) {
 			return other.bean == null;
-		} else return bean.equals(other.bean);
+		} else {
+			return bean.equals(other.bean);
+		}
 	}
 
 	@Override
