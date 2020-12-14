@@ -3,12 +3,15 @@ package cn.hutool.poi.excel.test;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.lang.Console;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.poi.excel.ExcelReader;
 import cn.hutool.poi.excel.ExcelUtil;
+import lombok.Data;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -133,11 +136,13 @@ public class ExcelReadTest {
 		reader.addHeaderAlias("姓名", "name");
 		reader.addHeaderAlias("年龄", "age");
 		reader.addHeaderAlias("性别", "gender");
+		reader.addHeaderAlias("鞋码", "shoeSize");
 
 		List<Person> all = reader.readAll(Person.class);
 		Assert.assertEquals("张三", all.get(0).getName());
 		Assert.assertEquals("男", all.get(0).getGender());
 		Assert.assertEquals(Integer.valueOf(11), all.get(0).getAge());
+		Assert.assertEquals(new BigDecimal("41.5"), all.get(0).getShoeSize());
 	}
 
 	@Test
@@ -154,39 +159,12 @@ public class ExcelReadTest {
 		}
 	}
 
+	@Data
 	public static class Person {
 		private String name;
 		private String gender;
 		private Integer age;
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public String getGender() {
-			return gender;
-		}
-
-		public void setGender(String gender) {
-			this.gender = gender;
-		}
-
-		public Integer getAge() {
-			return age;
-		}
-
-		public void setAge(Integer age) {
-			this.age = age;
-		}
-
-		@Override
-		public String toString() {
-			return "Person [name=" + name + ", gender=" + gender + ", age=" + age + "]";
-		}
+		private BigDecimal shoeSize;
 	}
 
 	@Test
@@ -209,6 +187,7 @@ public class ExcelReadTest {
 	}
 
 	@Test
+	@Ignore
 	public void readCellsTest() {
 		final ExcelReader reader = ExcelUtil.getReader("merge_test.xlsx");
 		reader.read((cell, value)-> Console.log("{}, {} {}", cell.getRowIndex(), cell.getColumnIndex(), value));
@@ -223,5 +202,21 @@ public class ExcelReadTest {
 		for (List<Object> list : read) {
 			Console.log(list);
 		}
+	}
+
+	@Test
+	public void nullValueEditTest(){
+		final ExcelReader reader = ExcelUtil.getReader("null_cell_test.xlsx");
+		reader.setCellEditor((cell, value)-> ObjectUtil.defaultIfNull(value, "#"));
+		final List<List<Object>> read = reader.read();
+
+		// 对于任意一个单元格有值的情况下，之前的单元格值按照null处理
+		Assert.assertEquals(1, read.get(1).size());
+		Assert.assertEquals(2, read.get(2).size());
+		Assert.assertEquals(3, read.get(3).size());
+
+		Assert.assertEquals("#", read.get(2).get(0));
+		Assert.assertEquals("#", read.get(3).get(0));
+		Assert.assertEquals("#", read.get(3).get(1));
 	}
 }

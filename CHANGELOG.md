@@ -3,6 +3,94 @@
 
 -------------------------------------------------------------------------------------------------------------
 
+# 5.5.2 (2020-12-01)
+
+### 新特性
+* 【crypto 】     KeyUtil增加重载，AES构造增加重载（issue#I25NNZ@Gitee）
+* 【json   】     JSONUtil增加toList重载（issue#1228@Github）
+* 【core   】     新增CollStreamUtil（issue#1228@Github）
+* 【extra  】     新增Rhino表达式执行引擎（pr#1229@Github）
+* 【crypto 】     增加判空（issue#1230@Github）
+* 【core   】     xml.setXmlStandalone(true)格式优化（pr#1234@Github）
+* 【core   】     AnnotationUtil增加setValue方法（pr#1250@Github）
+* 【core   】     ZipUtil增加get方法（issue#I27CUF@Gitee）
+* 【cache  】     对CacheObj等变量使用volatile关键字
+* 【core   】     Base64增加encodeWithoutPadding方法（issue#I26J16@Gitee）
+* 【core   】     ExceptionUtil增加message消息包装为运行时异常的方法（pr#1253@Gitee）
+* 【core   】     DatePattern增加年月格式化常量（pr#220@Gitee）
+* 【core   】     ArrayUtil增加shuffle方法（pr#1255@Github）
+* 【core   】     ArrayUtil部分方法分离至PrimitiveArrayUtil
+* 【crypto 】     opt改为otp包（issue#1257@Github）
+* 【cache  】     增加CacheListener（issue#1257@Github）
+* 【core   】     TimeInterval支持分组（issue#1238@Github）
+* 【core   】     增加compile包（pr#1243@Github）
+* 【core   】     增加ResourceClassLoader、CharSequenceResource、FileObjectResource
+* 【core   】     修改IoUtil.read(Reader)逻辑默认关闭Reader
+* 【core   】     ZipUtil增加Zip方法（pr#222@Gitee）
+* 【all    】     增加Hutool.getAllUtils和printAllUtils方法
+* 【core   】     增加PunyCode（issue#1268@Gitee）
+* 【core   】     ArrayUtil增加isSorted方法（pr#1271@Github）
+* 【captcha】     增加GifCaptcha（pr#1273@Github）
+* 【core   】     增加SSLUtil、SSLContextBuilder
+
+### Bug修复
+* 【cron   】     修复CronTimer可能死循环的问题（issue#1224@Github）
+* 【core   】     修复Calculator.conversion单个数字越界问题（issue#1222@Github）
+* 【poi    】     修复ExcelUtil.getSaxReader使用非MarkSupport流报错问题（issue#1225@Github）
+* 【core   】     修复HexUtil.format问题（issue#I268XT@Gitee）
+* 【core   】     修复ZipUtil判断压缩文件是否位于压缩目录内的逻辑有误的问题（issue#1251@Github）
+* 【json   】     修复JSONObject.accumulate问题
+* 【core   】     修复部分xlsx文件sax方式解析空指针问题（issue#1265@Github）
+* 【core   】     修复PatternPool中邮编的正则（issue#1274@Github）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.5.1 (2020-11-16)
+
+### 新特性
+* 【core   】     增加CopyVisitor和DelVisitor
+
+### Bug修复
+* 【core   】     修复在Linux下FileUtil.move失败问题（issue#I254Y3@Gitee）
+* 【http   】     修复UrlUtil和UrlBuilder中多个/被替换问题（issue#I25MZL@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.5.0 (2020-11-14)
+
+### 大版本特性
+* 【extra  】     增加jakarta.validation-api封装：ValidationUtil（pr#207@Gitee）
+* 【extra  】     增加表达式引擎封装：ExpressionUtil（pr#1203@Github）
+* 【extra  】     新增基于Apache-FtpServer封装：SimpleFtpServer
+* 【extra  】     新增基于Commons-Compress封装：CompressUtil
+
+### 新特性
+* 【core   】     NumberUtil.parseInt等支持123,2.00这类数字（issue#I23ORQ@Gitee）
+* 【core   】     增加ArrayUtil.isSub、indexOfSub、lastIndexOfSub方法（issue#I23O1K@Gitee）
+* 【core   】     反射调用支持传递参数的值为null（pr#1205@Github）
+* 【core   】     HexUtil增加format方法（issue#I245NF@Gitee）
+* 【poi    】     ExcelWriter增加setCurrentRowToEnd方法（issue#I24A2R@Gitee）
+* 【core   】     ExcelWriter增加setCurrentRowToEnd方法（issue#I24A2R@Gitee）
+* 【core   】     增加enum转数字支持（issue#I24QZY@Gitee）
+* 【core   】     NumberUtil.toBigDecimal空白符转换为0（issue#I24MRP@Gitee）
+* 【core   】     CollUtil和IterUtil增加size方法（pr#208@Gitee）
+* 【poi    】     ExcelReader的read方法读取空单元格增加CellEditor处理（issue#1213@Github）
+
+### Bug修复
+* 【core   】     修复DateUtil.current使用System.nanoTime的问题（issue#1198@Github）
+* 【core   】     修复Excel03SaxReader判断日期出错问题（issue#I23M9H@Gitee）
+* 【core   】     修复ClassUtil.getTypeArgument方法在判断泛型时导致的问题（issue#1207@Github）
+* 【core   】     修复Ipv4Util分隔符问题（issue#I24A9I@Gitee）
+* 【core   】     修复Ipv4Util.longToIp的问题
+* 【poi    】     修复Excel07SaxReader读取公式的错误的问题（issue#I23VFL@Gitee）
+* 【http   】     修复HttpUtil.isHttp判断问题（pr#1208@Github）
+* 【http   】     修复Snowflake时间回拨导致ID重复的bug（issue#1206@Github）
+* 【core   】     修复StrUtil.lastIndexOf查找位于首位的字符串找不到的bug（issue#I24RSV@Gitee）
+* 【poi    】     修复BigExcelWriter的autoSizeColumnAll问题（pr#1221@Github）
+* 【core   】     修复StrUtil.subBetweenAll不支持相同字符的问题（pr#1217@Github）
+
+-------------------------------------------------------------------------------------------------------------
+
 # 5.4.7 (2020-10-31)
 
 ### 新特性
@@ -12,7 +100,7 @@
 * 【core   】     CollUtil.map忽略空值改规则为原数组中的元素和处理后的元素都会忽略空值（issue#I22N08@Gitee）
 * 【http   】     增加SoapClient增加addSOAPHeader重载
 * 【http   】     ArrayUtil增加containsAll方法
-* 【http   】     增加CharsetDetector
+* 【core   】     增加CharsetDetector
 * 【cron   】     增加CronTask，监听支持获取id（issue#I23315@Gitee）
 
 ### Bug修复
