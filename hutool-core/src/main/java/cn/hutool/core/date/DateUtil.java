@@ -123,11 +123,10 @@ public class DateUtil extends CalendarUtil {
 	/**
 	 * 当前时间的时间戳
 	 *
-	 * @param isNano 是否为高精度时间
 	 * @return 时间
 	 */
-	public static long current(boolean isNano) {
-		return isNano ? System.nanoTime() : System.currentTimeMillis();
+	public static long current() {
+		return System.currentTimeMillis();
 	}
 
 	/**
@@ -820,10 +819,10 @@ public class DateUtil extends CalendarUtil {
 		int length = utcString.length();
 		if (StrUtil.contains(utcString, 'Z')) {
 			if (length == DatePattern.UTC_PATTERN.length() - 4) {
-				// 格式类似：2018-09-13T05:34:31Z
+				// 格式类似：2018-09-13T05:34:31Z，-4表示减去4个单引号的长度
 				return parse(utcString, DatePattern.UTC_FORMAT);
 			} else if (length == DatePattern.UTC_MS_PATTERN.length() - 4) {
-				// 格式类似：2018-09-13T05:34:31.999Z
+				// 格式类似：2018-09-13T05:34:31.999Z，-4表示减去4个单引号的长度
 				return parse(utcString, DatePattern.UTC_MS_FORMAT);
 			}
 		} else {
@@ -1410,7 +1409,7 @@ public class DateUtil extends CalendarUtil {
 	 * @param level     级别，按照天、小时、分、秒、毫秒分为5个等级
 	 * @return XX天XX小时XX分XX秒
 	 */
-	public static String formatBetween(Date beginDate, Date endDate, BetweenFormater.Level level) {
+	public static String formatBetween(Date beginDate, Date endDate, BetweenFormatter.Level level) {
 		return formatBetween(between(beginDate, endDate, DateUnit.MS), level);
 	}
 
@@ -1433,8 +1432,8 @@ public class DateUtil extends CalendarUtil {
 	 * @param level     级别，按照天、小时、分、秒、毫秒分为5个等级
 	 * @return XX天XX小时XX分XX秒XX毫秒
 	 */
-	public static String formatBetween(long betweenMs, BetweenFormater.Level level) {
-		return new BetweenFormater(betweenMs, level).format();
+	public static String formatBetween(long betweenMs, BetweenFormatter.Level level) {
+		return new BetweenFormatter(betweenMs, level).format();
 	}
 
 	/**
@@ -1445,7 +1444,7 @@ public class DateUtil extends CalendarUtil {
 	 * @since 3.0.1
 	 */
 	public static String formatBetween(long betweenMs) {
-		return new BetweenFormater(betweenMs, BetweenFormater.Level.MILLISECOND).format();
+		return new BetweenFormatter(betweenMs, BetweenFormatter.Level.MILLISECOND).format();
 	}
 
 	/**

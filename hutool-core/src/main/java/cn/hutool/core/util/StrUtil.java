@@ -1972,45 +1972,45 @@ public class StrUtil {
 	 * abcdefgh 2 -3 =》 cde <br>
 	 *
 	 * @param str       String
-	 * @param fromIndex 开始的index（包括）
-	 * @param toIndex   结束的index（不包括）
+	 * @param fromIndexInclude 开始的index（包括）
+	 * @param toIndexExclude   结束的index（不包括）
 	 * @return 字串
 	 */
-	public static String sub(CharSequence str, int fromIndex, int toIndex) {
+	public static String sub(CharSequence str, int fromIndexInclude, int toIndexExclude) {
 		if (isEmpty(str)) {
 			return str(str);
 		}
 		int len = str.length();
 
-		if (fromIndex < 0) {
-			fromIndex = len + fromIndex;
-			if (fromIndex < 0) {
-				fromIndex = 0;
+		if (fromIndexInclude < 0) {
+			fromIndexInclude = len + fromIndexInclude;
+			if (fromIndexInclude < 0) {
+				fromIndexInclude = 0;
 			}
-		} else if (fromIndex > len) {
-			fromIndex = len;
+		} else if (fromIndexInclude > len) {
+			fromIndexInclude = len;
 		}
 
-		if (toIndex < 0) {
-			toIndex = len + toIndex;
-			if (toIndex < 0) {
-				toIndex = len;
+		if (toIndexExclude < 0) {
+			toIndexExclude = len + toIndexExclude;
+			if (toIndexExclude < 0) {
+				toIndexExclude = len;
 			}
-		} else if (toIndex > len) {
-			toIndex = len;
+		} else if (toIndexExclude > len) {
+			toIndexExclude = len;
 		}
 
-		if (toIndex < fromIndex) {
-			int tmp = fromIndex;
-			fromIndex = toIndex;
-			toIndex = tmp;
+		if (toIndexExclude < fromIndexInclude) {
+			int tmp = fromIndexInclude;
+			fromIndexInclude = toIndexExclude;
+			toIndexExclude = tmp;
 		}
 
-		if (fromIndex == toIndex) {
+		if (fromIndexInclude == toIndexExclude) {
 			return EMPTY;
 		}
 
-		return str.toString().substring(fromIndex, toIndex);
+		return str.toString().substring(fromIndexInclude, toIndexExclude);
 	}
 
 	/**
@@ -2095,11 +2095,11 @@ public class StrUtil {
 	 * 切割指定位置之前部分的字符串
 	 *
 	 * @param string  字符串
-	 * @param toIndex 切割到的位置（不包括）
+	 * @param toIndexExclude 切割到的位置（不包括）
 	 * @return 切割后的剩余的前半部分字符串
 	 */
-	public static String subPre(CharSequence string, int toIndex) {
-		return sub(string, 0, toIndex);
+	public static String subPre(CharSequence string, int toIndexExclude) {
+		return sub(string, 0, toIndexExclude);
 	}
 
 	/**
@@ -2405,14 +2405,50 @@ public class StrUtil {
 		}
 
 		final List<String> result = new LinkedList<>();
-		for (String fragment : split(str, prefix)) {
-			int suffixIndex = fragment.indexOf(suffix.toString());
-			if (suffixIndex > 0) {
-				result.add(fragment.substring(0, suffixIndex));
+		final String[] split = split(str, prefix);
+		if(prefix.equals(suffix)){
+			// 前后缀字符相同，单独处理
+			for (int i = 1, length = split.length - 1; i < length; i += 2) {
+				result.add(split[i]);
+			}
+		} else{
+			int suffixIndex;
+			for (String fragment : split) {
+				suffixIndex = fragment.indexOf(suffix.toString());
+				if (suffixIndex > 0) {
+					result.add(fragment.substring(0, suffixIndex));
+				}
 			}
 		}
 
 		return result.toArray(new String[0]);
+	}
+
+	/**
+	 * 截取指定字符串多段中间部分，不包括标识字符串<br>
+	 * <p>
+	 * 栗子：
+	 *
+	 * <pre>
+	 * StrUtil.subBetweenAll(null, *)          			= []
+	 * StrUtil.subBetweenAll(*, null)          			= []
+	 * StrUtil.subBetweenAll(*, *)          			= []
+	 * StrUtil.subBetweenAll("", "")          			= []
+	 * StrUtil.subBetweenAll("", "#")         			= []
+	 * StrUtil.subBetweenAll("gotanks", "")     		= []
+	 * StrUtil.subBetweenAll("#gotanks#", "#")   		= ["gotanks"]
+	 * StrUtil.subBetweenAll("#hello# #world#!", "#")   = ["hello", "world"]
+	 * StrUtil.subBetweenAll("#hello# world#!", "#");   = ["hello"]
+	 * </pre>
+	 *
+	 * @param str    被切割的字符串
+	 * @param prefixAndSuffix 截取开始和结束的字符串标识
+	 * @return 截取后的字符串
+	 * @author gotanks
+	 * @since 5.5.0
+	 */
+	public static String[] subBetweenAll(CharSequence str, CharSequence prefixAndSuffix) {
+		return subBetweenAll(str, prefixAndSuffix, prefixAndSuffix);
 	}
 
 	/**
@@ -4019,7 +4055,7 @@ public class StrUtil {
 			return str.toString().lastIndexOf(searchStr.toString(), fromIndex);
 		}
 
-		for (int i = fromIndex; i > 0; i--) {
+		for (int i = fromIndex; i >= 0; i--) {
 			if (isSubEquals(str, i, searchStr, 0, searchStr.length(), true)) {
 				return i;
 			}
