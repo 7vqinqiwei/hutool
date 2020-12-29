@@ -1,12 +1,9 @@
-package cn.hutool.http.test;
+package cn.hutool.http;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.lang.Console;
 import cn.hutool.core.util.CharsetUtil;
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.http.ssl.SSLSocketFactoryBuilder;
 import cn.hutool.json.JSONUtil;
 import org.junit.Ignore;
@@ -143,5 +140,4 @@ public class HttpRequestTest {
 		HttpResponse execute = get.execute();
 		Console.log(execute.body());
 	}
-
 }

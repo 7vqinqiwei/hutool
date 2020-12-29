@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>cn.hutool</groupId>
 		<artifactId>hutool-parent</artifactId>
-		<version>5.5.2-SNAPSHOT</version>
+		<version>5.5.5-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>hutool-poi</artifactId>
@@ -38,6 +38,13 @@
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 			<version>${poi.version}</version>
+			<scope>compile</scope>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.ofdrw</groupId>
+			<artifactId>ofdrw-full</artifactId>
+			<version>1.7.2</version>
 			<scope>compile</scope>
 			<optional>true</optional>
 		</dependency>
