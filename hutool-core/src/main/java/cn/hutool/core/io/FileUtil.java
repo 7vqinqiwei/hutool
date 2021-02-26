@@ -638,12 +638,10 @@ public class FileUtil extends PathUtil {
 	 * @return 父目录
 	 */
 	public static File mkParentDirs(File file) {
-		final File parentFile = file.getParentFile();
-		if (null != parentFile && false == parentFile.exists()) {
-			//noinspection ResultOfMethodCallIgnored
-			parentFile.mkdirs();
+		if (null == file) {
+			return null;
 		}
-		return parentFile;
+		return mkdir(file.getParentFile());
 	}
 
 	/**
@@ -842,7 +840,7 @@ public class FileUtil extends PathUtil {
 		int exceptionsCount = 0;
 		while (true) {
 			try {
-				File file = File.createTempFile(prefix, suffix, dir).getCanonicalFile();
+				File file = File.createTempFile(prefix, suffix, mkdir(dir)).getCanonicalFile();
 				if (isReCreat) {
 					//noinspection ResultOfMethodCallIgnored
 					file.delete();
@@ -980,6 +978,8 @@ public class FileUtil extends PathUtil {
 	 * @see PathUtil#move(Path, Path, boolean)
 	 */
 	public static void move(File src, File target, boolean isOverride) throws IORuntimeException {
+		Assert.notNull(src, "Src file must be not null!");
+		Assert.notNull(target, "target file must be not null!");
 		move(src.toPath(), target.toPath(), isOverride);
 	}
 
@@ -1021,6 +1021,7 @@ public class FileUtil extends PathUtil {
 	 * @param isRetainExt 是否保留原文件的扩展名，如果保留，则newName不需要加扩展名
 	 * @param isOverride  是否覆盖目标文件
 	 * @return 目标文件
+	 * @see PathUtil#rename(Path, String, boolean)
 	 * @since 3.0.9
 	 */
 	public static File rename(File file, String newName, boolean isRetainExt, boolean isOverride) {
@@ -1703,6 +1704,17 @@ public class FileUtil extends PathUtil {
 		} catch (IOException e) {
 			throw new IORuntimeException(e);
 		}
+	}
+
+	/**
+	 * 读取带BOM头的文件为Reader
+	 *
+	 * @param file 文件
+	 * @return BufferedReader对象
+	 * @since 5.5.8
+	 */
+	public static BufferedReader getBOMReader(File file) {
+		return IoUtil.getReader(getBOMInputStream(file));
 	}
 
 	/**
@@ -2914,7 +2926,21 @@ public class FileUtil extends PathUtil {
 	 * @throws IORuntimeException IO异常
 	 */
 	public static File writeFromStream(InputStream in, File dest) throws IORuntimeException {
-		return FileWriter.create(dest).writeFromStream(in);
+		return writeFromStream(in, dest, true);
+	}
+
+	/**
+	 * 将流的内容写入文件
+	 *
+	 * @param dest      目标文件
+	 * @param in        输入流
+	 * @param isCloseIn 是否关闭输入流
+	 * @return dest
+	 * @throws IORuntimeException IO异常
+	 * @since 5.5.6
+	 */
+	public static File writeFromStream(InputStream in, File dest, boolean isCloseIn) throws IORuntimeException {
+		return FileWriter.create(dest).writeFromStream(in, isCloseIn);
 	}
 
 	/**
@@ -3169,7 +3195,22 @@ public class FileUtil extends PathUtil {
 	 * @since 4.1.15
 	 */
 	public static String getMimeType(String filePath) {
-		return URLConnection.getFileNameMap().getContentTypeFor(filePath);
+		String contentType = URLConnection.getFileNameMap().getContentTypeFor(filePath);
+		if (null == contentType) {
+			// 补充一些常用的mimeType
+			if (filePath.endsWith(".css")) {
+				contentType = "text/css";
+			} else if (filePath.endsWith(".js")) {
+				contentType = "application/x-javascript";
+			}
+		}
+
+		// 补充
+		if (null == contentType) {
+			contentType = getMimeType(Paths.get(filePath));
+		}
+
+		return contentType;
 	}
 
 	/**

@@ -19,11 +19,13 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 数组工具类
@@ -1646,6 +1648,40 @@ public class ArrayUtil extends PrimitiveArrayUtil {
 			result[i] = func.apply(array[i]);
 		}
 		return result;
+	}
+
+	/**
+	 * 按照指定规则，将一种类型的数组转换为另一种类型
+	 *
+	 * @param array               被转换的数组
+	 * @param targetComponentType 目标的元素类型
+	 * @param func                转换规则函数
+	 * @param <T>                 原数组类型
+	 * @param <R>                 目标数组类型
+	 * @return 转换后的数组
+	 * @since 5.5.8
+	 */
+	public static <T, R> R[] map(Object array, Class<R> targetComponentType, Function<? super T, ? extends R> func) {
+		final int length = length(array);
+		final R[] result = newArray(targetComponentType, length);
+		for (int i = 0; i < length; i++) {
+			result[i] = func.apply(get(array, i));
+		}
+		return result;
+	}
+
+	/**
+	 * 按照指定规则，将一种类型的数组元素提取后转换为List
+	 *
+	 * @param array 被转换的数组
+	 * @param func  转换规则函数
+	 * @param <T>   原数组类型
+	 * @param <R>   目标数组类型
+	 * @return 转换后的数组
+	 * @since 5.5.7
+	 */
+	public static <T, R> List<R> map(T[] array, Function<? super T, ? extends R> func) {
+		return Arrays.stream(array).map(func).collect(Collectors.toList());
 	}
 
 	/**
