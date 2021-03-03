@@ -7,7 +7,10 @@ import cn.hutool.core.lang.func.Func0;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.StampedLock;
 
 /**
@@ -27,7 +30,15 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
 	protected Map<K, CacheObj<K, V>> cacheMap;
 
+	// 乐观锁，此处使用乐观锁解决读多写少的场景
+	// get时乐观读，再检查是否修改，修改则转入悲观读重新读一遍，可以有效解决在写时阻塞大量读操作的情况。
+	// see: https://www.cnblogs.com/jiagoushijuzi/p/13721319.html
 	private final StampedLock lock = new StampedLock();
+
+	/**
+	 * 写的时候每个key一把锁，降低锁的粒度
+	 */
+	protected final Map<K, Lock> keyLockMap = new ConcurrentHashMap<>();
 
 	/**
 	 * 返回缓存容量，{@code 0}表示无大小限制
@@ -44,11 +55,11 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 	protected boolean existCustomTimeout;
 
 	/**
-	 * 命中数
+	 * 命中数，即命中缓存计数
 	 */
 	protected AtomicLong hitCount = new AtomicLong();
 	/**
-	 * 丢失数
+	 * 丢失数，即未命中缓存计数
 	 */
 	protected AtomicLong missCount = new AtomicLong();
 
@@ -135,9 +146,11 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 	public V get(K key, boolean isUpdateLastAccess, Func0<V> supplier) {
 		V v = get(key, isUpdateLastAccess);
 		if (null == v && null != supplier) {
-			final long stamp = lock.writeLock();
+			//每个key单独获取一把锁，降低锁的粒度提高并发能力，see pr#1385@Github
+			final Lock keyLock = keyLockMap.computeIfAbsent(key, k -> new ReentrantLock());
+			keyLock.lock();
 			try {
-				// 双重检查锁
+				// 双重检查锁，防止在竞争锁的过程中已经有其它线程写入
 				final CacheObj<K, V> co = cacheMap.get(key);
 				if (null == co || co.isExpired()) {
 					try {
@@ -145,12 +158,13 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 					} catch (Exception e) {
 						throw new RuntimeException(e);
 					}
-					putWithoutLock(key, v, this.timeout);
+					put(key, v, this.timeout);
 				} else {
-					v = co.get(true);
+					v = co.get(isUpdateLastAccess);
 				}
 			} finally {
-				lock.unlockWrite(stamp);
+				keyLock.unlock();
+				keyLockMap.remove(key);
 			}
 		}
 		return v;
@@ -159,25 +173,28 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 	@Override
 	public V get(K key, boolean isUpdateLastAccess) {
 		// 尝试读取缓存，使用乐观读锁
-		long stamp = lock.readLock();
-		try {
-			// 不存在或已移除
-			final CacheObj<K, V> co = cacheMap.get(key);
-			if (null == co) {
-				missCount.getAndIncrement();
-				return null;
+		long stamp = lock.tryOptimisticRead();
+		CacheObj<K, V> co = cacheMap.get(key);
+		if(false == lock.validate(stamp)){
+			// 有写线程修改了此对象，悲观读
+			stamp = lock.readLock();
+			try {
+				co = cacheMap.get(key);
+			} finally {
+				lock.unlockRead(stamp);
 			}
-
-			// 命中
-			if (false == co.isExpired()) {
-				hitCount.getAndIncrement();
-				return co.get(isUpdateLastAccess);
-			}
-		} finally {
-			lock.unlockRead(stamp);
 		}
 
-		// 过期
+		// 未命中
+		if (null == co) {
+			missCount.getAndIncrement();
+			return null;
+		} else if (false == co.isExpired()) {
+			hitCount.getAndIncrement();
+			return co.get(isUpdateLastAccess);
+		}
+
+		// 过期，既不算命中也不算非命中
 		remove(key, true);
 		return null;
 	}

@@ -9,13 +9,13 @@
 	<parent>
 		<groupId>cn.hutool</groupId>
 		<artifactId>hutool-parent</artifactId>
-		<version>5.5.5-SNAPSHOT</version>
+		<version>5.5.8-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>hutool-socket</artifactId>
 	<name>${project.artifactId}</name>
 	<description>Hutool套接字，包括BIO、NIO、AIO封装</description>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>cn.hutool</groupId>

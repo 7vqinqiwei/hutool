@@ -9,13 +9,13 @@
 	<parent>
 		<groupId>cn.hutool</groupId>
 		<artifactId>hutool-parent</artifactId>
-		<version>5.5.5-SNAPSHOT</version>
+		<version>5.5.8-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>hutool-aop</artifactId>
 	<name>${project.artifactId}</name>
 	<description>Hutool 动态代理（AOP）</description>
-	
+
 	<properties>
 		<!-- versions -->
 		<cglib.version>3.3.0</cglib.version>

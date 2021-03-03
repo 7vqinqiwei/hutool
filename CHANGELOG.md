@@ -3,6 +3,80 @@
 
 -------------------------------------------------------------------------------------------------------------
 
+# 5.5.8 (2021-01-25)
+
+### 新特性
+* 【extra  】     增加自动装配SpringUtil类（pr#1366@Github）
+* 【extra  】     ArrayUtil增加map方法重载
+* 【crypto 】     AsymmetricAlgorithm增加RSA_ECB("RSA/ECB/NoPadding")（issue#1368@Github）
+* 【core   】     补充StrUtil.padXXX注释（issue#I2E1S7@Gitee）
+* 【core   】     修改上传文件检查逻辑
+* 【core   】     修正LocalDateTimeUtil.offset方法注释问题（issue#I2EEXC@Gitee）
+* 【extra  】     VelocityEngine的getRowEngine改为getRawEngine（issue#I2EGRG@Gitee）
+* 【cache  】     缓存降低锁的粒度，提高并发能力（pr#1385@Github）
+* 【core   】     SimpleCache缓存降低锁的粒度，提高并发能力（pr#1385@Github）
+* 【core   】     增加RadixUtil（pr#260@Gitee）
+* 【core   】     BeanUtil.getFieldValue支持获取字段集合（pr#254@Gitee）
+* 【core   】     DateConvert转换失败默认抛出异常（issue#I2M5GN@Gitee）
+* 【http   】     HttpServerRequest增加getParam方法
+* 【http   】     RootAction增加可选name参数，返回指定文件名称
+* 【db     】     支持人大金仓8的驱动识别
+* 【db     】     ThreadUtil增加createScheduledExecutor和schedule方法（issue#I2NUTC@Gitee）
+* 【core   】     ImgUtil增加getImage方法（issue#I2DU1Z@Gitee）
+* 【core   】     DateUtil.beginOfHour（pr#269@Gitee）
+* 【core   】     MapUtil增加sortByValue（pr#259@Gitee）
+* 【core   】     TypeUtil修正hasTypeVeriable为hasTypeVariable
+* 【core   】     RandomUtil.getRandom改为new SecureRandom，避免阻塞
+
+### Bug修复
+* 【core   】     修复FileUtil.move以及PathUtil.copy等无法自动创建父目录的问题（issue#I2CKTI@Gitee）
+* 【core   】     修复Console.input读取不全问题（pr#263@Gitee）
+* 【core   】     修复URLUtil.encodeAll未检查空指针问题（issue#I2CNPS@Gitee）
+* 【core   】     修复UrlBuilder.of的query中含有?丢失问题（issue#I2CNPS@Gitee）
+* 【crypto 】     修复BCrypt.checkpw报错问题（issue#1377@Github）
+* 【extra  】     修复Fftp中cd失败导致的问题（issue#1371@Github）
+* 【poi    】     修复ExcelWriter.merge注释问题（issue#I2DNPG@Gitee）
+* 【core   】     修复CsvReader读取注释行错误问题（issue#I2D87I@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.5.7 (2021-01-07)
+
+### 新特性
+* 【core   】     DynaBean.create增加重载方法（pr#245@Gitee）
+* 【core   】     IdcardUtil增加重载是否忽略大小写（issue#1348@Github）
+* 【poi    】     SheetRidReader增加getRidByIndex方法（issue#1342@Github）
+* 【extra  】     MailAccount增加sslProtocols配置项（issue#IZN95@Gitee）
+* 【extra  】     MailUtil增加getSession方法
+* 【setting】     新增setByGroup和putByGroup，set和put标记为过期（issue#I2C42H@Gitee）
+* 【crypto 】     修改SymmetricAlgorithm注释（issue#1360@Github）
+* 【all    】     pom中将META-INF/maven下全部exclude（pr#1355@Github）
+* 【http   】     SimpleServer中增加addFilter等方法，并使用全局线程池
+* 【core   】     CollUtil.forEach 增加null 判断（pr#250@Gitee）
+* 【extra  】     FtpConfig增加serverLanguageCode和systemKey配置,Ftp.download增加重载（pr#248@Gitee）
+
+### Bug修复
+* 【core   】     修复CsvReader读取双引号未转义问题（issue#I2BMP1@Gitee）
+* 【json   】     JSONUtil.parse修复config无效问题（issue#1363@Github）
+* 【http   】     修复SimpleServer返回响应内容Content-Length不正确的问题（issue#1358@Github）
+* 【http   】     修复Https请求部分环境下报证书验证异常问题（issue#I2C1BZ@Gitee）
+
+-------------------------------------------------------------------------------------------------------------
+
+# 5.5.6 (2020-12-29)
+
+### 新特性
+* 【core   】     手机号工具类 座机正则表达式统一管理（pr#243@Gitee）
+* 【extra  】     Mail增加setDebugOutput方法（issue#1335@Gitee）
+
+### Bug修复
+* 【core   】     修复ZipUtil.unzip从流解压关闭问题（issue#I2B0S1@Gitee）
+* 【poi    】     修复Excel07Writer写出表格错乱问题（issue#I2B57B@Gitee）
+* 【poi    】     修复SheetRidReader读取字段错误问题（issue#1342@Github）
+* 【core   】     修复FileUtil.getMimeType不支持css和js（issue#1341@Github）
+
+-------------------------------------------------------------------------------------------------------------
+
 # 5.5.5 (2020-12-27)
 
 ### 新特性
@@ -26,6 +100,7 @@
 * 【core   】     修复强依赖了POI的问题（issue#1336@Github）
 
 -------------------------------------------------------------------------------------------------------------
+
 # 5.5.4 (2020-12-16)
 
 ### 新特性
