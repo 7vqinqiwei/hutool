@@ -181,6 +181,8 @@ public class StrUtil extends CharSequenceUtil {
 	 */
 	public static final String AT = "@";
 
+	public static final String EN_QUESTION_MASK = "?";
+
 
 	/**
 	 * 字符串常量：HTML 空格转义 {@code "&nbsp;" -> " "}
@@ -668,4 +670,7 @@ public class StrUtil extends CharSequenceUtil {
 		}
 		return template2;
 	}
+
+
+
 }

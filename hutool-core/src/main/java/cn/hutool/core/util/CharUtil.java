@@ -49,6 +49,8 @@ public class CharUtil {
 	public static final char COLON = ':';
 	/** 字符常量：艾特 {@code '@'} */
 	public static final char AT = '@';
+	/** 字符常量：英文的 question mask {@code '?'} */
+	public static final char EN_QUESTION_MASK = '?';
 
 	/**
 	 * 是否为ASCII字符，ASCII字符位于0~127之间
