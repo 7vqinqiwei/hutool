@@ -1,5 +1,6 @@
 package cn.hutool.core.io;
 
+import cn.hutool.core.collection.LineIter;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.lang.Assert;
@@ -10,7 +11,9 @@ import cn.hutool.core.util.StrUtil;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -158,11 +161,11 @@ public class IoUtil extends NioUtil {
 			for (int readSize; (readSize = in.read(buffer)) != EOF; ) {
 				out.write(buffer, 0, readSize);
 				size += readSize;
-				out.flush();
 				if (null != streamProgress) {
 					streamProgress.progress(size);
 				}
 			}
+			out.flush();
 		} catch (IOException e) {
 			throw new IORuntimeException(e);
 		}
@@ -386,7 +389,17 @@ public class IoUtil extends NioUtil {
 	 * @since 5.5.3
 	 */
 	public static FastByteArrayOutputStream read(InputStream in, boolean isClose) throws IORuntimeException {
-		final FastByteArrayOutputStream out = new FastByteArrayOutputStream();
+		final FastByteArrayOutputStream out;
+		if(in instanceof FileInputStream){
+			// 文件流的长度是可预见的，此时直接读取效率更高
+			try {
+				out = new FastByteArrayOutputStream(in.available());
+			} catch (IOException e) {
+				throw new IORuntimeException(e);
+			}
+		} else{
+			out = new FastByteArrayOutputStream();
+		}
 		try {
 			copy(in, out);
 		} finally {
@@ -448,12 +461,12 @@ public class IoUtil extends NioUtil {
 	 * 从流中读取bytes
 	 *
 	 * @param in      {@link InputStream}
-	 * @param isCLose 是否关闭输入流
+	 * @param isClose 是否关闭输入流
 	 * @return bytes
 	 * @throws IORuntimeException IO异常
 	 * @since 5.0.4
 	 */
-	public static byte[] readBytes(InputStream in, boolean isCLose) throws IORuntimeException {
+	public static byte[] readBytes(InputStream in, boolean isClose) throws IORuntimeException {
 		if (in instanceof FileInputStream) {
 			// 文件流的长度是可预见的，此时直接读取效率更高
 			final byte[] result;
@@ -466,12 +479,16 @@ public class IoUtil extends NioUtil {
 				}
 			} catch (IOException e) {
 				throw new IORuntimeException(e);
+			} finally {
+				if (isClose) {
+					close(in);
+				}
 			}
 			return result;
 		}
 
 		// 未知bytes总量的流
-		return read(in, isCLose).toByteArray();
+		return read(in, isClose).toByteArray();
 	}
 
 	/**
@@ -755,7 +772,7 @@ public class IoUtil extends NioUtil {
 	}
 
 	/**
-	 * 文件转为流
+	 * 文件转为{@link FileInputStream}
 	 *
 	 * @param file 文件
 	 * @return {@link FileInputStream}
@@ -769,7 +786,7 @@ public class IoUtil extends NioUtil {
 	}
 
 	/**
-	 * String 转为流
+	 * byte[] 转为{@link ByteArrayInputStream}
 	 *
 	 * @param content 内容bytes
 	 * @return 字节流
@@ -783,6 +800,20 @@ public class IoUtil extends NioUtil {
 	}
 
 	/**
+	 * {@link ByteArrayOutputStream}转为{@link ByteArrayInputStream}
+	 *
+	 * @param out {@link ByteArrayOutputStream}
+	 * @return 字节流
+	 * @since 5.3.6
+	 */
+	public static ByteArrayInputStream toStream(ByteArrayOutputStream out) {
+		if (out == null) {
+			return null;
+		}
+		return new ByteArrayInputStream(out.toByteArray());
+	}
+
+	/**
 	 * 转换为{@link BufferedInputStream}
 	 *
 	 * @param in {@link InputStream}
@@ -790,7 +821,21 @@ public class IoUtil extends NioUtil {
 	 * @since 4.0.10
 	 */
 	public static BufferedInputStream toBuffered(InputStream in) {
+		Assert.notNull(in, "InputStream must be not null!");
 		return (in instanceof BufferedInputStream) ? (BufferedInputStream) in : new BufferedInputStream(in);
+	}
+
+	/**
+	 * 转换为{@link BufferedInputStream}
+	 *
+	 * @param in {@link InputStream}
+	 * @param bufferSize buffer size
+	 * @return {@link BufferedInputStream}
+	 * @since 5.6.1
+	 */
+	public static BufferedInputStream toBuffered(InputStream in, int bufferSize) {
+		Assert.notNull(in, "InputStream must be not null!");
+		return (in instanceof BufferedInputStream) ? (BufferedInputStream) in : new BufferedInputStream(in, bufferSize);
 	}
 
 	/**
@@ -801,7 +846,71 @@ public class IoUtil extends NioUtil {
 	 * @since 4.0.10
 	 */
 	public static BufferedOutputStream toBuffered(OutputStream out) {
+		Assert.notNull(out, "OutputStream must be not null!");
 		return (out instanceof BufferedOutputStream) ? (BufferedOutputStream) out : new BufferedOutputStream(out);
+	}
+
+	/**
+	 * 转换为{@link BufferedOutputStream}
+	 *
+	 * @param out {@link OutputStream}
+	 * @param bufferSize buffer size
+	 * @return {@link BufferedOutputStream}
+	 * @since 5.6.1
+	 */
+	public static BufferedOutputStream toBuffered(OutputStream out, int bufferSize) {
+		Assert.notNull(out, "OutputStream must be not null!");
+		return (out instanceof BufferedOutputStream) ? (BufferedOutputStream) out : new BufferedOutputStream(out, bufferSize);
+	}
+
+	/**
+	 * 转换为{@link BufferedReader}
+	 *
+	 * @param reader {@link Reader}
+	 * @return {@link BufferedReader}
+	 * @since 5.6.1
+	 */
+	public static BufferedReader toBuffered(Reader reader) {
+		Assert.notNull(reader, "Reader must be not null!");
+		return (reader instanceof BufferedReader) ? (BufferedReader) reader : new BufferedReader(reader);
+	}
+
+	/**
+	 * 转换为{@link BufferedReader}
+	 *
+	 * @param reader {@link Reader}
+	 * @param bufferSize buffer size
+	 * @return {@link BufferedReader}
+	 * @since 5.6.1
+	 */
+	public static BufferedReader toBuffered(Reader reader, int bufferSize) {
+		Assert.notNull(reader, "Reader must be not null!");
+		return (reader instanceof BufferedReader) ? (BufferedReader) reader : new BufferedReader(reader, bufferSize);
+	}
+
+	/**
+	 * 转换为{@link BufferedWriter}
+	 *
+	 * @param writer {@link Writer}
+	 * @return {@link BufferedWriter}
+	 * @since 5.6.1
+	 */
+	public static BufferedWriter toBuffered(Writer writer) {
+		Assert.notNull(writer, "Writer must be not null!");
+		return (writer instanceof BufferedWriter) ? (BufferedWriter) writer : new BufferedWriter(writer);
+	}
+
+	/**
+	 * 转换为{@link BufferedWriter}
+	 *
+	 * @param writer {@link Writer}
+	 * @param bufferSize buffer size
+	 * @return {@link BufferedWriter}
+	 * @since 5.6.1
+	 */
+	public static BufferedWriter toBuffered(Writer writer, int bufferSize) {
+		Assert.notNull(writer, "Writer must be not null!");
+		return (writer instanceof BufferedWriter) ? (BufferedWriter) writer : new BufferedWriter(writer, bufferSize);
 	}
 
 	/**
@@ -975,9 +1084,9 @@ public class IoUtil extends NioUtil {
 			for (Object content : contents) {
 				if (content != null) {
 					osw.writeObject(content);
-					osw.flush();
 				}
 			}
+			osw.flush();
 		} catch (IOException e) {
 			throw new IORuntimeException(e);
 		} finally {
@@ -1171,5 +1280,52 @@ public class IoUtil extends NioUtil {
 	 */
 	public static long checksumValue(InputStream in, Checksum checksum) {
 		return checksum(in, checksum).getValue();
+	}
+
+	/**
+	 * 返回行遍历器
+	 * <pre>
+	 * LineIterator it = null;
+	 * try {
+	 * 	it = IoUtil.lineIter(reader);
+	 * 	while (it.hasNext()) {
+	 * 		String line = it.nextLine();
+	 * 		// do something with line
+	 * 	}
+	 * } finally {
+	 * 		it.close();
+	 * }
+	 * </pre>
+	 *
+	 * @param reader {@link Reader}
+	 * @return {@link LineIter}
+	 * @since 5.6.1
+	 */
+	public static LineIter lineIter(Reader reader){
+		return new LineIter(reader);
+	}
+
+	/**
+	 * 返回行遍历器
+	 * <pre>
+	 * LineIterator it = null;
+	 * try {
+	 * 	it = IoUtil.lineIter(in, CharsetUtil.CHARSET_UTF_8);
+	 * 	while (it.hasNext()) {
+	 * 		String line = it.nextLine();
+	 * 		// do something with line
+	 * 	}
+	 * } finally {
+	 * 		it.close();
+	 * }
+	 * </pre>
+	 *
+	 * @param in {@link InputStream}
+	 * @param charset 编码
+	 * @return {@link LineIter}
+	 * @since 5.6.1
+	 */
+	public static LineIter lineIter(InputStream in, Charset charset){
+		return new LineIter(in, charset);
 	}
 }

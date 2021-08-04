@@ -2,8 +2,6 @@ package cn.hutool.core.collection;
 
 import cn.hutool.core.comparator.PinyinComparator;
 import cn.hutool.core.comparator.PropertyComparator;
-import cn.hutool.core.convert.Convert;
-import cn.hutool.core.lang.Editor;
 import cn.hutool.core.lang.Matcher;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -20,7 +18,9 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * @author qinqw
+ * List相关工具类
+ *
+ * @author looly
  */
 public class ListUtil {
 	/**
@@ -249,7 +249,7 @@ public class ListUtil {
 		// 每页条目数大于总数直接返回所有
 		if (resultSize <= pageSize) {
 			if (pageNo < (PageUtil.getFirstPageNo() + 1)) {
-				return Collections.unmodifiableList(list);
+				return unmodifiable(list);
 			} else {
 				// 越界直接返回空
 				return new ArrayList<>(0);
@@ -265,11 +265,11 @@ public class ListUtil {
 		if (startEnd[1] > resultSize) {
 			startEnd[1] = resultSize;
 			if (startEnd[0] > startEnd[1]) {
-				return empty();
+				return new ArrayList<>(0);
 			}
 		}
 
-		return list.subList(startEnd[0], startEnd[1]);
+		return sub(list, startEnd[0], startEnd[1]);
 	}
 
 	/**
@@ -332,7 +332,11 @@ public class ListUtil {
 	 * @since 4.0.6
 	 */
 	public static <T> List<T> reverseNew(List<T> list) {
-		final List<T> list2 = ObjectUtil.clone(list);
+		List<T> list2 = ObjectUtil.clone(list);
+		if(null == list2){
+			// 不支持clone
+			list2 = new ArrayList<>(list);
+		}
 		return reverse(list2);
 	}
 
@@ -369,7 +373,8 @@ public class ListUtil {
 	}
 
 	/**
-	 * 截取集合的部分
+	 * 截取集合的部分<br>
+	 * 此方法与{@link List#subList(int, int)} 不同在于子列表是新的副本，操作子列表不会影响原列表。
 	 *
 	 * @param <T>   集合元素类型
 	 * @param list  被截取的数组
@@ -410,8 +415,8 @@ public class ListUtil {
 			end = size;
 		}
 
-		if (step <= 1) {
-			return list.subList(start, end);
+		if (step < 1) {
+			step = 1;
 		}
 
 		final List<T> result = new ArrayList<>();
@@ -422,34 +427,27 @@ public class ListUtil {
 	}
 
 	/**
-	 * 过滤<br>
-	 * 过滤过程通过传入的Editor实现来返回需要的元素内容，这个Editor实现可以实现以下功能：
+	 * 获取匹配规则定义中匹配到元素的最后位置<br>
+	 * 此方法对于某些无序集合的位置信息，以转换为数组后的位置为准。
 	 *
-	 * <pre>
-	 * 1、过滤出需要的对象，如果返回null表示这个元素对象抛弃
-	 * 2、修改元素对象，返回集合中为修改后的对象
-	 * </pre>
-	 *
-	 * @param <T>    集合元素类型
-	 * @param list   集合
-	 * @param editor 编辑器接口
-	 * @return 过滤后的数组
-	 * @since 4.1.8
+	 * @param <T>     元素类型
+	 * @param list    List集合
+	 * @param matcher 匹配器，为空则全部匹配
+	 * @return 最后一个位置
+	 * @since 5.6.6
 	 */
-	public static <T> List<T> filter(List<T> list, Editor<T> editor) {
-		if (null == list || null == editor) {
-			return list;
-		}
-
-		final List<T> list2 = (list instanceof LinkedList) ? new LinkedList<>() : new ArrayList<>(list.size());
-		T modified;
-		for (T t : list) {
-			modified = editor.edit(t);
-			if (null != modified) {
-				list2.add(modified);
+	public static <T> int lastIndexOf(List<T> list, Matcher<T> matcher) {
+		if (null != list) {
+			final int size = list.size();
+			if(size > 0){
+				for(int i = size -1; i >= 0; i--){
+					if (null == matcher || matcher.match(list.get(i))) {
+						return i;
+					}
+				}
 			}
 		}
-		return list2;
+		return -1;
 	}
 
 	/**
@@ -462,17 +460,7 @@ public class ListUtil {
 	 * @since 5.2.5
 	 */
 	public static <T> int[] indexOfAll(List<T> list, Matcher<T> matcher) {
-		final List<Integer> indexList = new ArrayList<>();
-		if (null != list) {
-			int index = 0;
-			for (T t : list) {
-				if (null == matcher || matcher.match(t)) {
-					indexList.add(index);
-				}
-				index++;
-			}
-		}
-		return Convert.convert(int[].class, indexList);
+		return CollUtil.indexOfAll(list, matcher);
 	}
 
 	/**
@@ -491,10 +479,11 @@ public class ListUtil {
 	}
 
 	/**
-	 * 获取一个空List
+	 * 获取一个空List，这个空List不可变
 	 *
 	 * @param <T> 元素类型
 	 * @return 空的List
+	 * @see Collections#emptyList()
 	 * @since 5.2.6
 	 */
 	public static <T> List<T> empty() {

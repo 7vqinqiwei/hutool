@@ -4,6 +4,7 @@ import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.file.visitor.CopyVisitor;
 import cn.hutool.core.io.file.visitor.DelVisitor;
+import cn.hutool.core.io.file.visitor.MoveVisitor;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.CharsetUtil;
 
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
@@ -144,7 +146,7 @@ public class PathUtil {
 			if (isDirectory(path)) {
 				Files.walkFileTree(path, DelVisitor.INSTANCE);
 			} else {
-				Files.delete(path);
+				delFile(path);
 			}
 		} catch (IOException e) {
 			throw new IORuntimeException(e);
@@ -230,7 +232,7 @@ public class PathUtil {
 	 */
 	public static Path copyContent(Path src, Path target, CopyOption... options) throws IORuntimeException {
 		try {
-			Files.walkFileTree(src, new CopyVisitor(src, target));
+			Files.walkFileTree(src, new CopyVisitor(src, target, options));
 		} catch (IOException e) {
 			throw new IORuntimeException(e);
 		}
@@ -404,7 +406,7 @@ public class PathUtil {
 	 * @return byte数组
 	 * @since 5.5.4
 	 */
-	public static byte[] readBytes(Path path){
+	public static byte[] readBytes(Path path) {
 		try {
 			return Files.readAllBytes(path);
 		} catch (IOException e) {
@@ -449,7 +451,8 @@ public class PathUtil {
 
 	/**
 	 * 移动文件或目录<br>
-	 * 当目标是目录时，会将源文件或文件夹整体移动至目标目录下
+	 * 当目标是目录时，会将源文件或文件夹整体移动至目标目录下<br>
+	 * 例如：move("/usr/aaa", "/usr/bbb")结果为："/usr/bbb/aaa"
 	 *
 	 * @param src        源文件或目录路径
 	 * @param target     目标路径，如果为目录，则移动到此目录下
@@ -469,7 +472,15 @@ public class PathUtil {
 		try {
 			return Files.move(src, target, options);
 		} catch (IOException e) {
-			throw new IORuntimeException(e);
+			// 移动失败，可能是跨分区移动导致的，采用递归移动方式
+			try {
+				Files.walkFileTree(src, new MoveVisitor(src, target, options));
+				// 移动后空目录没有删除，
+				del(src);
+			} catch (IOException e2) {
+				throw new IORuntimeException(e2);
+			}
+			return target;
 		}
 	}
 
@@ -551,7 +562,7 @@ public class PathUtil {
 	 * @return 转换后的Path
 	 * @since 5.5.5
 	 */
-	public static Path toAbsNormal(Path path){
+	public static Path toAbsNormal(Path path) {
 		Assert.notNull(path);
 		return path.toAbsolutePath().normalize();
 	}
@@ -561,8 +572,8 @@ public class PathUtil {
 	 *
 	 * @param file 文件
 	 * @return MimeType
-	 * @since 5.5.5
 	 * @see Files#probeContentType(Path)
+	 * @since 5.5.5
 	 */
 	public static String getMimeType(Path file) {
 		try {
@@ -599,5 +610,23 @@ public class PathUtil {
 	 */
 	public static Path mkParentDirs(Path path) {
 		return mkdir(path.getParent());
+	}
+
+	/**
+	 * 删除文件，不追踪软链
+	 *
+	 * @param path 文件对象
+	 * @throws IOException IO异常
+	 * @since 5.7.7
+	 */
+	protected static void delFile(Path path) throws IOException {
+		try {
+			Files.delete(path);
+		} catch (AccessDeniedException e) {
+			// 可能遇到只读文件，无法删除.使用 file 方法删除
+			if (false == path.toFile().delete()) {
+				throw e;
+			}
+		}
 	}
 }

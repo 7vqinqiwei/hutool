@@ -1,5 +1,6 @@
 package cn.hutool.http;
 
+import cn.hutool.core.codec.Base64;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Console;
 import cn.hutool.core.util.CharsetUtil;
@@ -247,6 +248,7 @@ public class HttpUtilTest {
 	@Test
 	@Ignore
 	public void patchTest() {
+		// 验证patch请求是否可用
 		String body = HttpRequest.patch("https://www.baidu.com").execute().body();
 		Console.log(body);
 	}
@@ -320,9 +322,16 @@ public class HttpUtilTest {
 	}
 
 	@Test
-	public void tjhrTest(){
-		String url = "https://www.51tjhr.com";
-		final String s = HttpUtil.get(url);
+	@Ignore
+	public void sinajsTest(){
+		final String s = HttpUtil.get("http://hq.sinajs.cn/list=sh600519");
 		Console.log(s);
+	}
+
+	@Test
+	@Ignore
+	public void gimg2Test(){
+		byte[] bytes = HttpUtil.downloadBytes("https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fpic.jj20.com%2Fup%2Fallimg%2F1114%2F0H320120Z3%2F200H3120Z3-6-1200.jpg&refer=http%3A%2F%2Fpic.jj20.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1621996490&t=8c384c2823ea453da15a1b9cd5183eea");
+		Console.log(Base64.encode(bytes));
 	}
 }

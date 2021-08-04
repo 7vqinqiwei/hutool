@@ -1,14 +1,21 @@
 package cn.hutool.core.text.csv;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Console;
 import cn.hutool.core.util.CharsetUtil;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CsvUtilTest {
 
@@ -47,13 +54,15 @@ public class CsvUtilTest {
 	@Ignore
 	public void readTest3() {
 		CsvReader reader = CsvUtil.getReader();
-		reader.read(FileUtil.getUtf8Reader("d:/test/test.csv"), Console::log);
+		String path = FileUtil.isWindows() ? "d:/test/test.csv" : "~/test/test.csv";
+		reader.read(FileUtil.getUtf8Reader(path), Console::log);
 	}
 
 	@Test
 	@Ignore
 	public void writeTest() {
-		CsvWriter writer = CsvUtil.getWriter("d:/test/testWrite.csv", CharsetUtil.CHARSET_UTF_8);
+		String path = FileUtil.isWindows() ? "d:/test/testWrite.csv" : "~/test/testWrite.csv";
+		CsvWriter writer = CsvUtil.getWriter(path, CharsetUtil.CHARSET_UTF_8);
 		writer.write(
 				new String[] {"a1", "b1", "c1", "123345346456745756756785656"},
 				new String[] {"a2", "b2", "c2"},
@@ -63,9 +72,46 @@ public class CsvUtilTest {
 
 	@Test
 	@Ignore
+	public void writeBeansTest() {
+
+		@Data
+		class Student {
+			Integer id;
+			String name;
+			Integer age;
+		}
+
+		String path = FileUtil.isWindows() ? "d:/test/testWriteBeans.csv" : "~/test/testWriteBeans.csv";
+		CsvWriter writer = CsvUtil.getWriter(path, CharsetUtil.CHARSET_UTF_8);
+		List<Student> students = new ArrayList<>();
+		Student student1 = new Student();
+		student1.setId(1);
+		student1.setName("张三");
+		student1.setAge(18);
+
+		Student student2 = new Student();
+		student2.setId(2);
+		student2.setName("李四");
+		student2.setAge(22);
+
+		Student student3 = new Student();
+		student3.setId(3);
+		student3.setName("王五");
+		student3.setAge(31);
+
+		students.add(student1);
+		students.add(student2);
+		students.add(student3);
+		writer.writeBeans(students);
+		writer.close();
+	}
+
+	@Test
+	@Ignore
 	public void readLfTest(){
 		final CsvReader reader = CsvUtil.getReader();
-		final CsvData read = reader.read(FileUtil.file("d:/test/rw_test.csv"));
+		String path = FileUtil.isWindows() ? "d:/test/rw_test.csv" : "~/test/rw_test.csv";
+		final CsvData read = reader.read(FileUtil.file(path));
 		for (CsvRow row : read) {
 			Console.log(row);
 		}
@@ -85,7 +131,47 @@ public class CsvUtilTest {
 		list.add(1);
 		resultList.add(list);
 
-		final CsvWriter writer = CsvUtil.getWriter("d:/test/csvWrapTest.csv", CharsetUtil.CHARSET_UTF_8);
+		String path = FileUtil.isWindows() ? "d:/test/csvWrapTest.csv" : "~/test/csvWrapTest.csv";
+		final CsvWriter writer = CsvUtil.getWriter(path, CharsetUtil.CHARSET_UTF_8);
 		writer.write(resultList);
+	}
+
+	@Test
+	@Ignore
+	public void writeDataTest(){
+		@Data
+		@AllArgsConstructor
+		class User {
+			Integer userId;
+			String username;
+			String mobile;
+		}
+
+		List<String> header = ListUtil.of("用户id", "用户名", "手机号");
+		List<CsvRow> row = new ArrayList<>();
+
+		List<User> datas = new ArrayList<>();
+		datas.add(new User(1, "张三", "18800001111"));
+		datas.add(new User(2, "李四", "18800001112"));
+		datas.add(new User(3, "王五", "18800001113"));
+		datas.add(new User(4, "赵六", "18800001114"));
+
+		//可以为null
+		//Map<String, Integer> headMap = null;
+		Map<String, Integer> headMap = new HashMap<>();
+		headMap.put("userId", 0);
+		headMap.put("username", 1);
+		headMap.put("mobile", 2);
+
+		for (User user : datas) {
+			// row.size() + 1, 表示从第2行开始，第一行是标题栏
+			row.add(new CsvRow(row.size() + 1, headMap,
+					BeanUtil.beanToMap(user).values().stream().map(Object::toString).collect(Collectors.toList())));
+		}
+
+		CsvData csvData = new CsvData(header, row);
+		String path = FileUtil.isWindows() ? "d:/test/csvWriteDataTest.csv" : "~/test/csvWriteDataTest.csv";
+		final CsvWriter writer = CsvUtil.getWriter(path, CharsetUtil.CHARSET_UTF_8);
+		writer.write(csvData);
 	}
 }

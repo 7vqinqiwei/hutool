@@ -1,5 +1,6 @@
 package cn.hutool.core.net;
 
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.net.url.UrlBuilder;
 import cn.hutool.core.net.url.UrlQuery;
 import org.junit.Assert;
@@ -25,5 +26,21 @@ public class UrlQueryTest {
 		final UrlBuilder urlBuilder = UrlBuilder.ofHttpWithoutEncode(url);
 		final String queryStr = urlBuilder.getQueryStr();
 		Assert.assertEquals("imageMogr2/auto-orient/thumbnail/500&pid=259848", queryStr);
+	}
+
+	@Test
+	public void parseTest2(){
+		String requestUrl = "http://192.168.1.1:8080/pc?=d52i5837i4ed=o39-ap9e19s5--=72e54*ll0lodl-f338868d2";
+		UrlQuery q = new UrlQuery();
+		UrlQuery parse = q.parse(requestUrl, Charset.defaultCharset());
+		Assert.assertEquals("=d52i5837i4ed=o39-ap9e19s5--=72e54*ll0lodl-f338868d2", parse.toString());
+	}
+
+	@Test
+	public void parseTest3(){
+		// issue#1688@Github
+		String u = "https://www.baidu.com/proxy";
+		final UrlQuery query = UrlQuery.of(u, Charset.defaultCharset());
+		Assert.assertTrue(MapUtil.isEmpty(query.getQueryMap()));
 	}
 }

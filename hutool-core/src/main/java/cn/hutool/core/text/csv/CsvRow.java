@@ -1,6 +1,7 @@
 package cn.hutool.core.text.csv;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.Assert;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -24,20 +25,20 @@ public final class CsvRow implements List<String> {
 
 	/**
 	 * 构造
-	 * 
+	 *
 	 * @param originalLineNumber 对应文件中的第几行
 	 * @param headerMap 标题Map
 	 * @param fields 数据列表
 	 */
 	public CsvRow(final long originalLineNumber, final Map<String, Integer> headerMap, final List<String> fields) {
-
+		Assert.notNull(fields, "fields must be not null!");
 		this.originalLineNumber = originalLineNumber;
 		this.headerMap = headerMap;
 		this.fields = fields;
 	}
 
 	/**
-	 * 获取原始行号，多行情况下为首行行号。
+	 * 获取原始行号，多行情况下为首行行号。忽略注释行
 	 *
 	 * @return the original line number 行号
 	 */

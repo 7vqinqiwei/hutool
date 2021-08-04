@@ -13,4 +13,16 @@ public class XMLTest {
 		final String s = JSONUtil.toXmlStr(put);
 		Assert.assertEquals("<aaa>你好</aaa><键2>test</键2>", s);
 	}
+
+	@Test
+	public void escapeTest(){
+		String xml = "<a>•</a>";
+		JSONObject jsonObject = XML.toJSONObject(xml);
+
+		Assert.assertEquals("{\"a\":\"•\"}", jsonObject.toString());
+
+		String xml2 = XML.toXml(JSONUtil.parseObj(jsonObject));
+		Assert.assertEquals(xml, xml2);
+	}
+
 }

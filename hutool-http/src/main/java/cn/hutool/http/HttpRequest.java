@@ -12,7 +12,6 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.net.url.UrlBuilder;
 import cn.hutool.core.util.ArrayUtil;
-import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.body.MultipartBody;
@@ -32,7 +31,6 @@ import java.net.Proxy;
 import java.net.URLStreamHandler;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,9 +40,6 @@ import java.util.Map;
  * @author Looly
  */
 public class HttpRequest extends HttpBase<HttpRequest> {
-
-	private static final String CONTENT_TYPE_MULTIPART_PREFIX = ContentType.MULTIPART.getValue() + "; boundary=";
-	private static final String CONTENT_TYPE_FILE_TEMPLATE = "Content-Type: {}\r\n\r\n";
 
 	/**
 	 * 设置全局默认的连接和读取超时时长
@@ -157,7 +152,7 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	 * @param url URL
 	 */
 	public HttpRequest(String url) {
-		this(UrlBuilder.ofHttp(url, CharsetUtil.CHARSET_UTF_8));
+		this(UrlBuilder.ofHttp(url));
 	}
 
 	/**
@@ -347,13 +342,6 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	 * @return HttpRequest
 	 */
 	public HttpRequest method(Method method) {
-//		if (Method.PATCH == method) {
-//			this.method = Method.POST;
-//			this.header("X-HTTP-Method-Override", "PATCH");
-//		} else {
-//			this.method = method;
-//		}
-
 		this.method = method;
 		return this;
 	}
@@ -388,7 +376,7 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	public boolean isKeepAlive() {
 		String connection = header(Header.CONNECTION);
 		if (connection == null) {
-			return !httpVersion.equalsIgnoreCase(HTTP_1_0);
+			return false == HTTP_1_0.equalsIgnoreCase(httpVersion);
 		}
 
 		return false == "close".equalsIgnoreCase(connection);
@@ -504,9 +492,9 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 
 		// 普通值
 		String strValue;
-		if (value instanceof List) {
+		if (value instanceof Iterable) {
 			// 列表对象
-			strValue = CollUtil.join((List<?>) value, ",");
+			strValue = CollUtil.join((Iterable<?>) value, ",");
 		} else if (ArrayUtil.isArray(value)) {
 			if (File.class == ArrayUtil.getComponentType(value)) {
 				// 多文件
@@ -548,6 +536,20 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	public HttpRequest form(Map<String, Object> formMap) {
 		if (MapUtil.isNotEmpty(formMap)) {
 			formMap.forEach(this::form);
+		}
+		return this;
+	}
+
+	/**
+	 * 设置map&lt;String, String&gt;类型表单数据
+	 *
+	 * @param formMapStr 表单内容
+	 * @return this
+	 * @since 5.6.7
+	 */
+	public HttpRequest formStr(Map<String, String> formMapStr) {
+		if (MapUtil.isNotEmpty(formMapStr)) {
+			formMapStr.forEach(this::form);
 		}
 		return this;
 	}
@@ -788,19 +790,6 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	 */
 	public HttpRequest disableCache() {
 		this.isDisableCache = true;
-		return this;
-	}
-
-	/**
-	 * 是否对URL中的参数进行编码
-	 *
-	 * @param isEncodeUrlParams 是否对URL中的参数进行编码
-	 * @return this
-	 * @since 4.4.1
-	 * @deprecated 编码自动完成，无需设置
-	 */
-	@Deprecated
-	public HttpRequest setEncodeUrlParams(boolean isEncodeUrlParams) {
 		return this;
 	}
 
@@ -1127,7 +1116,7 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 			}
 
 			if (responseCode != HttpURLConnection.HTTP_OK) {
-				if (responseCode == HttpURLConnection.HTTP_MOVED_TEMP || responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_SEE_OTHER) {
+				if (HttpStatus.isRedirected(responseCode)) {
 					setUrl(httpConnection.header(Header.LOCATION));
 					if (redirectCount < this.maxRedirectCount) {
 						redirectCount++;

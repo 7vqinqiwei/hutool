@@ -1,5 +1,7 @@
 package cn.hutool.crypto.digest.otp;
 
+import cn.hutool.core.codec.Base32;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.crypto.digest.HMac;
 import cn.hutool.crypto.digest.HmacAlgorithm;
 
@@ -60,11 +62,13 @@ public class HOTP {
 	 * @param key            共享密码，RFC 4226要求最少128位
 	 */
 	public HOTP(int passwordLength, HmacAlgorithm algorithm, byte[] key) {
+		if(passwordLength >= MOD_DIVISORS.length){
+			throw new IllegalArgumentException("Password length must be < " + MOD_DIVISORS.length);
+		}
 		this.mac = new HMac(algorithm, key);
-
 		this.modDivisor = MOD_DIVISORS[passwordLength];
 		this.passwordLength = passwordLength;
-		this.buffer = new byte[this.mac.getMacLength()];
+		this.buffer = new byte[8];
 	}
 
 	/**
@@ -74,7 +78,7 @@ public class HOTP {
 	 *                可以是基于计次的动移动因子，也可以是计时移动因子
 	 * @return 一次性密码的int值
 	 */
-	public synchronized int generate(final long counter) {
+	public synchronized int generate(long counter) {
 		// C 的整数值需要用二进制的字符串表达，比如某个事件计数为 3，
 		// 则C是 "11"（此处省略了前面的二进制的数字0）
 		this.buffer[0] = (byte) ((counter & 0xff00000000000000L) >>> 56);
@@ -92,18 +96,14 @@ public class HOTP {
 	}
 
 	/**
-	 * 截断
+	 * 生成共享密钥的Base32表示形式
 	 *
-	 * @param digest HMAC的hash值
-	 * @return 截断值
+	 * @param numBytes 将生成的种子字节数量。
+	 * @return 共享密钥
+	 * @since 5.7.4
 	 */
-	private int truncate(byte[] digest) {
-		final int offset = digest[digest.length - 1] & 0x0f;
-		return ((digest[offset] & 0x7f) << 24 |
-				(digest[offset + 1] & 0xff) << 16 |
-				(digest[offset + 2] & 0xff) << 8 |
-				(digest[offset + 3] & 0xff)) %
-				this.modDivisor;
+	public static String generateSecretKey(int numBytes) {
+		return Base32.encode(RandomUtil.getSHA1PRNGRandom(RandomUtil.randomBytes(256)).generateSeed(numBytes));
 	}
 
 	/**
@@ -122,5 +122,20 @@ public class HOTP {
 	 */
 	public String getAlgorithm() {
 		return this.mac.getAlgorithm();
+	}
+
+	/**
+	 * 截断
+	 *
+	 * @param digest HMAC的hash值
+	 * @return 截断值
+	 */
+	private int truncate(byte[] digest) {
+		final int offset = digest[digest.length - 1] & 0x0f;
+		return ((digest[offset] & 0x7f) << 24 |
+				(digest[offset + 1] & 0xff) << 16 |
+				(digest[offset + 2] & 0xff) << 8 |
+				(digest[offset + 3] & 0xff)) %
+				this.modDivisor;
 	}
 }

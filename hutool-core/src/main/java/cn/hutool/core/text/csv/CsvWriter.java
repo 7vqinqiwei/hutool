@@ -1,5 +1,6 @@
 package cn.hutool.core.text.csv;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.io.FileUtil;
@@ -19,6 +20,7 @@ import java.io.Serializable;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * CSV数据写出器
@@ -199,6 +201,49 @@ public final class CsvWriter implements Closeable, Flushable, Serializable {
 		if (CollUtil.isNotEmpty(lines)) {
 			for (Object values : lines) {
 				appendLine(Convert.toStrArray(values));
+			}
+			flush();
+		}
+		return this;
+	}
+
+	/**
+	 * 将一个 CsvData 集合写出到Writer
+	 *
+	 * @param csvData CsvData
+	 * @return this
+	 * @since 5.7.4
+	 */
+	public CsvWriter write(CsvData csvData) {
+		if (csvData != null) {
+			// 1、写header
+			if (CollUtil.isNotEmpty(csvData.getHeader())) {
+				this.writeLine(csvData.getHeader().toArray(new String[0]));
+			}
+			// 2、写内容
+			this.write(csvData.getRows());
+			flush();
+		}
+		return this;
+	}
+
+	/**
+	 * 将一个Bean集合写出到Writer，并自动生成表头
+	 *
+	 * @param beans Bean集合
+	 * @return this
+	 */
+	public CsvWriter writeBeans(Collection<?> beans) {
+		if (CollUtil.isNotEmpty(beans)) {
+			boolean isFirst = true;
+			Map<String, Object> map;
+			for (Object bean : beans) {
+				map = BeanUtil.beanToMap(bean);
+				if(isFirst){
+					writeLine(map.keySet().toArray(new String[0]));
+					isFirst = false;
+				}
+				writeLine(Convert.toStrArray(map.values()));
 			}
 			flush();
 		}
