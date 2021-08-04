@@ -11,7 +11,6 @@ import cn.hutool.core.text.CharPool;
  * @since 4.0.1
  */
 public class CharUtil implements CharPool {
-public class CharUtil {
 
 	/** 字符常量：空格符 {@code ' '} */
 	public static final char SPACE = ' ';
