@@ -38,9 +38,9 @@ public class ListUtilTest {
 	}
 
 	@Test
-	public void filterTest(){
+	public void editTest(){
 		List<String> a = ListUtil.toLinkedList("1", "2", "3");
-		final List<String> filter = ListUtil.filter(a, str -> "edit" + str);
+		final List<String> filter = (List<String>) CollUtil.edit(a, str -> "edit" + str);
 		Assert.assertEquals("edit1", filter.get(0));
 		Assert.assertEquals("edit2", filter.get(1));
 		Assert.assertEquals("edit3", filter.get(2));
@@ -100,5 +100,16 @@ public class ListUtilTest {
 		PageUtil.setFirstPageNo(1);
 		int[] d1 = ListUtil.page(0,8,a).stream().mapToInt(Integer::valueOf).toArray();
 		Assert.assertArrayEquals(new int[]{1,2,3,4,5},d1);
+	}
+
+	@Test
+	public void subTest(){
+		final List<Integer> of = ListUtil.of(1, 2, 3, 4);
+		final List<Integer> sub = ListUtil.sub(of, 2, 4);
+		sub.remove(0);
+
+		// 对子列表操作不影响原列表
+		Assert.assertEquals(4, of.size());
+		Assert.assertEquals(1, sub.size());
 	}
 }

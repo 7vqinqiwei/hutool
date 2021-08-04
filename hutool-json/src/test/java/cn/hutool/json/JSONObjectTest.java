@@ -216,7 +216,6 @@ public class JSONObjectTest {
 	@Test
 	public void toBeanWithNullTest() {
 		String jsonStr = "{'data':{'userName':'ak','password': null}}";
-		Console.log(JSONUtil.parseObj(jsonStr));
 		UserWithMap user = JSONUtil.toBean(JSONUtil.parseObj(jsonStr), UserWithMap.class);
 		Assert.assertTrue(user.getData().containsKey("password"));
 	}
@@ -431,6 +430,48 @@ public class JSONObjectTest {
 	}
 
 	@Test
+	public void setDateFormatTest2(){
+		JSONConfig jsonConfig = JSONConfig.create();
+		jsonConfig.setDateFormat("yyyy#MM#dd");
+		jsonConfig.setOrder(true);
+
+		Date date = DateUtil.parse("2020-06-05 11:16:11");
+		JSONObject json = new JSONObject(jsonConfig);
+		json.set("date", date);
+		json.set("bbb", "222");
+		json.set("aaa", "123");
+
+		String jsonStr = "{\"date\":\"2020#06#05\",\"bbb\":\"222\",\"aaa\":\"123\"}";
+
+		Assert.assertEquals(jsonStr, json.toString());
+
+		// 解析测试
+		final JSONObject parse = JSONUtil.parseObj(jsonStr, jsonConfig);
+		Assert.assertEquals(DateUtil.beginOfDay(date), parse.getDate("date"));
+	}
+
+	@Test
+	public void setCustomDateFormatTest(){
+		JSONConfig jsonConfig = JSONConfig.create();
+		jsonConfig.setDateFormat("#sss");
+		jsonConfig.setOrder(true);
+
+		Date date = DateUtil.parse("2020-06-05 11:16:11");
+		JSONObject json = new JSONObject(jsonConfig);
+		json.set("date", date);
+		json.set("bbb", "222");
+		json.set("aaa", "123");
+
+		String jsonStr = "{\"date\":1591326971,\"bbb\":\"222\",\"aaa\":\"123\"}";
+
+		Assert.assertEquals(jsonStr, json.toString());
+
+		// 解析测试
+		final JSONObject parse = JSONUtil.parseObj(jsonStr, jsonConfig);
+		Assert.assertEquals(date, parse.getDate("date"));
+	}
+
+	@Test
 	public void getTimestampTest(){
 		String timeStr = "1970-01-01 00:00:00";
 		final JSONObject jsonObject = JSONUtil.createObj().set("time", timeStr);
@@ -518,7 +559,7 @@ public class JSONObjectTest {
 		final Map.Entry<String, String> next = entries.iterator().next();
 
 		final JSONObject jsonObject = JSONUtil.parseObj(next);
-		Console.log(jsonObject);
+		Assert.assertEquals("{\"test\":\"testValue\"}", jsonObject.toString());
 	}
 
 	@Test(expected = JSONException.class)
@@ -533,7 +574,7 @@ public class JSONObjectTest {
 		map.put("c", 2.0F);
 
 		final String s = JSONUtil.toJsonStr(map);
-		Console.log(s);
+		Assert.assertEquals("{\"c\":2}", s);
 	}
 
 	@Test

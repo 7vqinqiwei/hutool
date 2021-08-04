@@ -1,10 +1,13 @@
 package cn.hutool.core.date.format;
 
+import cn.hutool.core.date.DatePattern;
+
 import java.text.DateFormat;
 import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParseException;
 import java.text.ParsePosition;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -22,7 +25,7 @@ import java.util.TimeZone;
  * {@link #getTimeInstance(int, TimeZone, Locale)}<br>
  * {@link #getDateTimeInstance(int, int, TimeZone, Locale)}
  * </p>
- * 
+ *
  * Thanks to Apache Commons Lang 3.5
  * @since 2.16.2
  */
@@ -51,7 +54,7 @@ public class FastDateFormat extends Format implements DateParser, DatePrinter {
 	// -----------------------------------------------------------------------
 	/**
 	 * 获得 FastDateFormat实例，使用默认格式和地区
-	 * 
+	 *
 	 * @return FastDateFormat
 	 */
 	public static FastDateFormat getInstance() {
@@ -61,7 +64,7 @@ public class FastDateFormat extends Format implements DateParser, DatePrinter {
 	/**
 	 * 获得 FastDateFormat 实例，使用默认地区<br>
 	 * 支持缓存
-	 * 
+	 *
 	 * @param pattern 使用{@link java.text.SimpleDateFormat} 相同的日期格式
 	 * @return FastDateFormat
 	 * @throws IllegalArgumentException 日期格式问题
@@ -73,7 +76,7 @@ public class FastDateFormat extends Format implements DateParser, DatePrinter {
 	/**
 	 * 获得 FastDateFormat 实例<br>
 	 * 支持缓存
-	 * 
+	 *
 	 * @param pattern 使用{@link java.text.SimpleDateFormat} 相同的日期格式
 	 * @param timeZone 时区{@link TimeZone}
 	 * @return FastDateFormat
@@ -99,7 +102,7 @@ public class FastDateFormat extends Format implements DateParser, DatePrinter {
 	/**
 	 * 获得 FastDateFormat 实例<br>
 	 * 支持缓存
-	 * 
+	 *
 	 * @param pattern 使用{@link java.text.SimpleDateFormat} 相同的日期格式
 	 * @param timeZone 时区{@link TimeZone}
 	 * @param locale {@link Locale} 日期地理位置
@@ -370,6 +373,27 @@ public class FastDateFormat extends Format implements DateParser, DatePrinter {
 	 */
 	public int getMaxLengthEstimate() {
 		return printer.getMaxLengthEstimate();
+	}
+
+	// convert DateTimeFormatter
+	// -----------------------------------------------------------------------
+
+	/**
+	 * 便捷获取 DateTimeFormatter
+	 * 由于 {@link DatePattern} 很大一部分的格式没有提供 {@link DateTimeFormatter},因此这里提供快捷获取方式
+	 * @return DateTimeFormatter
+	 * @author dazer neusoft
+	 * @since 5.6.4
+	 */
+	public DateTimeFormatter getDateTimeFormatter() {
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern(this.getPattern());
+		if (this.getLocale() != null) {
+			formatter = formatter.withLocale(this.getLocale());
+		}
+		if (this.getTimeZone() != null) {
+			formatter = formatter.withZone(this.getTimeZone().toZoneId());
+		}
+		return formatter;
 	}
 
 	// Basics

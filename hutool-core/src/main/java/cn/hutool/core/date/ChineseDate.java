@@ -5,8 +5,10 @@ import cn.hutool.core.date.chinese.ChineseMonth;
 import cn.hutool.core.date.chinese.GanZhi;
 import cn.hutool.core.date.chinese.LunarFestival;
 import cn.hutool.core.date.chinese.LunarInfo;
+import cn.hutool.core.date.chinese.SolarTerms;
 import cn.hutool.core.util.StrUtil;
 
+import java.util.Calendar;
 import java.util.Date;
 
 
@@ -34,7 +36,7 @@ public class ChineseDate {
 	private final int gyear;
 	//公历月
 	private final int gmonth;
-	//公里日
+	//公历日
 	private final int gday;
 
 	//是否闰年
@@ -152,6 +154,16 @@ public class ChineseDate {
 	}
 
 	/**
+	 * 获取公历的年
+	 *
+	 * @return 公历年
+	 * @since 5.6.1
+	 */
+	public int getGregorianYear(){
+		return this.gyear;
+	}
+
+	/**
 	 * 获取农历的月，从1开始计数
 	 *
 	 * @return 农历的月
@@ -159,6 +171,26 @@ public class ChineseDate {
 	 */
 	public int getMonth() {
 		return this.month;
+	}
+
+	/**
+	 * 获取公历的月，从1开始计数
+	 *
+	 * @return 公历月
+	 * @since 5.6.1
+	 */
+	public int getGregorianMonthBase1(){
+		return this.gmonth;
+	}
+
+	/**
+	 * 获取公历的月，从0开始计数
+	 *
+	 * @return 公历月
+	 * @since 5.6.1
+	 */
+	public int getGregorianMonth(){
+		return this.gmonth -1;
 	}
 
 	/**
@@ -201,6 +233,16 @@ public class ChineseDate {
 	}
 
 	/**
+	 * 获取公历的日
+	 *
+	 * @return 公历日
+	 * @since 5.6.1
+	 */
+	public int getGregorianDay(){
+		return this.gday;
+	}
+
+	/**
 	 * 获得农历日
 	 *
 	 * @return 获得农历日
@@ -223,6 +265,28 @@ public class ChineseDate {
 		}
 	}
 
+	/**
+	 * 获取公历的Date
+	 *
+	 * @return 公历Date
+	 * @since 5.6.1
+	 */
+	public Date getGregorianDate(){
+		return DateUtil.date(getGregorianCalendar());
+	}
+
+	/**
+	 * 获取公历的Calendar
+	 *
+	 * @return 公历Calendar
+	 * @since 5.6.1
+	 */
+	public Calendar getGregorianCalendar(){
+		final Calendar calendar = CalendarUtil.calendar();
+		//noinspection MagicConstant
+		calendar.set(this.gyear, getGregorianMonth(), this.gday, 0, 0, 0);
+		return calendar;
+	}
 
 	/**
 	 * 获得节日
@@ -262,6 +326,16 @@ public class ChineseDate {
 			return cyclicalm(gyear, gmonth, gday);
 		}
 		return null;
+	}
+
+
+	/**
+	 * 获得节气
+	 * @return 获得节气
+	 * @since 5.6.3
+	 */
+	public String getTerm() {
+		return SolarTerms.getTerm(gyear, gmonth, gday);
 	}
 
 	/**

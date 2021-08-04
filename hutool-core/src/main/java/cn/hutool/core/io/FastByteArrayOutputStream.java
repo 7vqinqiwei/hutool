@@ -28,7 +28,7 @@ public class FastByteArrayOutputStream extends OutputStream {
 
 	/**
 	 * 构造
-	 * 
+	 *
 	 * @param size 预估大小
 	 */
 	public FastByteArrayOutputStream(int size) {
@@ -68,6 +68,10 @@ public class FastByteArrayOutputStream extends OutputStream {
 	 */
 	public void writeTo(OutputStream out) throws IORuntimeException {
 		final int index = buffer.index();
+		if(index < 0){
+			// 无数据写出
+			return;
+		}
 		byte[] buf;
 		try {
 			for (int i = 0; i < index; i++) {
@@ -80,7 +84,7 @@ public class FastByteArrayOutputStream extends OutputStream {
 		}
 	}
 
-	
+
 	/**
 	 * 转为Byte数组
 	 * @return Byte数组
@@ -102,7 +106,7 @@ public class FastByteArrayOutputStream extends OutputStream {
 	public String toString(String charsetName) {
 		return toString(CharsetUtil.charset(charsetName));
 	}
-	
+
 	/**
 	 * 转为字符串
 	 * @param charset 编码,null表示默认编码

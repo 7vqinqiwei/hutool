@@ -173,8 +173,17 @@ public class UrlQuery {
 			}
 		}
 
+		if(i - pos == len){
+			// 没有任何参数符号
+			if(queryStr.startsWith("http") || queryStr.contains("/")){
+				// 可能为url路径，忽略之
+				return this;
+			}
+		}
+
 		// 处理结尾
 		addParam(name, queryStr.substring(pos, i), charset);
+
 		return this;
 	}
 
@@ -222,7 +231,7 @@ public class UrlQuery {
 				sb.append("&");
 			}
 			key = entry.getKey();
-			if (StrUtil.isNotEmpty(key)) {
+			if (null != key) {
 				sb.append(URLUtil.encodeAll(StrUtil.str(key), charset));
 				value = entry.getValue();
 				if (null != value) {

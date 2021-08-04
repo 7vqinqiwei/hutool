@@ -21,20 +21,20 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Type;
 import java.nio.charset.Charset;
+import java.sql.SQLException;
 import java.time.temporal.TemporalAccessor;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 
 /**
  * JSON工具类
  *
  * @author Looly
  */
-public final class JSONUtil {
+public class JSONUtil {
 
 	// -------------------------------------------------------------------- Pause start
 
@@ -193,7 +193,15 @@ public final class JSONUtil {
 	 * @return JSON
 	 */
 	public static JSON parse(Object obj) {
-		return parse(obj, JSONConfig.create());
+		if(obj instanceof JSON){
+			return (JSON) obj;
+		}
+
+		final JSONConfig config = JSONConfig.create();
+		if(InternalJSONUtil.isOrder(obj)){
+			config.setOrder(true);
+		}
+		return parse(obj, config);
 	}
 
 	/**
@@ -238,29 +246,6 @@ public final class JSONUtil {
 		return XML.toJSONObject(xmlStr);
 	}
 
-	/**
-	 * Map转化为JSONObject
-	 *
-	 * @param map {@link Map}
-	 * @return JSONObjec
-	 * @deprecated 请直接使用 {@link #parseObj(Object)}
-	 */
-	@Deprecated
-	public static JSONObject parseFromMap(Map<?, ?> map) {
-		return new JSONObject(map);
-	}
-
-	/**
-	 * ResourceBundle转化为JSONObject
-	 *
-	 * @param bundle ResourceBundle文件
-	 * @return JSONObject
-	 * @deprecated 请直接使用 {@link #parseObj(Object)}
-	 */
-	@Deprecated
-	public static JSONObject parseFromResourceBundle(ResourceBundle bundle) {
-		return new JSONObject(bundle);
-	}
 	// -------------------------------------------------------------------- Pause end
 
 	// -------------------------------------------------------------------- Read start
@@ -542,7 +527,44 @@ public final class JSONUtil {
 	 * @see JSON#getByPath(String)
 	 */
 	public static Object getByPath(JSON json, String expression) {
-		return (null == json || StrUtil.isBlank(expression)) ? null : json.getByPath(expression);
+		return getByPath(json, expression, null);
+	}
+
+	/**
+	 * 通过表达式获取JSON中嵌套的对象<br>
+	 * <ol>
+	 * <li>.表达式，可以获取Bean对象中的属性（字段）值或者Map中key对应的值</li>
+	 * <li>[]表达式，可以获取集合等对象中对应index的值</li>
+	 * </ol>
+	 * <p>
+	 * 表达式栗子：
+	 *
+	 * <pre>
+	 * persion
+	 * persion.name
+	 * persons[3]
+	 * person.friends[5].name
+	 * </pre>
+	 *
+	 * @param <T> 值类型
+	 * @param json       {@link JSON}
+	 * @param expression 表达式
+	 * @param defaultValue 默认值
+	 * @return 对象
+	 * @see JSON#getByPath(String)
+	 * @since 5.6.0
+	 */
+	@SuppressWarnings("unchecked")
+	public static <T> T getByPath(JSON json, String expression, T defaultValue) {
+		if((null == json || StrUtil.isBlank(expression))){
+			return defaultValue;
+		}
+
+		if(null != defaultValue){
+			final Class<T> type = (Class<T>) defaultValue.getClass();
+			return ObjectUtil.defaultIfNull(json.getByPath(expression, type), defaultValue);
+		}
+		return (T) json.getByPath(expression);
 	}
 
 	/**
@@ -637,14 +659,12 @@ public final class JSONUtil {
 			return writer;
 		}
 
-		char b; // 前一个字符
 		char c; // 当前字符
 		int len = str.length();
 		if (isWrap) {
 			writer.write('"');
 		}
 		for (int i = 0; i < len; i++) {
-//			b = c;
 			c = str.charAt(i);
 			switch (c) {
 				case '\\':
@@ -652,13 +672,6 @@ public final class JSONUtil {
 					writer.write("\\");
 					writer.write(c);
 					break;
-					//此处转义导致输出不和预期一致
-//				case '/':
-//					if (b == '<') {
-//						writer.write('\\');
-//					}
-//					writer.write(c);
-//					break;
 				default:
 					writer.write(escape(c));
 			}
@@ -735,6 +748,11 @@ public final class JSONUtil {
 		}
 
 		try {
+			// fix issue#1399@Github
+			if(object instanceof SQLException){
+				return object.toString();
+			}
+
 			// JSONArray
 			if (object instanceof Iterable || ArrayUtil.isArray(object)) {
 				return new JSONArray(object, jsonConfig);
@@ -801,7 +819,7 @@ public final class JSONUtil {
 		if (StrUtil.isBlank(str)) {
 			return false;
 		}
-		return StrUtil.isWrap(str.trim(), '{', '}');
+		return StrUtil.isWrap(StrUtil.trim(str), '{', '}');
 	}
 
 	/**
@@ -815,7 +833,7 @@ public final class JSONUtil {
 		if (StrUtil.isBlank(str)) {
 			return false;
 		}
-		return StrUtil.isWrap(str.trim(), '[', ']');
+		return StrUtil.isWrap(StrUtil.trim(str), '[', ']');
 	}
 
 	/**

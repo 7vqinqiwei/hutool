@@ -7,7 +7,6 @@ import cn.hutool.poi.excel.ExcelDateUtil;
 import cn.hutool.poi.excel.ExcelUtil;
 import cn.hutool.poi.excel.StyleSet;
 import cn.hutool.poi.excel.editors.TrimEditor;
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.CellType;
@@ -39,7 +38,6 @@ import java.util.Date;
  * @author looly
  * @since 4.0.7
  */
-@SuppressWarnings("deprecation")
 public class CellUtil {
 
 	/**
@@ -64,7 +62,7 @@ public class CellUtil {
 		if (null == cell) {
 			return null;
 		}
-		return getCellValue(cell, cell.getCellTypeEnum(), isTrimCellValue);
+		return getCellValue(cell, cell.getCellType(), isTrimCellValue);
 	}
 
 	/**
@@ -107,14 +105,14 @@ public class CellUtil {
 			return null == cellEditor ? null : cellEditor.edit(cell, null);
 		}
 		if (null == cellType) {
-			cellType = cell.getCellTypeEnum();
+			cellType = cell.getCellType();
 		}
 
 		// 尝试获取合并单元格，如果是合并单元格，则重新获取单元格类型
 		final Cell mergedCell = getMergedRegionCell(cell);
 		if (mergedCell != cell) {
 			cell = mergedCell;
-			cellType = cell.getCellTypeEnum();
+			cellType = cell.getCellType();
 		}
 
 		Object value;
@@ -127,7 +125,7 @@ public class CellUtil {
 				break;
 			case FORMULA:
 				// 遇到公式时查找公式结果类型
-				value = getCellValue(cell, cell.getCachedFormulaResultTypeEnum(), cellEditor);
+				value = getCellValue(cell, cell.getCachedFormulaResultType(), cellEditor);
 				break;
 			case BLANK:
 				value = StrUtil.EMPTY;
@@ -150,7 +148,7 @@ public class CellUtil {
 	 *
 	 * @param cell     单元格
 	 * @param value    值
-	 * @param styleSet 单元格样式集，包括日期等样式
+	 * @param styleSet 单元格样式集，包括日期等样式，null表示无样式
 	 * @param isHeader 是否为标题单元格
 	 */
 	public static void setCellValue(Cell cell, Object value, StyleSet styleSet, boolean isHeader) {
@@ -168,25 +166,21 @@ public class CellUtil {
 			}
 		}
 
-		if (value instanceof Date) {
-			if (null != styleSet && null != styleSet.getCellStyleForDate()) {
-				cell.setCellStyle(styleSet.getCellStyleForDate());
-			}
-		} else if (value instanceof TemporalAccessor) {
-			if (null != styleSet && null != styleSet.getCellStyleForDate()) {
-				cell.setCellStyle(styleSet.getCellStyleForDate());
-			}
-		} else if (value instanceof Calendar) {
+		if (value instanceof Date
+				|| value instanceof TemporalAccessor
+				|| value instanceof Calendar) {
+			// 日期单独定义格式
 			if (null != styleSet && null != styleSet.getCellStyleForDate()) {
 				cell.setCellStyle(styleSet.getCellStyleForDate());
 			}
 		} else if (value instanceof Number) {
+			// 数字单独定义格式
 			if ((value instanceof Double || value instanceof Float || value instanceof BigDecimal) && null != styleSet && null != styleSet.getCellStyleForNumber()) {
 				cell.setCellStyle(styleSet.getCellStyleForNumber());
 			}
 		}
 
-		setCellValue(cell, value, null);
+		setCellValue(cell, value);
 	}
 
 	/**
@@ -205,6 +199,31 @@ public class CellUtil {
 
 		if (null != style) {
 			cell.setCellStyle(style);
+		}
+
+		setCellValue(cell, value);
+	}
+
+	/**
+	 * 设置单元格值<br>
+	 * 根据传入的styleSet自动匹配样式<br>
+	 * 当为头部样式时默认赋值头部样式，但是头部中如果有数字、日期等类型，将按照数字、日期样式设置
+	 *
+	 * @param cell  单元格
+	 * @param value 值
+	 * @since 5.6.4
+	 */
+	public static void setCellValue(Cell cell, Object value) {
+		if (null == cell) {
+			return;
+		}
+
+		// issue#1659@Github
+		// 在使用BigWriter(SXSSF)模式写出数据时，单元格值为直接值，非引用值（is标签）
+		// 而再使用ExcelWriter(XSSF)编辑时，会写出引用值，导致失效。
+		// 此处做法是先清空单元格值，再写入
+		if(CellType.BLANK != cell.getCellType()){
+			cell.setBlank();
 		}
 
 		if (null == value) {
@@ -320,7 +339,21 @@ public class CellUtil {
 	 * @param lastRow     结束行，0开始
 	 * @param firstColumn 起始列，0开始
 	 * @param lastColumn  结束列，0开始
-	 * @param cellStyle   单元格样式，只提取边框样式
+	 * @return 合并后的单元格号
+	 */
+	public static int mergingCells(Sheet sheet, int firstRow, int lastRow, int firstColumn, int lastColumn) {
+		return mergingCells(sheet, firstRow, lastRow, firstColumn, lastColumn, null);
+	}
+
+	/**
+	 * 合并单元格，可以根据设置的值来合并行和列
+	 *
+	 * @param sheet       表对象
+	 * @param firstRow    起始行，0开始
+	 * @param lastRow     结束行，0开始
+	 * @param firstColumn 起始列，0开始
+	 * @param lastColumn  结束列，0开始
+	 * @param cellStyle   单元格样式，只提取边框样式，null表示无样式
 	 * @return 合并后的单元格号
 	 */
 	public static int mergingCells(Sheet sheet, int firstRow, int lastRow, int firstColumn, int lastColumn, CellStyle cellStyle) {
@@ -332,10 +365,14 @@ public class CellUtil {
 		);
 
 		if (null != cellStyle) {
-			RegionUtil.setBorderTop(cellStyle.getBorderTopEnum(), cellRangeAddress, sheet);
-			RegionUtil.setBorderRight(cellStyle.getBorderRightEnum(), cellRangeAddress, sheet);
-			RegionUtil.setBorderBottom(cellStyle.getBorderBottomEnum(), cellRangeAddress, sheet);
-			RegionUtil.setBorderLeft(cellStyle.getBorderLeftEnum(), cellRangeAddress, sheet);
+			RegionUtil.setBorderTop(cellStyle.getBorderTop(), cellRangeAddress, sheet);
+			RegionUtil.setBorderRight(cellStyle.getBorderRight(), cellRangeAddress, sheet);
+			RegionUtil.setBorderBottom(cellStyle.getBorderBottom(), cellRangeAddress, sheet);
+			RegionUtil.setBorderLeft(cellStyle.getBorderLeft(), cellRangeAddress, sheet);
+			RegionUtil.setTopBorderColor(cellStyle.getTopBorderColor(),cellRangeAddress,sheet);
+			RegionUtil.setRightBorderColor(cellStyle.getRightBorderColor(),cellRangeAddress,sheet);
+			RegionUtil.setLeftBorderColor(cellStyle.getLeftBorderColor(),cellRangeAddress,sheet);
+			RegionUtil.setBottomBorderColor(cellStyle.getBottomBorderColor(),cellRangeAddress,sheet);
 		}
 		return sheet.addMergedRegion(cellRangeAddress);
 	}
