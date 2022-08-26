@@ -61,6 +61,9 @@ public class NumberUtilTest {
 		Assert.assertTrue(NumberUtil.isInteger("0256"));
 		Assert.assertTrue(NumberUtil.isInteger("0"));
 		Assert.assertFalse(NumberUtil.isInteger("23.4"));
+		Assert.assertFalse(NumberUtil.isInteger(null));
+		Assert.assertFalse(NumberUtil.isInteger(""));
+		Assert.assertFalse(NumberUtil.isInteger(" "));
 	}
 
 	@Test
@@ -70,6 +73,9 @@ public class NumberUtilTest {
 		Assert.assertTrue(NumberUtil.isLong("0256"));
 		Assert.assertTrue(NumberUtil.isLong("0"));
 		Assert.assertFalse(NumberUtil.isLong("23.4"));
+		Assert.assertFalse(NumberUtil.isLong(null));
+		Assert.assertFalse(NumberUtil.isLong(""));
+		Assert.assertFalse(NumberUtil.isLong(" "));
 	}
 
 	@Test
@@ -85,6 +91,12 @@ public class NumberUtilTest {
 	public void divTest() {
 		double result = NumberUtil.div(0, 1);
 		Assert.assertEquals(0.0, result, 0);
+	}
+
+	@Test
+	public void divBigDecimalTest() {
+		BigDecimal result = NumberUtil.div(BigDecimal.ZERO, BigDecimal.ONE);
+		Assert.assertEquals(BigDecimal.ZERO, result.stripTrailingZeros());
 	}
 
 	@Test
@@ -275,6 +287,12 @@ public class NumberUtilTest {
 		Assert.assertEquals(1482, v1);
 	}
 
+	@Test(expected = NumberFormatException.class)
+	public void parseIntTest3() {
+		int v1 = NumberUtil.parseInt("d");
+		Assert.assertEquals(0, v1);
+	}
+
 	@Test
 	public void parseNumberTest() {
 		// from 5.4.8 issue#I23ORQ@Gitee
@@ -283,7 +301,14 @@ public class NumberUtilTest {
 		Assert.assertEquals(1482, v1);
 
 		Number v2 = NumberUtil.parseNumber("1,482.00D");
-		Assert.assertEquals(1482L, v2);
+		Assert.assertEquals(1482L, v2.longValue());
+	}
+
+	@Test
+	public void parseHexNumberTest() {
+		// 千位分隔符去掉
+		final int v1 = NumberUtil.parseNumber("0xff").intValue();
+		Assert.assertEquals(255, v1);
 	}
 
 	@Test
@@ -392,5 +417,58 @@ public class NumberUtilTest {
 		Assert.assertEquals(7, ints.length);
 		final Set<?> set = Convert.convert(Set.class, ints);
 		Assert.assertEquals(7, set.size());
+	}
+
+	@Test
+	public void toPlainNumberTest(){
+		String num = "5344.34234e3";
+		final String s = new BigDecimal(num).toPlainString();
+		Assert.assertEquals("5344342.34", s);
+	}
+
+	@Test
+	public void generateBySetTest(){
+		final Integer[] integers = NumberUtil.generateBySet(10, 100, 5);
+		Assert.assertEquals(5, integers.length);
+	}
+
+	@Test
+	public void isOddOrEvenTest(){
+		int[] a = { 0, 32, -32, 123, -123 };
+		Assert.assertFalse(NumberUtil.isOdd(a[0]));
+		Assert.assertTrue(NumberUtil.isEven(a[0]));
+
+		Assert.assertFalse(NumberUtil.isOdd(a[1]));
+		Assert.assertTrue(NumberUtil.isEven(a[1]));
+
+		Assert.assertFalse(NumberUtil.isOdd(a[2]));
+		Assert.assertTrue(NumberUtil.isEven(a[2]));
+
+		Assert.assertTrue(NumberUtil.isOdd(a[3]));
+		Assert.assertFalse(NumberUtil.isEven(a[3]));
+
+		Assert.assertTrue(NumberUtil.isOdd(a[4]));
+		Assert.assertFalse(NumberUtil.isEven(a[4]));
+	}
+
+	@Test
+	public void divIntegerTest(){
+		Assert.assertEquals(1001013, NumberUtil.div(100101300, (Number) 100).intValue());
+	}
+
+	@Test
+	public void isDoubleTest(){
+		Assert.assertFalse(NumberUtil.isDouble(null));
+		Assert.assertFalse(NumberUtil.isDouble(""));
+		Assert.assertFalse(NumberUtil.isDouble("  "));
+	}
+
+	@Test
+	public void range(){
+		Assert.assertFalse(NumberUtil.isIn(new BigDecimal("1"),new BigDecimal("2"),new BigDecimal("12")));
+		Assert.assertTrue(NumberUtil.isIn(new BigDecimal("1"),new BigDecimal("1"),new BigDecimal("2")));
+		Assert.assertTrue(NumberUtil.isIn(new BigDecimal("1"),new BigDecimal("0"),new BigDecimal("2")));
+		Assert.assertFalse(NumberUtil.isIn(new BigDecimal("0.23"),new BigDecimal("0.12"),new BigDecimal("0.22")));
+		Assert.assertTrue(NumberUtil.isIn(new BigDecimal("-0.12"),new BigDecimal("-0.3"),new BigDecimal("0")));
 	}
 }

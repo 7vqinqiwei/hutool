@@ -1,12 +1,14 @@
 package cn.hutool.core.util;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.lang.Console;
 import cn.hutool.core.lang.PatternPool;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class ReUtilTest {
@@ -141,6 +143,22 @@ public class ReUtilTest {
 	}
 
 	@Test
+	public void escapeTest2(){
+		String str = "a[bbbc";
+		String re = "[";
+		final String s = ReUtil.get(ReUtil.escape(re), str, 0);
+		Assert.assertEquals("[", s);
+	}
+
+	@Test
+	public void escapeTest3(){
+		String context = "{prefix}_";
+		String regex = "{prefix}_";
+		final boolean b = ReUtil.isMatch(ReUtil.escape(regex), context);
+		Assert.assertTrue(b);
+	}
+
+	@Test
 	public void getAllGroupsTest() {
 		//转义给定字符串，为正则相关的特殊符号转义
 		Pattern pattern = Pattern.compile("(\\d+)-(\\d+)-(\\d+)");
@@ -154,5 +172,34 @@ public class ReUtilTest {
 		Assert.assertEquals("192", allGroups.get(0));
 		Assert.assertEquals("168", allGroups.get(1));
 		Assert.assertEquals("1", allGroups.get(2));
+	}
+
+	@Test
+	public void matchTest(){
+		final boolean match = ReUtil.isMatch(
+				"(.+?)省(.+?)市(.+?)区", "广东省深圳市南山区");
+		Console.log(match);
+	}
+
+	@Test
+	public void getByGroupNameTest() {
+		String content = "2021-10-11";
+		String regex = "(?<year>\\d+)-(?<month>\\d+)-(?<day>\\d+)";
+		String year = ReUtil.get(regex, content, "year");
+		Assert.assertEquals("2021", year);
+		String month = ReUtil.get(regex, content, "month");
+		Assert.assertEquals("10", month);
+		String day = ReUtil.get(regex, content, "day");
+		Assert.assertEquals("11", day);
+	}
+
+	@Test
+	public void getAllGroupNamesTest() {
+		String content = "2021-10-11";
+		String regex = "(?<year>\\d+)-(?<month>\\d+)-(?<day>\\d+)";
+		Map<String, String> map = ReUtil.getAllGroupNames(PatternPool.get(regex, Pattern.DOTALL), content);
+		Assert.assertEquals(map.get("year"), "2021");
+		Assert.assertEquals(map.get("month"), "10");
+		Assert.assertEquals(map.get("day"), "11");
 	}
 }

@@ -18,6 +18,7 @@ public class DatePattern {
 	/**
 	 * 标准日期时间正则，每个字段支持单个数字或2个数字，包括：
 	 * <pre>
+	 *     yyyy-MM-dd HH:mm:ss.SSSSSS
 	 *     yyyy-MM-dd HH:mm:ss.SSS
 	 *     yyyy-MM-dd HH:mm:ss
 	 *     yyyy-MM-dd HH:mm
@@ -26,9 +27,13 @@ public class DatePattern {
 	 *
 	 * @since 5.3.6
 	 */
-	public static final Pattern REGEX_NORM = Pattern.compile("\\d{4}-\\d{1,2}-\\d{1,2}(\\s\\d{1,2}:\\d{1,2}(:\\d{1,2})?)?(.\\d{1,3})?");
+	public static final Pattern REGEX_NORM = Pattern.compile("\\d{4}-\\d{1,2}-\\d{1,2}(\\s\\d{1,2}:\\d{1,2}(:\\d{1,2})?)?(.\\d{1,6})?");
 
 	//-------------------------------------------------------------------------------------------------------------------------------- Normal
+	/**
+	 * 年格式：yyyy
+	 */
+	public static final String NORM_YEAR_PATTERN = "yyyy";
 	/**
 	 * 年月格式：yyyy-MM
 	 */
@@ -144,7 +149,7 @@ public class DatePattern {
 	/**
 	 * 标准日期格式 {@link FastDateFormat}：yyyy年MM月dd日
 	 */
-	public static final DateTimeFormatter CHINESE_DATE_FORMATTER = createFormatter(ISO8601_PATTERN);
+	public static final DateTimeFormatter CHINESE_DATE_FORMATTER = createFormatter(CHINESE_DATE_PATTERN);
 
 	/**
 	 * 标准日期格式：yyyy年MM月dd日 HH时mm分ss秒
@@ -310,7 +315,7 @@ public class DatePattern {
 	 * @return {@link DateTimeFormatter}
 	 * @since 5.7.5
 	 */
-	private static DateTimeFormatter createFormatter(String pattern) {
+	public static DateTimeFormatter createFormatter(String pattern) {
 		return DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
 				.withZone(ZoneId.systemDefault());
 	}

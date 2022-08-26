@@ -3,9 +3,9 @@ package cn.hutool.http;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.TimeInterval;
 import cn.hutool.core.lang.Console;
+import cn.hutool.core.net.SSLProtocols;
+import cn.hutool.core.net.url.UrlBuilder;
 import cn.hutool.core.util.CharsetUtil;
-import cn.hutool.http.ssl.SSLSocketFactoryBuilder;
-import cn.hutool.json.JSONUtil;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -27,6 +27,14 @@ public class HttpRequestTest {
 	public void getHttpsTest() {
 		String body = HttpRequest.get("https://www.hutool.cn/").timeout(10).execute().body();
 		Console.log(body);
+	}
+
+	@Test
+	@Ignore
+	public void getHttpsThenTest() {
+		HttpRequest
+				.get("https://hutool.cn")
+				.then(response -> Console.log(response.body()));
 	}
 
 	@Test
@@ -91,7 +99,7 @@ public class HttpRequestTest {
 				// 禁用缓存
 				.disableCache()
 				// 自定义SSL版本
-				.setSSLProtocol(SSLSocketFactoryBuilder.TLSv12);
+				.setSSLProtocol(SSLProtocols.TLSv12);
 		Console.log(request.execute().body());
 	}
 
@@ -126,18 +134,74 @@ public class HttpRequestTest {
 		map.put("size", "2");
 		map.put("sizes", list);
 
-		String s = JSONUtil.toJsonStr(map);
-		HttpRequest request = HttpUtil.createGet("http://localhost:8888/get");
-		Console.log(request.execute().body());
+		HttpRequest
+				.get("http://localhost:8888/get")
+				.form(map)
+				.then(resp -> Console.log(resp.body()));
 	}
 
 	@Test
 	@Ignore
-	public void getWithoutEncodeTest(){
+	public void getWithoutEncodeTest() {
 		String url = "https://img-cloud.voc.com.cn/140/2020/09/03/c3d41b93e0d32138574af8e8b50928b376ca5ba61599127028157.png?imageMogr2/auto-orient/thumbnail/500&pid=259848";
 		HttpRequest get = HttpUtil.createGet(url);
 		Console.log(get.getUrl());
 		HttpResponse execute = get.execute();
 		Console.log(execute.body());
+	}
+
+	@Test
+	@Ignore
+	public void followRedirectsTest() {
+		// 从5.7.19开始关闭JDK的自动重定向功能，改为手动重定向
+		// 当有多层重定向时，JDK的重定向会失效，或者说只有最后一个重定向有效，因此改为手动更易控制次数
+		// 此链接有两次重定向，当设置次数为1时，表示最多执行一次重定向，即请求2次
+		String url = "http://api.rosysun.cn/sjtx/?type=2";
+//		String url = "https://api.btstu.cn/sjtx/api.php?lx=b1";
+
+		// 方式1：全局设置
+		HttpGlobalConfig.setMaxRedirectCount(1);
+		HttpResponse execute = HttpRequest.get(url).execute();
+		Console.log(execute.getStatus(), execute.header(Header.LOCATION));
+
+		// 方式2，单独设置
+		execute = HttpRequest.get(url).setMaxRedirectCount(1).execute();
+		Console.log(execute.getStatus(), execute.header(Header.LOCATION));
+	}
+
+	@Test
+	@Ignore
+	public void addInterceptorTest() {
+		HttpUtil.createGet("https://hutool.cn")
+				.addInterceptor(Console::log)
+				.addResponseInterceptor((res)-> Console.log(res.getStatus()))
+				.execute();
+	}
+
+	@Test
+	@Ignore
+	public void addGlobalInterceptorTest() {
+		GlobalInterceptor.INSTANCE.addRequestInterceptor(Console::log);
+		HttpUtil.createGet("https://hutool.cn").execute();
+	}
+
+	@Test
+	@Ignore
+	public void getWithFormTest(){
+		String url = "https://postman-echo.com/get";
+		final Map<String, Object> map = new HashMap<>();
+		map.put("aaa", "application+1@qqq.com");
+		HttpRequest request =HttpUtil.createGet(url).form(map);
+		Console.log(request.execute().body());
+	}
+
+	@Test
+	@Ignore
+	public void urlWithParamIfGetTest(){
+		UrlBuilder urlBuilder = new UrlBuilder();
+		urlBuilder.setScheme("https").setHost("hutool.cn");
+
+		HttpRequest httpRequest = new HttpRequest(urlBuilder);
+		httpRequest.setMethod(Method.GET).execute();
 	}
 }

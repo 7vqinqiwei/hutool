@@ -7,6 +7,9 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.lang.Filter;
 import cn.hutool.core.lang.Matcher;
 import cn.hutool.core.lang.func.Func1;
+import cn.hutool.core.text.finder.CharFinder;
+import cn.hutool.core.text.finder.Finder;
+import cn.hutool.core.text.finder.StrFinder;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.CharsetUtil;
@@ -18,11 +21,12 @@ import cn.hutool.core.util.StrUtil;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
-import java.util.ArrayList;
+import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -33,7 +37,7 @@ import java.util.function.Predicate;
  */
 public class CharSequenceUtil {
 
-	public static final int INDEX_NOT_FOUND = -1;
+	public static final int INDEX_NOT_FOUND = Finder.INDEX_NOT_FOUND;
 
 	/**
 	 * 字符串常量：{@code "null"} <br>
@@ -82,8 +86,7 @@ public class CharSequenceUtil {
 	 * @see #isEmpty(CharSequence)
 	 */
 	public static boolean isBlank(CharSequence str) {
-		int length;
-
+		final int length;
 		if ((str == null) || ((length = str.length()) == 0)) {
 			return true;
 		}
@@ -690,7 +693,12 @@ public class CharSequenceUtil {
 
 	/**
 	 * 是否以指定字符串开头<br>
-	 * 如果给定的字符串和开头字符串都为null则返回true，否则任意一个值为null返回false
+	 * 如果给定的字符串和开头字符串都为null则返回true，否则任意一个值为null返回false<br>
+	 * <pre>
+	 *     CharSequenceUtil.startWith("123", "123", false, true);   -- false
+	 *     CharSequenceUtil.startWith("ABCDEF", "abc", true, true); -- true
+	 *     CharSequenceUtil.startWith("abc", "abc", true, true);    -- false
+	 * </pre>
 	 *
 	 * @param str          被监测字符串
 	 * @param prefix       开头字符串
@@ -701,18 +709,14 @@ public class CharSequenceUtil {
 	 */
 	public static boolean startWith(CharSequence str, CharSequence prefix, boolean ignoreCase, boolean ignoreEquals) {
 		if (null == str || null == prefix) {
-			if (false == ignoreEquals) {
+			if (ignoreEquals) {
 				return false;
 			}
 			return null == str && null == prefix;
 		}
 
-		boolean isStartWith;
-		if (ignoreCase) {
-			isStartWith = str.toString().toLowerCase().startsWith(prefix.toString().toLowerCase());
-		} else {
-			isStartWith = str.toString().startsWith(prefix.toString());
-		}
+		boolean isStartWith = str.toString()
+				.regionMatches(ignoreCase, 0, prefix.toString(), 0, prefix.length());
 
 		if (isStartWith) {
 			return (false == ignoreEquals) || (false == equals(str, prefix, ignoreCase));
@@ -775,6 +779,28 @@ public class CharSequenceUtil {
 		return false;
 	}
 
+	/**
+	 * 给定字符串是否以任何一个字符串结尾（忽略大小写）<br>
+	 * 给定字符串和数组为空都返回false
+	 *
+	 * @param str      给定字符串
+	 * @param suffixes 需要检测的结尾字符串
+	 * @return 给定字符串是否以任何一个字符串结尾
+	 * @since 5.8.1
+	 */
+	public static boolean startWithAnyIgnoreCase(final CharSequence str, final CharSequence... suffixes) {
+		if (isEmpty(str) || ArrayUtil.isEmpty(suffixes)) {
+			return false;
+		}
+
+		for (final CharSequence suffix : suffixes) {
+			if (startWith(str, suffix, true)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	// ------------------------------------------------------------------------ endWith
 
 	/**
@@ -795,21 +821,42 @@ public class CharSequenceUtil {
 	 * 是否以指定字符串结尾<br>
 	 * 如果给定的字符串和开头字符串都为null则返回true，否则任意一个值为null返回false
 	 *
-	 * @param str          被监测字符串
-	 * @param suffix       结尾字符串
-	 * @param isIgnoreCase 是否忽略大小写
+	 * @param str        被监测字符串
+	 * @param suffix     结尾字符串
+	 * @param ignoreCase 是否忽略大小写
 	 * @return 是否以指定字符串结尾
 	 */
-	public static boolean endWith(CharSequence str, CharSequence suffix, boolean isIgnoreCase) {
+	public static boolean endWith(CharSequence str, CharSequence suffix, boolean ignoreCase) {
+		return endWith(str, suffix, ignoreCase, false);
+	}
+
+	/**
+	 * 是否以指定字符串结尾<br>
+	 * 如果给定的字符串和开头字符串都为null则返回true，否则任意一个值为null返回false
+	 *
+	 * @param str          被监测字符串
+	 * @param suffix       结尾字符串
+	 * @param ignoreCase   是否忽略大小写
+	 * @param ignoreEquals 是否忽略字符串相等的情况
+	 * @return 是否以指定字符串结尾
+	 * @since 5.8.0
+	 */
+	public static boolean endWith(CharSequence str, CharSequence suffix, boolean ignoreCase, boolean ignoreEquals) {
 		if (null == str || null == suffix) {
+			if (ignoreEquals) {
+				return false;
+			}
 			return null == str && null == suffix;
 		}
 
-		if (isIgnoreCase) {
-			return str.toString().toLowerCase().endsWith(suffix.toString().toLowerCase());
-		} else {
-			return str.toString().endsWith(suffix.toString());
+		final int strOffset = str.length() - suffix.length();
+		boolean isEndWith = str.toString()
+				.regionMatches(ignoreCase, strOffset, suffix.toString(), 0, suffix.length());
+
+		if (isEndWith) {
+			return (false == ignoreEquals) || (false == equals(str, suffix, ignoreCase));
 		}
+		return false;
 	}
 
 	/**
@@ -960,6 +1007,26 @@ public class CharSequenceUtil {
 	}
 
 	/**
+	 * 检查指定字符串中是否含给定的所有字符串
+	 *
+	 * @param str       字符串
+	 * @param testChars 检查的字符
+	 * @return 字符串含有非检查的字符，返回false
+	 * @since 4.4.1
+	 */
+	public static boolean containsAll(CharSequence str, CharSequence... testChars) {
+		if (isBlank(str) || ArrayUtil.isEmpty(testChars)) {
+			return false;
+		}
+		for (CharSequence testChar : testChars) {
+			if (false == contains(str, testChar)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * 给定字符串是否包含空白符（空白符包括空格、制表符、全角空格和不间断空格）<br>
 	 * 如果给定字符串为null或者""，则返回false
 	 *
@@ -1016,7 +1083,7 @@ public class CharSequenceUtil {
 			// 如果被监测字符串和
 			return null == testStr;
 		}
-		return str.toString().toLowerCase().contains(testStr.toString().toLowerCase());
+		return indexOfIgnoreCase(str, testStr) > -1;
 	}
 
 	/**
@@ -1062,7 +1129,7 @@ public class CharSequenceUtil {
 	 * @param searchChar 被查找的字符
 	 * @return 位置
 	 */
-	public static int indexOf(final CharSequence str, char searchChar) {
+	public static int indexOf(CharSequence str, char searchChar) {
 		return indexOf(str, searchChar, 0);
 	}
 
@@ -1085,29 +1152,17 @@ public class CharSequenceUtil {
 	/**
 	 * 指定范围内查找指定字符
 	 *
-	 * @param str        字符串
+	 * @param text       字符串
 	 * @param searchChar 被查找的字符
 	 * @param start      起始位置，如果小于0，从0开始查找
 	 * @param end        终止位置，如果超过str.length()则默认查找到字符串末尾
 	 * @return 位置
 	 */
-	public static int indexOf(final CharSequence str, char searchChar, int start, int end) {
-		if (isEmpty(str)) {
+	public static int indexOf(CharSequence text, char searchChar, int start, int end) {
+		if (isEmpty(text)) {
 			return INDEX_NOT_FOUND;
 		}
-		final int len = str.length();
-		if (start < 0 || start > len) {
-			start = 0;
-		}
-		if (end > len || end < 0) {
-			end = len;
-		}
-		for (int i = start; i < end; i++) {
-			if (str.charAt(i) == searchChar) {
-				return i;
-			}
-		}
-		return INDEX_NOT_FOUND;
+		return new CharFinder(searchChar).setText(text).setEndIndex(end).start(start);
 	}
 
 	/**
@@ -1166,40 +1221,22 @@ public class CharSequenceUtil {
 	/**
 	 * 指定范围内查找字符串
 	 *
-	 * @param str        字符串
-	 * @param searchStr  需要查找位置的字符串
-	 * @param fromIndex  起始位置
+	 * @param text       字符串，空则返回-1
+	 * @param searchStr  需要查找位置的字符串，空则返回-1
+	 * @param from       起始位置（包含）
 	 * @param ignoreCase 是否忽略大小写
 	 * @return 位置
 	 * @since 3.2.1
 	 */
-	public static int indexOf(final CharSequence str, CharSequence searchStr, int fromIndex, boolean ignoreCase) {
-		if (str == null || searchStr == null) {
-			return INDEX_NOT_FOUND;
-		}
-		if (fromIndex < 0) {
-			fromIndex = 0;
-		}
-
-		final int endLimit = str.length() - searchStr.length() + 1;
-		if (fromIndex > endLimit) {
-			return INDEX_NOT_FOUND;
-		}
-		if (searchStr.length() == 0) {
-			return fromIndex;
-		}
-
-		if (false == ignoreCase) {
-			// 不忽略大小写调用JDK方法
-			return str.toString().indexOf(searchStr.toString(), fromIndex);
-		}
-
-		for (int i = fromIndex; i < endLimit; i++) {
-			if (isSubEquals(str, i, searchStr, 0, searchStr.length(), true)) {
-				return i;
+	public static int indexOf(CharSequence text, CharSequence searchStr, int from, boolean ignoreCase) {
+		if (isEmpty(text) || isEmpty(searchStr)) {
+			if (StrUtil.equals(text, searchStr)) {
+				return 0;
+			} else {
+				return INDEX_NOT_FOUND;
 			}
 		}
-		return INDEX_NOT_FOUND;
+		return new StrFinder(searchStr, ignoreCase).setText(text).start(from);
 	}
 
 	/**
@@ -1210,7 +1247,7 @@ public class CharSequenceUtil {
 	 * @return 位置
 	 * @since 3.2.1
 	 */
-	public static int lastIndexOfIgnoreCase(final CharSequence str, final CharSequence searchStr) {
+	public static int lastIndexOfIgnoreCase(CharSequence str, CharSequence searchStr) {
 		return lastIndexOfIgnoreCase(str, searchStr, str.length());
 	}
 
@@ -1224,7 +1261,7 @@ public class CharSequenceUtil {
 	 * @return 位置
 	 * @since 3.2.1
 	 */
-	public static int lastIndexOfIgnoreCase(final CharSequence str, final CharSequence searchStr, int fromIndex) {
+	public static int lastIndexOfIgnoreCase(CharSequence str, CharSequence searchStr, int fromIndex) {
 		return lastIndexOf(str, searchStr, fromIndex, true);
 	}
 
@@ -1232,37 +1269,23 @@ public class CharSequenceUtil {
 	 * 指定范围内查找字符串<br>
 	 * fromIndex 为搜索起始位置，从后往前计数
 	 *
-	 * @param str        字符串
+	 * @param text       字符串
 	 * @param searchStr  需要查找位置的字符串
-	 * @param fromIndex  起始位置，从后往前计数
+	 * @param from       起始位置，从后往前计数
 	 * @param ignoreCase 是否忽略大小写
 	 * @return 位置
 	 * @since 3.2.1
 	 */
-	public static int lastIndexOf(final CharSequence str, final CharSequence searchStr, int fromIndex, boolean ignoreCase) {
-		if (str == null || searchStr == null) {
-			return INDEX_NOT_FOUND;
-		}
-		if (fromIndex < 0) {
-			fromIndex = 0;
-		}
-		fromIndex = Math.min(fromIndex, str.length());
-
-		if (searchStr.length() == 0) {
-			return fromIndex;
-		}
-
-		if (false == ignoreCase) {
-			// 不忽略大小写调用JDK方法
-			return str.toString().lastIndexOf(searchStr.toString(), fromIndex);
-		}
-
-		for (int i = fromIndex; i >= 0; i--) {
-			if (isSubEquals(str, i, searchStr, 0, searchStr.length(), true)) {
-				return i;
+	public static int lastIndexOf(CharSequence text, CharSequence searchStr, int from, boolean ignoreCase) {
+		if (isEmpty(text) || isEmpty(searchStr)) {
+			if (StrUtil.equals(text, searchStr)) {
+				return 0;
+			} else {
+				return INDEX_NOT_FOUND;
 			}
 		}
-		return INDEX_NOT_FOUND;
+		return new StrFinder(searchStr, ignoreCase)
+				.setText(text).setNegative(true).start(from);
 	}
 
 	/**
@@ -1460,7 +1483,7 @@ public class CharSequenceUtil {
 		}
 
 		final String str2 = str.toString();
-		if (str2.toLowerCase().startsWith(prefix.toString().toLowerCase())) {
+		if (startWithIgnoreCase(str, prefix)) {
 			return subSuf(str2, prefix.length());// 截取后半段
 		}
 		return str2;
@@ -1509,7 +1532,7 @@ public class CharSequenceUtil {
 		}
 
 		final String str2 = str.toString();
-		if (str2.toLowerCase().endsWith(suffix.toString().toLowerCase())) {
+		if (endWithIgnoreCase(str, suffix)) {
 			return subPre(str2, str2.length() - suffix.length());
 		}
 		return str2;
@@ -1728,16 +1751,14 @@ public class CharSequenceUtil {
 	/**
 	 * 切分字符串
 	 *
-	 * @param str       被切分的字符串
+	 * @param text      被切分的字符串
 	 * @param separator 分隔符字符
 	 * @param limit     限制分片数
 	 * @return 切分后的数组
 	 */
-	public static String[] splitToArray(CharSequence str, char separator, int limit) {
-		if (null == str) {
-			return new String[]{};
-		}
-		return StrSplitter.splitToArray(str.toString(), separator, limit, false, false);
+	public static String[] splitToArray(CharSequence text, char separator, int limit) {
+		Assert.notNull(text, "Text must be not null!");
+		return StrSplitter.splitToArray(text.toString(), separator, limit, false, false);
 	}
 
 	/**
@@ -1828,10 +1849,23 @@ public class CharSequenceUtil {
 	 * @since 3.0.8
 	 */
 	public static List<String> split(CharSequence str, char separator, int limit, boolean isTrim, boolean ignoreEmpty) {
-		if (null == str) {
-			return new ArrayList<>(0);
-		}
-		return StrSplitter.split(str.toString(), separator, limit, isTrim, ignoreEmpty);
+		return StrSplitter.split(str, separator, limit, isTrim, ignoreEmpty);
+	}
+
+	/**
+	 * 切分字符串
+	 *
+	 * @param <R>         切分后元素类型
+	 * @param str         被切分的字符串
+	 * @param separator   分隔符字符
+	 * @param limit       限制分片数，-1不限制
+	 * @param ignoreEmpty 是否忽略空串
+	 * @param mapping     切分后的字符串元素的转换方法
+	 * @return 切分后的集合，元素类型是经过 mapping 转换后的
+	 * @since 5.7.14
+	 */
+	public static <R> List<R> split(CharSequence str, char separator, int limit, boolean ignoreEmpty, Function<String, R> mapping) {
+		return StrSplitter.split(str, separator, limit, ignoreEmpty, mapping);
 	}
 
 	/**
@@ -1872,11 +1906,8 @@ public class CharSequenceUtil {
 	 * @since 3.2.0
 	 */
 	public static List<String> split(CharSequence str, CharSequence separator, int limit, boolean isTrim, boolean ignoreEmpty) {
-		if (null == str) {
-			return new ArrayList<>(0);
-		}
 		final String separatorStr = (null == separator) ? null : separator.toString();
-		return StrSplitter.split(str.toString(), separatorStr, limit, isTrim, ignoreEmpty);
+		return StrSplitter.split(str, separatorStr, limit, isTrim, ignoreEmpty);
 	}
 
 	/**
@@ -1885,13 +1916,10 @@ public class CharSequenceUtil {
 	 * @param str 字符串
 	 * @param len 每一个小节的长度
 	 * @return 截取后的字符串数组
-	 * @see StrSplitter#splitByLength(String, int)
+	 * @see StrSplitter#splitByLength(CharSequence, int)
 	 */
 	public static String[] split(CharSequence str, int len) {
-		if (null == str) {
-			return new String[]{};
-		}
-		return StrSplitter.splitByLength(str.toString(), len);
+		return StrSplitter.splitByLength(str, len);
 	}
 
 	/**
@@ -2004,19 +2032,32 @@ public class CharSequenceUtil {
 	 * 截取部分字符串，这里一个汉字的长度认为是2
 	 *
 	 * @param str    字符串
-	 * @param len    切割的位置
+	 * @param len    bytes切割到的位置（包含）
 	 * @param suffix 切割后加上后缀
 	 * @return 切割后的字符串
 	 * @since 3.1.1
 	 */
 	public static String subPreGbk(CharSequence str, int len, CharSequence suffix) {
+		return subPreGbk(str, len, true) + suffix;
+	}
+
+	/**
+	 * 截取部分字符串，这里一个汉字的长度认为是2<br>
+	 * 可以自定义halfUp，如len为10，如果截取后最后一个字符是半个字符，{@code true}表示保留，则长度是11，否则长度9
+	 *
+	 * @param str    字符串
+	 * @param len    bytes切割到的位置（包含）
+	 * @param halfUp 遇到截取一半的GBK字符，是否保留。
+	 * @return 切割后的字符串
+	 * @since 5.7.17
+	 */
+	public static String subPreGbk(CharSequence str, int len, boolean halfUp) {
 		if (isEmpty(str)) {
 			return str(str);
 		}
 
-		byte[] b;
 		int counterOfDoubleByte = 0;
-		b = str.toString().getBytes(CharsetUtil.CHARSET_GBK);
+		final byte[] b = bytes(str, CharsetUtil.CHARSET_GBK);
 		if (b.length <= len) {
 			return str.toString();
 		}
@@ -2027,9 +2068,13 @@ public class CharSequenceUtil {
 		}
 
 		if (counterOfDoubleByte % 2 != 0) {
-			len += 1;
+			if (halfUp) {
+				len += 1;
+			} else {
+				len -= 1;
+			}
 		}
-		return new String(b, 0, len, CharsetUtil.CHARSET_GBK) + suffix;
+		return new String(b, 0, len, CharsetUtil.CHARSET_GBK);
 	}
 
 	/**
@@ -2354,7 +2399,9 @@ public class CharSequenceUtil {
 			}
 		} else {
 			int suffixIndex;
-			for (String fragment : split) {
+			String fragment;
+			for (int i = 1; i < split.length; i++) {
+				fragment = split[i];
 				suffixIndex = fragment.indexOf(suffix.toString());
 				if (suffixIndex > 0) {
 					result.add(fragment.substring(0, suffixIndex));
@@ -2494,23 +2541,24 @@ public class CharSequenceUtil {
 	 * StrUtil.repeatAndJoin("?", 5, null) = "?????"
 	 * </pre>
 	 *
-	 * @param str         被重复的字符串
-	 * @param count       数量
-	 * @param conjunction 分界符
+	 * @param str       被重复的字符串
+	 * @param count     数量
+	 * @param delimiter 分界符
 	 * @return 连接后的字符串
 	 * @since 4.0.1
 	 */
-	public static String repeatAndJoin(CharSequence str, int count, CharSequence conjunction) {
+	public static String repeatAndJoin(CharSequence str, int count, CharSequence delimiter) {
 		if (count <= 0) {
 			return EMPTY;
 		}
-		final StrBuilder builder = StrBuilder.create();
-		boolean isFirst = true;
+		final StringBuilder builder = new StringBuilder(str.length() * count);
+		builder.append(str);
+		count--;
+
+		final boolean isAppendDelimiter = isNotEmpty(delimiter);
 		while (count-- > 0) {
-			if (isFirst) {
-				isFirst = false;
-			} else if (isNotEmpty(conjunction)) {
-				builder.append(conjunction);
+			if (isAppendDelimiter) {
+				builder.append(delimiter);
 			}
 			builder.append(str);
 		}
@@ -2558,7 +2606,12 @@ public class CharSequenceUtil {
 	}
 
 	/**
-	 * 比较两个字符串是否相等。
+	 * 比较两个字符串是否相等，规则如下
+	 * <ul>
+	 *     <li>str1和str2都为{@code null}</li>
+	 *     <li>忽略大小写使用{@link String#equalsIgnoreCase(String)}判断相等</li>
+	 *     <li>不忽略大小写使用{@link String#contentEquals(CharSequence)}判断相等</li>
+	 * </ul>
 	 *
 	 * @param str1       要比较的字符串1
 	 * @param str2       要比较的字符串2
@@ -2652,6 +2705,21 @@ public class CharSequenceUtil {
 	}
 
 	/**
+	 * 截取第一个字串的部分字符，与第二个字符串比较（长度一致），判断截取的子串是否相同<br>
+	 * 任意一个字符串为null返回false
+	 *
+	 * @param str1       第一个字符串
+	 * @param start1     第一个字符串开始的位置
+	 * @param str2       第二个字符串
+	 * @param ignoreCase 是否忽略大小写
+	 * @return 子串是否相同
+	 * @since 3.2.1
+	 */
+	public static boolean isSubEquals(CharSequence str1, int start1, CharSequence str2, boolean ignoreCase) {
+		return isSubEquals(str1, start1, str2, 0, str2.length(), ignoreCase);
+	}
+
+	/**
 	 * 截取两个字符串的不同部分（长度一致），判断截取的子串是否相同<br>
 	 * 任意一个字符串为null返回false
 	 *
@@ -2680,7 +2748,7 @@ public class CharSequenceUtil {
 	 * 如果想输出 {} 使用 \\转义 { 即可，如果想输出 {} 之前的 \ 使用双转义符 \\\\ 即可<br>
 	 * 例：<br>
 	 * 通常使用：format("this is {} for {}", "a", "b") =》 this is a for b<br>
-	 * 转义{}： format("this is \\{} for {}", "a", "b") =》 this is \{} for a<br>
+	 * 转义{}： format("this is \\{} for {}", "a", "b") =》 this is {} for a<br>
 	 * 转义\： format("this is \\\\{} for {}", "a", "b") =》 this is \a for b<br>
 	 *
 	 * @param template 文本模板，被替换的部分用 {} 表示，如果模板为null，返回"null"
@@ -2841,10 +2909,10 @@ public class CharSequenceUtil {
 			len += str.length();
 		}
 		if (isNotEmpty(prefix)) {
-			len += str.length();
+			len += prefix.length();
 		}
 		if (isNotEmpty(suffix)) {
-			len += str.length();
+			len += suffix.length();
 		}
 		StringBuilder sb = new StringBuilder(len);
 		if (isNotEmpty(prefix) && false == startWith(str, prefix)) {
@@ -3540,13 +3608,18 @@ public class CharSequenceUtil {
 
 		final int strLength = str.length();
 		final int searchStrLength = searchStr.length();
+		if (strLength < searchStrLength) {
+			// issue#I4M16G@Gitee
+			return str(str);
+		}
+
 		if (fromIndex > strLength) {
 			return str(str);
 		} else if (fromIndex < 0) {
 			fromIndex = 0;
 		}
 
-		final StrBuilder result = StrBuilder.create(strLength + 16);
+		final StringBuilder result = new StringBuilder(strLength - searchStrLength + replacement.length());
 		if (0 != fromIndex) {
 			result.append(str.subSequence(0, fromIndex));
 		}
@@ -3567,7 +3640,8 @@ public class CharSequenceUtil {
 	}
 
 	/**
-	 * 替换指定字符串的指定区间内字符为固定字符
+	 * 替换指定字符串的指定区间内字符为固定字符<br>
+	 * 此方法使用{@link String#codePoints()}完成拆分替换
 	 *
 	 * @param str          字符串
 	 * @param startInclude 开始位置（包含）
@@ -3580,35 +3654,76 @@ public class CharSequenceUtil {
 		if (isEmpty(str)) {
 			return str(str);
 		}
-		final int strLength = str.length();
+		final String originalStr = str(str);
+		int[] strCodePoints = originalStr.codePoints().toArray();
+		final int strLength = strCodePoints.length;
 		if (startInclude > strLength) {
-			return str(str);
+			return originalStr;
 		}
 		if (endExclude > strLength) {
 			endExclude = strLength;
 		}
 		if (startInclude > endExclude) {
 			// 如果起始位置大于结束位置，不替换
-			return str(str);
+			return originalStr;
 		}
 
-		final char[] chars = new char[strLength];
+		final StringBuilder stringBuilder = new StringBuilder();
 		for (int i = 0; i < strLength; i++) {
 			if (i >= startInclude && i < endExclude) {
-				chars[i] = replacedChar;
+				stringBuilder.append(replacedChar);
 			} else {
-				chars[i] = str.charAt(i);
+				stringBuilder.append(new String(strCodePoints, i, 1));
 			}
 		}
-		return new String(chars);
+		return stringBuilder.toString();
+	}
+
+	/**
+	 * 替换指定字符串的指定区间内字符为指定字符串，字符串只重复一次<br>
+	 * 此方法使用{@link String#codePoints()}完成拆分替换
+	 *
+	 * @param str          字符串
+	 * @param startInclude 开始位置（包含）
+	 * @param endExclude   结束位置（不包含）
+	 * @param replacedStr  被替换的字符串
+	 * @return 替换后的字符串
+	 * @since 3.2.1
+	 */
+	public static String replace(CharSequence str, int startInclude, int endExclude, CharSequence replacedStr) {
+		if (isEmpty(str)) {
+			return str(str);
+		}
+		final String originalStr = str(str);
+		int[] strCodePoints = originalStr.codePoints().toArray();
+		final int strLength = strCodePoints.length;
+		if (startInclude > strLength) {
+			return originalStr;
+		}
+		if (endExclude > strLength) {
+			endExclude = strLength;
+		}
+		if (startInclude > endExclude) {
+			// 如果起始位置大于结束位置，不替换
+			return originalStr;
+		}
+
+		final StringBuilder stringBuilder = new StringBuilder();
+		for (int i = 0; i < startInclude; i++) {
+			stringBuilder.append(new String(strCodePoints, i, 1));
+		}
+		stringBuilder.append(replacedStr);
+		for (int i = endExclude; i < strLength; i++) {
+			stringBuilder.append(new String(strCodePoints, i, 1));
+		}
+		return stringBuilder.toString();
 	}
 
 	/**
 	 * 替换所有正则匹配的文本，并使用自定义函数决定如何替换<br>
 	 * replaceFun可以通过{@link Matcher}提取出匹配到的内容的不同部分，然后经过重新处理、组装变成新的内容放回原位。
-	 *
 	 * <pre class="code">
-	 *     replaceAll(this.content, "(\\d+)", parameters -&gt; "-" + parameters.group(1) + "-")
+	 *     replace(this.content, "(\\d+)", parameters -&gt; "-" + parameters.group(1) + "-")
 	 *     // 结果为："ZZZaaabbbccc中文-1234-"
 	 * </pre>
 	 *
@@ -3639,7 +3754,7 @@ public class CharSequenceUtil {
 
 	/**
 	 * 替换指定字符串的指定区间内字符为"*"
-	 * 俗称：脱敏功能，后面其他功能，可以见：DesensitizedUtils(脱敏工具类)
+	 * 俗称：脱敏功能，后面其他功能，可以见：DesensitizedUtil(脱敏工具类)
 	 *
 	 * <pre>
 	 * StrUtil.hide(null,*,*)=null
@@ -3665,15 +3780,15 @@ public class CharSequenceUtil {
 	 * 脱敏，使用默认的脱敏策略
 	 *
 	 * <pre>
-	 * StrUtil.desensitized("100", DesensitizedUtils.DesensitizedType.USER_ID)) =  "0"
-	 * StrUtil.desensitized("段正淳", DesensitizedUtils.DesensitizedType.CHINESE_NAME)) = "段**"
-	 * StrUtil.desensitized("51343620000320711X", DesensitizedUtils.DesensitizedType.ID_CARD)) = "5***************1X"
-	 * StrUtil.desensitized("09157518479", DesensitizedUtils.DesensitizedType.FIXED_PHONE)) = "0915*****79"
-	 * StrUtil.desensitized("18049531999", DesensitizedUtils.DesensitizedType.MOBILE_PHONE)) = "180****1999"
-	 * StrUtil.desensitized("北京市海淀区马连洼街道289号", DesensitizedUtils.DesensitizedType.ADDRESS)) = "北京市海淀区马********"
-	 * StrUtil.desensitized("duandazhi-jack@gmail.com.cn", DesensitizedUtils.DesensitizedType.EMAIL)) = "d*************@gmail.com.cn"
-	 * StrUtil.desensitized("1234567890", DesensitizedUtils.DesensitizedType.PASSWORD)) = "**********"
-	 * StrUtil.desensitized("苏D40000", DesensitizedUtils.DesensitizedType.CAR_LICENSE)) = "苏D4***0"
+	 * StrUtil.desensitized("100", DesensitizedUtil.DesensitizedType.USER_ID)) =  "0"
+	 * StrUtil.desensitized("段正淳", DesensitizedUtil.DesensitizedType.CHINESE_NAME)) = "段**"
+	 * StrUtil.desensitized("51343620000320711X", DesensitizedUtil.DesensitizedType.ID_CARD)) = "5***************1X"
+	 * StrUtil.desensitized("09157518479", DesensitizedUtil.DesensitizedType.FIXED_PHONE)) = "0915*****79"
+	 * StrUtil.desensitized("18049531999", DesensitizedUtil.DesensitizedType.MOBILE_PHONE)) = "180****1999"
+	 * StrUtil.desensitized("北京市海淀区马连洼街道289号", DesensitizedUtil.DesensitizedType.ADDRESS)) = "北京市海淀区马********"
+	 * StrUtil.desensitized("duandazhi-jack@gmail.com.cn", DesensitizedUtil.DesensitizedType.EMAIL)) = "d*************@gmail.com.cn"
+	 * StrUtil.desensitized("1234567890", DesensitizedUtil.DesensitizedType.PASSWORD)) = "**********"
+	 * StrUtil.desensitized("苏D40000", DesensitizedUtil.DesensitizedType.CAR_LICENSE)) = "苏D4***0"
 	 * StrUtil.desensitized("11011111222233333256", DesensitizedType.BANK_CARD)) = "1101 **** **** **** 3256"
 	 * </pre>
 	 *
@@ -3804,7 +3919,7 @@ public class CharSequenceUtil {
 	 * @since 5.4.1
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends CharSequence> T firstNonNull(T... strs) {
+	public static <T extends CharSequence> T firstNonNull(T... strs) {
 		return ArrayUtil.firstNonNull(strs);
 	}
 
@@ -3818,7 +3933,7 @@ public class CharSequenceUtil {
 	 * @since 5.4.1
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends CharSequence> T firstNonEmpty(T... strs) {
+	public static <T extends CharSequence> T firstNonEmpty(T... strs) {
 		return ArrayUtil.firstMatch(StrUtil::isNotEmpty, strs);
 	}
 
@@ -3832,7 +3947,7 @@ public class CharSequenceUtil {
 	 * @since 5.4.1
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends CharSequence> T firstNonBlank(T... strs) {
+	public static <T extends CharSequence> T firstNonBlank(T... strs) {
 		return ArrayUtil.firstMatch(StrUtil::isNotBlank, strs);
 	}
 
@@ -4016,9 +4131,10 @@ public class CharSequenceUtil {
 	 *
 	 * @param str 转换前的驼峰式命名的字符串，也可以为下划线形式
 	 * @return 转换后下划线方式命名的字符串
+	 * @see NamingCase#toUnderlineCase(CharSequence)
 	 */
 	public static String toUnderlineCase(CharSequence str) {
-		return toSymbolCase(str, CharUtil.UNDERLINE);
+		return NamingCase.toUnderlineCase(str);
 	}
 
 	/**
@@ -4027,59 +4143,11 @@ public class CharSequenceUtil {
 	 * @param str    转换前的驼峰式命名的字符串，也可以为符号连接形式
 	 * @param symbol 连接符
 	 * @return 转换后符号连接方式命名的字符串
+	 * @see NamingCase#toSymbolCase(CharSequence, char)
 	 * @since 4.0.10
 	 */
 	public static String toSymbolCase(CharSequence str, char symbol) {
-		if (str == null) {
-			return null;
-		}
-
-		final int length = str.length();
-		final StrBuilder sb = new StrBuilder();
-		char c;
-		for (int i = 0; i < length; i++) {
-			c = str.charAt(i);
-			if (Character.isUpperCase(c)) {
-				final Character preChar = (i > 0) ? str.charAt(i - 1) : null;
-				final Character nextChar = (i < str.length() - 1) ? str.charAt(i + 1) : null;
-
-				if (null != preChar) {
-					if (symbol == preChar) {
-						// 前一个为分隔符
-						if (null == nextChar || Character.isLowerCase(nextChar)) {
-							//普通首字母大写，如_Abb -> _abb
-							c = Character.toLowerCase(c);
-						}
-						//后一个为大写，按照专有名词对待，如_AB -> _AB
-					} else if (Character.isLowerCase(preChar)) {
-						// 前一个为小写
-						sb.append(symbol);
-						if (null == nextChar || Character.isLowerCase(nextChar)) {
-							//普通首字母大写，如aBcc -> a_bcc
-							c = Character.toLowerCase(c);
-						}
-						// 后一个为大写，按照专有名词对待，如aBC -> a_BC
-					} else {
-						//前一个为大写
-						if (null == nextChar || Character.isLowerCase(nextChar)) {
-							// 普通首字母大写，如ABcc -> A_bcc
-							sb.append(symbol);
-							c = Character.toLowerCase(c);
-						}
-						// 后一个为大写，按照专有名词对待，如ABC -> ABC
-					}
-				} else {
-					// 首字母，需要根据后一个判断是否转为小写
-					if (null == nextChar || Character.isLowerCase(nextChar)) {
-						// 普通首字母大写，如Abc -> abc
-						c = Character.toLowerCase(c);
-					}
-					// 后一个为大写，按照专有名词对待，如ABC -> ABC
-				}
-			}
-			sb.append(c);
-		}
-		return sb.toString();
+		return NamingCase.toSymbolCase(str, symbol);
 	}
 
 	/**
@@ -4088,33 +4156,23 @@ public class CharSequenceUtil {
 	 *
 	 * @param name 转换前的下划线大写方式命名的字符串
 	 * @return 转换后的驼峰式命名的字符串
+	 * @see NamingCase#toCamelCase(CharSequence)
 	 */
 	public static String toCamelCase(CharSequence name) {
-		if (null == name) {
-			return null;
-		}
+		return NamingCase.toCamelCase(name);
+	}
 
-		final String name2 = name.toString();
-		if (contains(name2, CharUtil.UNDERLINE)) {
-			final int length = name2.length();
-			final StringBuilder sb = new StringBuilder(length);
-			boolean upperCase = false;
-			for (int i = 0; i < length; i++) {
-				char c = name2.charAt(i);
-
-				if (c == CharUtil.UNDERLINE) {
-					upperCase = true;
-				} else if (upperCase) {
-					sb.append(Character.toUpperCase(c));
-					upperCase = false;
-				} else {
-					sb.append(Character.toLowerCase(c));
-				}
-			}
-			return sb.toString();
-		} else {
-			return name2;
-		}
+	/**
+	 * 将连接符方式命名的字符串转换为驼峰式。如果转换前的下划线大写方式命名的字符串为空，则返回空字符串。<br>
+	 * 例如：hello_world=》helloWorld; hello-world=》helloWorld
+	 *
+	 * @param name   转换前的下划线大写方式命名的字符串
+	 * @param symbol 连接符
+	 * @return 转换后的驼峰式命名的字符串
+	 * @see NamingCase#toCamelCase(CharSequence, char)
+	 */
+	public static String toCamelCase(CharSequence name, char symbol) {
+		return NamingCase.toCamelCase(name, symbol);
 	}
 
 	// ------------------------------------------------------------------------ isSurround
@@ -4252,11 +4310,17 @@ public class CharSequenceUtil {
 	 * 将给定字符串，变成 "xxx...xxx" 形式的字符串
 	 *
 	 * <ul>
-	 *     <li>abcdef 5 -》 a...f</li>
-	 *     <li>abcdef 4 -》 a..f</li>
-	 *     <li>abcdef 3 -》 a.f</li>
-	 *     <li>abcdef 2 -》 a.</li>
-	 *     <li>abcdef 1 -》 a</li>
+	 *     <li>abcdefgh  9 -》 abcdefgh</li>
+	 *     <li>abcdefgh  8 -》 abcdefgh</li>
+	 *     <li>abcdefgh  7 -》 ab...gh</li>
+	 *     <li>abcdefgh  6 -》 ab...h</li>
+	 *     <li>abcdefgh  5 -》 a...h</li>
+	 *     <li>abcdefgh  4 -》 a..h</li>
+	 *     <li>abcdefgh  3 -》 a.h</li>
+	 *     <li>abcdefgh  2 -》 a.</li>
+	 *     <li>abcdefgh  1 -》 a</li>
+	 *     <li>abcdefgh  0 -》 abcdefgh</li>
+	 *     <li>abcdefgh -1 -》 abcdefgh</li>
 	 * </ul>
 	 *
 	 * @param str       字符串
@@ -4273,20 +4337,23 @@ public class CharSequenceUtil {
 		}
 
 		// since 5.7.5，特殊长度
-		switch (maxLength){
+		switch (maxLength) {
 			case 1:
 				return String.valueOf(str.charAt(0));
 			case 2:
 				return str.charAt(0) + ".";
 			case 3:
-				return str.charAt(0) + "." + str.charAt(str.length() - 1);
+				return str.charAt(0) + "." + str.charAt(strLength - 1);
+			case 4:
+				return str.charAt(0) + ".." + str.charAt(strLength - 1);
 		}
 
-		final int w = maxLength / 2;
+		final int suffixLength = (maxLength - 3) / 2;
+		final int preLength = suffixLength + (maxLength - 3) % 2; // suffixLength 或 suffixLength + 1
 		final String str2 = str.toString();
 		return format("{}...{}",
-				str2.substring(0, maxLength - w),
-				str2.substring(strLength - w + 3));
+				str2.substring(0, preLength),
+				str2.substring(strLength - suffixLength));
 	}
 
 	/**
@@ -4304,7 +4371,7 @@ public class CharSequenceUtil {
 	/**
 	 * 以 conjunction 为分隔符将多个对象转换为字符串
 	 *
-	 * @param <T> 元素类型
+	 * @param <T>         元素类型
 	 * @param conjunction 分隔符 {@link StrPool#COMMA}
 	 * @param iterable    集合
 	 * @return 连接后的字符串
@@ -4327,7 +4394,7 @@ public class CharSequenceUtil {
 		if (StrUtil.isBlank(value)) {
 			return false;
 		}
-		for (int i = value.length(); --i >= 0;) {
+		for (int i = value.length(); --i >= 0; ) {
 			if (false == matcher.match(value.charAt(i))) {
 				return false;
 			}
@@ -4367,7 +4434,7 @@ public class CharSequenceUtil {
 			// 循环位移，当越界时循环
 			moveLength = moveLength % len;
 		}
-		final StrBuilder strBuilder = StrBuilder.create(len);
+		final StringBuilder strBuilder = new StringBuilder(len);
 		if (moveLength > 0) {
 			int endAfterMove = Math.min(endExclude + moveLength, str.length());
 			strBuilder.append(str.subSequence(0, startInclude))//
@@ -4393,7 +4460,39 @@ public class CharSequenceUtil {
 	 * @return 给定字符串的所有字符是否都一样
 	 * @since 5.7.3
 	 */
-	public static boolean isCharEquals(String str) {
-		return isBlank(str.replace(str.charAt(0), CharUtil.SPACE));
+	public static boolean isCharEquals(CharSequence str) {
+		Assert.notEmpty(str, "Str to check must be not empty!");
+		return count(str, str.charAt(0)) == str.length();
+	}
+
+	/**
+	 * 对字符串归一化处理，如 "Á" 可以使用 "u00C1"或 "u0041u0301"表示，实际测试中两个字符串并不equals<br>
+	 * 因此使用此方法归一为一种表示形式，默认按照W3C通常建议的，在NFC中交换文本。
+	 *
+	 * @param str 归一化的字符串
+	 * @return 归一化后的字符串
+	 * @see Normalizer#normalize(CharSequence, Normalizer.Form)
+	 * @since 5.7.16
+	 */
+	public static String normalize(CharSequence str) {
+		return Normalizer.normalize(str, Normalizer.Form.NFC);
+	}
+
+	/**
+	 * 在给定字符串末尾填充指定字符，以达到给定长度<br>
+	 * 如果字符串本身的长度大于等于length，返回原字符串
+	 *
+	 * @param str       字符串
+	 * @param fixedChar 补充的字符
+	 * @param length    补充到的长度
+	 * @return 补充后的字符串
+	 * @since 5.8.0
+	 */
+	public static String fixLength(CharSequence str, char fixedChar, int length) {
+		final int fixedLength = length - str.length();
+		if (fixedLength <= 0) {
+			return str.toString();
+		}
+		return str + repeat(fixedChar, fixedLength);
 	}
 }
