@@ -13,7 +13,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -28,8 +27,17 @@ import java.util.Set;
 public class TableMap<K, V> implements Map<K, V>, Iterable<Map.Entry<K, V>>, Serializable {
 	private static final long serialVersionUID = 1L;
 
+	private static final int DEFAULT_CAPACITY = 10;
+
 	private final List<K> keys;
 	private final List<V> values;
+
+	/**
+	 * 构造
+	 */
+	public TableMap() {
+		this(DEFAULT_CAPACITY);
+	}
 
 	/**
 	 * 构造
@@ -86,11 +94,12 @@ public class TableMap<K, V> implements Map<K, V>, Iterable<Map.Entry<K, V>>, Ser
 
 	/**
 	 * 根据value获得对应的key，只返回找到的第一个value对应的key值
+	 *
 	 * @param value 值
 	 * @return 键
 	 * @since 5.3.3
 	 */
-	public K getKey(V value){
+	public K getKey(V value) {
 		final int index = values.indexOf(value);
 		if (index > -1 && index < keys.size()) {
 			return keys.get(index);
@@ -161,7 +170,17 @@ public class TableMap<K, V> implements Map<K, V>, Iterable<Map.Entry<K, V>>, Ser
 
 	@Override
 	public Set<K> keySet() {
-		return new HashSet<>(keys);
+		return new HashSet<>(this.keys);
+	}
+
+	/**
+	 * 获取所有键，可重复，不可修改
+	 *
+	 * @return 键列表
+	 * @since 5.8.0
+	 */
+	public List<K> keys() {
+		return Collections.unmodifiableList(this.keys);
 	}
 
 	@Override
@@ -173,7 +192,7 @@ public class TableMap<K, V> implements Map<K, V>, Iterable<Map.Entry<K, V>>, Ser
 	public Set<Map.Entry<K, V>> entrySet() {
 		final Set<Map.Entry<K, V>> hashSet = new LinkedHashSet<>();
 		for (int i = 0; i < size(); i++) {
-			hashSet.add(new Entry<>(keys.get(i), values.get(i)));
+			hashSet.add(MapUtil.entry(keys.get(i), values.get(i)));
 		}
 		return hashSet;
 	}
@@ -191,7 +210,7 @@ public class TableMap<K, V> implements Map<K, V>, Iterable<Map.Entry<K, V>>, Ser
 
 			@Override
 			public Map.Entry<K, V> next() {
-				return new Entry<>(keysIter.next(), valuesIter.next());
+				return MapUtil.entry(keysIter.next(), valuesIter.next());
 			}
 
 			@Override
@@ -208,49 +227,5 @@ public class TableMap<K, V> implements Map<K, V>, Iterable<Map.Entry<K, V>>, Ser
 				"keys=" + keys +
 				", values=" + values +
 				'}';
-	}
-
-	private static class Entry<K, V> implements Map.Entry<K, V> {
-
-		private final K key;
-		private final V value;
-
-		public Entry(K key, V value) {
-			this.key = key;
-			this.value = value;
-		}
-
-		@Override
-		public K getKey() {
-			return key;
-		}
-
-		@Override
-		public V getValue() {
-			return value;
-		}
-
-		@Override
-		public V setValue(V value) {
-			throw new UnsupportedOperationException("setValue not supported.");
-		}
-
-		@Override
-		public final boolean equals(Object o) {
-			if (o == this)
-				return true;
-			if (o instanceof Map.Entry) {
-				Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
-				return Objects.equals(key, e.getKey()) &&
-						Objects.equals(value, e.getValue());
-			}
-			return false;
-		}
-
-		@Override
-		public int hashCode() {
-			//copy from 1.8 HashMap.Node
-			return Objects.hashCode(key) ^ Objects.hashCode(value);
-		}
 	}
 }

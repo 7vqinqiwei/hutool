@@ -12,7 +12,7 @@
 	<a target="_blank" href="https://search.maven.org/artifact/cn.hutool/hutool-all">
 		<img src="https://img.shields.io/maven-central/v/cn.hutool/hutool-all.svg?label=Maven%20Central" />
 	</a>
-	<a target="_blank" href="https://license.coscl.org.cn/MulanPSL2/">
+	<a target="_blank" href="http://license.coscl.org.cn/MulanPSL2/index.html">
 		<img src="https://img.shields.io/:license-MulanPSL2-blue.svg" />
 	</a>
 	<a target="_blank" href="https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html">
@@ -40,7 +40,8 @@
 
 <br/>
 <p align="center">
-	<a href="https://qm.qq.com/cgi-bin/qm/qr?k=0wwldaU0E8r-ZzHl_wma33W7420zwXYi&jump_from=webapi"><img src="https://img.shields.io/badge/QQ%20Group-956375658-orange"/></a>
+	<a href="https://qm.qq.com/cgi-bin/qm/qr?k=jPq9DsjXs7GUWbXRZU3wygSJyMEy4pqr&jump_from=webapi">
+	<img src="https://img.shields.io/badge/QQ%E7%BE%A4%E2%91%A5-610134978-orange"/></a>
 </p>
 
 -------------------------------------------------------------------------------
@@ -110,9 +111,29 @@ Each module can be introduced individually, or all modules can be introduced by 
 
 [📘Chinese documentation](https://www.hutool.cn/docs/)
 
+[📘Chinese back-up documentation](https://plus.hutool.cn/docs/#/)
+
 [📙API](https://apidoc.gitee.com/dromara/hutool/)
 
 [🎬Video](https://www.bilibili.com/video/BV1bQ4y1M7d9?p=2)
+
+-------------------------------------------------------------------------------
+
+## 🪙Support Hutool
+
+### 💳Donate
+
+If you think Hutool is good, you can donate to buy the author a pack of chili~, thanks in advance ^_^.
+
+[Gitee donate](https://gitee.com/dromara/hutool)
+
+[Dromara donate](https://dromara.gitee.io/donate.html)
+
+### 👕Shop about Hutool
+
+We provide the T-Shirt and Sweater with Hutool Logo, please visit the shop：
+
+👉 [Hutool Shop](https://market.m.taobao.com/apps/market/content/index.html?wh_weex=true&contentId=331724720170) 👈
 
 -------------------------------------------------------------------------------
 
@@ -123,18 +144,18 @@ Each module can be introduced individually, or all modules can be introduced by 
 <dependency>
     <groupId>cn.hutool</groupId>
     <artifactId>hutool-all</artifactId>
-    <version>5.7.7</version>
+    <version>5.8.5</version>
 </dependency>
 ```
 
 ### 🍐Gradle
 ```
-compile 'cn.hutool:hutool-all:5.7.7'
+implementation 'cn.hutool:hutool-all:5.8.5'
 ```
 
 ## 📥Download
 
-- [Maven Repo](https://repo1.maven.org/maven2/cn/hutool/hutool-all/5.7.7/)
+- [Maven Repo](https://repo1.maven.org/maven2/cn/hutool/hutool-all/5.8.5/)
 
 > 🔔️note:
 > Hutool 5.x supports JDK8+ and is not tested on Android platforms, and cannot guarantee that all tool classes or tool methods are available.
@@ -186,24 +207,11 @@ Hutool welcomes anyone to contribute code to Hutool, but the author suffers from
 
 ## ⭐Star Hutool
 
-[![Giteye chart](https://chart.giteye.net/gitee/dromara/hutool/GMSL7VDA.png)](https://giteye.net/chart/GMSL7VDA)
-
 [![Stargazers over time](https://starchart.cc/dromara/hutool.svg)](https://starchart.cc/dromara/hutool)
-
-## 💳Donate
-
-If you think Hutool is good, you can donate to buy tshe author a pack of chili~, thanks in advance ^_^.
-
-[Gitee donate](https://gitee.com/dromara/hutool)
-
-[Dromara donate](https://dromara.gitee.io/donate.html)
 
 ## 📌WeChat Official Account
 
-#### 🐧Welcome to the official account of Hutool cooperation.
-
-![Java2B](https://cdn.jsdelivr.net/gh/looly/hutool-site/images/qrcode.jpg)
-
-#### 🐧Welcome to organization Dromara
-
-![Dromara](https://dromara.org/img/qrcode/qrcode_1.png)
+<div align="center">
+	<img src="https://cdn.jsdelivr.net/gh/looly/hutool-site/images/qr_tuling.jpg" height="150">
+	<img src="https://dromara.org/img/qrcode/qrcode_1.png" height="150">
+</div>

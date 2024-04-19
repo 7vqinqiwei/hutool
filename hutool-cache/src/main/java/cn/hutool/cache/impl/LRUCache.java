@@ -16,7 +16,7 @@ import java.util.Iterator;
  * @param <K> 键类型
  * @param <V> 值类型
  */
-public class LRUCache<K, V> extends AbstractCache<K, V> {
+public class LRUCache<K, V> extends ReentrantCache<K, V> {
 	private static final long serialVersionUID = 1L;
 
 	/**
@@ -56,7 +56,7 @@ public class LRUCache<K, V> extends AbstractCache<K, V> {
 			return 0;
 		}
 		int count = 0;
-		Iterator<CacheObj<K, V>> values = cacheMap.values().iterator();
+		Iterator<CacheObj<K, V>> values = cacheObjIter();
 		CacheObj<K, V> co;
 		while (values.hasNext()) {
 			co = values.next();

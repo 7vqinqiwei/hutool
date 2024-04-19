@@ -21,10 +21,21 @@ public class ExtractorTest {
 	@Test
 	@Ignore
 	public void sevenZTest(){
-		Extractor extractor = CompressUtil.createExtractor(
+		Extractor extractor = 	CompressUtil.createExtractor(
 				CharsetUtil.defaultCharset(),
 				FileUtil.file("d:/test/compress/test.7z"));
 
 		extractor.extract(FileUtil.file("d:/test/compress/test2/"));
+	}
+
+	@Test
+	@Ignore
+	public void tgzTest(){
+		Extractor extractor = 	CompressUtil.createExtractor(
+				CharsetUtil.defaultCharset(),
+				"tgz",
+				FileUtil.file("d:/test/test.tgz"));
+
+		extractor.extract(FileUtil.file("d:/test/tgz/"));
 	}
 }

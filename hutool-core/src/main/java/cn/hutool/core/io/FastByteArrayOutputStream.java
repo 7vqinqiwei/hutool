@@ -22,6 +22,9 @@ public class FastByteArrayOutputStream extends OutputStream {
 
 	private final FastByteBuffer buffer;
 
+	/**
+	 * 构造
+	 */
 	public FastByteArrayOutputStream() {
 		this(1024);
 	}
@@ -114,7 +117,7 @@ public class FastByteArrayOutputStream extends OutputStream {
 	 */
 	public String toString(Charset charset) {
 		return new String(toByteArray(),
-				ObjectUtil.defaultIfNull(charset, CharsetUtil.defaultCharset()));
+				ObjectUtil.defaultIfNull(charset, CharsetUtil::defaultCharset));
 	}
 
 }

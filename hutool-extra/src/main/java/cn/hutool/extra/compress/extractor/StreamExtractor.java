@@ -11,6 +11,8 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +61,8 @@ public class StreamExtractor implements Extractor{
 	}
 
 	/**
-	 * 构造
+	 * 构造<br>
+	 * 如果抛出异常，则提供的流将被关闭
 	 *
 	 * @param charset      编码
 	 * @param archiverName 归档包格式，null表示自动检测
@@ -71,10 +74,19 @@ public class StreamExtractor implements Extractor{
 			in = IoUtil.toBuffered(in);
 			if (StrUtil.isBlank(archiverName)) {
 				this.in = factory.createArchiveInputStream(in);
+			} else if("tgz".equalsIgnoreCase(archiverName) || "tar.gz".equalsIgnoreCase(archiverName)){
+				//issue#I5J33E，支持tgz格式解压
+				try {
+					this.in = new TarArchiveInputStream(new GzipCompressorInputStream(in));
+				} catch (IOException e) {
+					throw new IORuntimeException(e);
+				}
 			} else {
 				this.in = factory.createArchiveInputStream(archiverName, in);
 			}
 		} catch (ArchiveException e) {
+			// issue#2384，如果报错可能持有文件句柄，导致无法删除文件
+			IoUtil.close(in);
 			throw new CompressException(e);
 		}
 	}
@@ -109,6 +121,9 @@ public class StreamExtractor implements Extractor{
 		ArchiveEntry entry;
 		File outItemFile;
 		while (null != (entry = in.getNextEntry())) {
+			if(null != filter && false == filter.accept(entry)){
+				continue;
+			}
 			if (false == in.canReadEntryData(entry)) {
 				// 无法读取的文件直接跳过
 				continue;

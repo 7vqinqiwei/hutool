@@ -9,17 +9,16 @@
 	<parent>
 		<groupId>cn.hutool</groupId>
 		<artifactId>hutool-parent</artifactId>
-		<version>5.7.7-SNAPSHOT</version>
+		<version>5.8.5</version>
 	</parent>
 
 	<artifactId>hutool-poi</artifactId>
 	<name>${project.artifactId}</name>
-	<description>Hutool POI工具类（对MS Office操作）</description>
+	<description>Hutool POI工具类（对Office文档、OFD等操作）</description>
 
 	<properties>
 		<!-- versions -->
 		<poi.version>4.1.2</poi.version>
-		<xerces.version>2.12.0</xerces.version>
 	</properties>
 
 	<dependencies>
@@ -46,14 +45,7 @@
 		<dependency>
 			<groupId>org.ofdrw</groupId>
 			<artifactId>ofdrw-full</artifactId>
-			<version>1.12.1</version>
-			<scope>compile</scope>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
-			<groupId>xerces</groupId>
-			<artifactId>xercesImpl</artifactId>
-			<version>${xerces.version}</version>
+			<version>1.17.18</version>
 			<scope>compile</scope>
 			<optional>true</optional>
 		</dependency>
