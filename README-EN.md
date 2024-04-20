@@ -12,14 +12,14 @@
 	<a target="_blank" href="https://search.maven.org/artifact/cn.hutool/hutool-all">
 		<img src="https://img.shields.io/maven-central/v/cn.hutool/hutool-all.svg?label=Maven%20Central" />
 	</a>
-	<a target="_blank" href="http://license.coscl.org.cn/MulanPSL2/index.html">
+	<a target="_blank" href="https://license.coscl.org.cn/MulanPSL2">
 		<img src="https://img.shields.io/:license-MulanPSL2-blue.svg" />
 	</a>
 	<a target="_blank" href="https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html">
 		<img src="https://img.shields.io/badge/JDK-8+-green.svg" />
 	</a>
 	<a target="_blank" href="https://travis-ci.com/dromara/hutool">
-		<img src="https://travis-ci.com/dromara/hutool.svg?branch=v4-master" />
+		<img src="https://travis-ci.com/dromara/hutool.svg?branch=v5-master" />
 	</a>
 	<a href="https://www.codacy.com/gh/dromara/hutool/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=dromara/hutool&amp;utm_campaign=Badge_Grade">
 		<img src="https://app.codacy.com/project/badge/Grade/8a6897d9de7440dd9de8804c28d2871d"/>
@@ -40,8 +40,14 @@
 
 <br/>
 <p align="center">
-	<a href="https://qm.qq.com/cgi-bin/qm/qr?k=jPq9DsjXs7GUWbXRZU3wygSJyMEy4pqr&jump_from=webapi">
-	<img src="https://img.shields.io/badge/QQ%E7%BE%A4%E2%91%A5-610134978-orange"/></a>
+	<a href="https://qm.qq.com/cgi-bin/qm/qr?k=QtsqXLkHpLjE99tkre19j6pjPMhSay1a&jump_from=webapi">
+	<img src="https://img.shields.io/badge/QQ%E7%BE%A4%E2%91%A6-715292493-orange"/></a>
+</p>
+
+-------------------------------------------------------------------------------
+
+<p align="center">
+	<a href="#"><img style="width: 45%" alt="" src="https://plus.hutool.cn/images/zanzhu.jpg"/></a>
 </p>
 
 -------------------------------------------------------------------------------
@@ -51,7 +57,7 @@
 -------------------------------------------------------------------------------
 
 ## 📚Introduction
-**Hutool** is a small but comprehensive library of Java tools, encapsulation by static methods, reduce the cost of learning related APIs, increase productivity, and make Java as elegant as a functional programming language,let the Java be "sweet" too.
+**Hutool** is a small but comprehensive library of Java tools, achieved by encapsulation through static methods, reduce the cost of learning related APIs, increase productivity, and make Java as elegant as a functional programming language,let the Java be "sweet" too.
 
 **Hutool** tools and methods from each user's crafted, it covers all aspects of the underlying code of Java development, it is a powerful tool for large project development to solve small problems, but also the efficiency of small projects;
 
@@ -109,9 +115,9 @@ Each module can be introduced individually, or all modules can be introduced by 
 
 ## 📝Doc
 
-[📘Chinese documentation](https://www.hutool.cn/docs/)
+[📘Chinese documentation](https://doc.hutool.cn/pages/index/)
 
-[📘Chinese back-up documentation](https://plus.hutool.cn/docs/#/)
+[📘Chinese back-up documentation](https://plus.hutool.cn/)
 
 [📙API](https://apidoc.gitee.com/dromara/hutool/)
 
@@ -144,18 +150,18 @@ We provide the T-Shirt and Sweater with Hutool Logo, please visit the shop：
 <dependency>
     <groupId>cn.hutool</groupId>
     <artifactId>hutool-all</artifactId>
-    <version>5.8.5</version>
+    <version>5.8.27</version>
 </dependency>
 ```
 
 ### 🍐Gradle
 ```
-implementation 'cn.hutool:hutool-all:5.8.5'
+implementation 'cn.hutool:hutool-all:5.8.27'
 ```
 
 ## 📥Download
 
-- [Maven Repo](https://repo1.maven.org/maven2/cn/hutool/hutool-all/5.8.5/)
+- [Maven Repo](https://repo1.maven.org/maven2/cn/hutool/hutool-all/5.8.27/)
 
 > 🔔️note:
 > Hutool 5.x supports JDK8+ and is not tested on Android platforms, and cannot guarantee that all tool classes or tool methods are available.
@@ -203,15 +209,12 @@ Hutool welcomes anyone to contribute code to Hutool, but the author suffers from
 3. Newly added methods do not use third-party library methods，Unless the method tool is add to the '**extra module**'.
 4. Please pull request to the `v5-dev` branch. Hutool uses a new branch after 5.x: `v5-master` is the master branch, which indicates the version of the central library that has been released, and this branch does not allow pr or modifications.
 
+### 📖 Documentation source code
+
+[Documentation source code](https://gitee.com/loolly_admin/hutool-doc-handy)
+
 -------------------------------------------------------------------------------
 
 ## ⭐Star Hutool
 
 [![Stargazers over time](https://starchart.cc/dromara/hutool.svg)](https://starchart.cc/dromara/hutool)
-
-## 📌WeChat Official Account
-
-<div align="center">
-	<img src="https://cdn.jsdelivr.net/gh/looly/hutool-site/images/qr_tuling.jpg" height="150">
-	<img src="https://dromara.org/img/qrcode/qrcode_1.png" height="150">
-</div>

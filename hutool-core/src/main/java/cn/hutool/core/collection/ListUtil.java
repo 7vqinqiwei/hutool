@@ -4,6 +4,7 @@ import cn.hutool.core.comparator.PinyinComparator;
 import cn.hutool.core.comparator.PropertyComparator;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.lang.Matcher;
+import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.PageUtil;
@@ -371,7 +372,13 @@ public class ListUtil {
 			// 不支持clone
 			list2 = new ArrayList<>(list);
 		}
-		return reverse(list2);
+
+		try {
+			return reverse(list2);
+		} catch (final UnsupportedOperationException e) {
+			// 提供的列表不可编辑,新建列表
+			return reverse(list(false, list));
+		}
 	}
 
 	/**
@@ -425,6 +432,8 @@ public class ListUtil {
 		if (index < size) {
 			list.set(index, element);
 		} else {
+			// issue#3286, 增加安全检查，最多增加10倍
+			Validator.checkIndexLimit(index, list.size());
 			for (int i = size; i < index; i++) {
 				list.add(paddingElement);
 			}

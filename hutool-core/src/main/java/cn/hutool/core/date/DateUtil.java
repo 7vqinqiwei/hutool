@@ -28,7 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * 时间工具类
+ * 日期时间工具类
  *
  * @author xiaoleilu
  * @see LocalDateTimeUtil java8日志工具类
@@ -68,11 +68,14 @@ public class DateUtil extends CalendarUtil {
 	 * {@link Date}类型时间转为{@link DateTime}<br>
 	 * 如果date本身为DateTime对象，则返回强转后的对象，否则新建一个DateTime对象
 	 *
-	 * @param date Long类型Date（Unix时间戳）
+	 * @param date Long类型Date（Unix时间戳），如果传入{@code null}，返回{@code null}
 	 * @return 时间对象
 	 * @since 3.0.7
 	 */
 	public static DateTime date(Date date) {
+		if (date == null) {
+			return null;
+		}
 		if (date instanceof DateTime) {
 			return (DateTime) date;
 		}
@@ -82,11 +85,14 @@ public class DateUtil extends CalendarUtil {
 	/**
 	 * 根据已有{@link Date} 产生新的{@link DateTime}对象
 	 *
-	 * @param date Date对象
+	 * @param date Date对象，如果传入{@code null}，返回{@code null}
 	 * @return {@link DateTime}对象
 	 * @since 4.3.1
 	 */
 	public static DateTime dateNew(Date date) {
+		if (date == null) {
+			return null;
+		}
 		return new DateTime(date);
 	}
 
@@ -105,10 +111,13 @@ public class DateUtil extends CalendarUtil {
 	 * {@link Calendar}类型时间转为{@link DateTime}<br>
 	 * 始终根据已有{@link Calendar} 产生新的{@link DateTime}对象
 	 *
-	 * @param calendar {@link Calendar}
+	 * @param calendar {@link Calendar}，如果传入{@code null}，返回{@code null}
 	 * @return 时间对象
 	 */
 	public static DateTime date(Calendar calendar) {
+		if (calendar == null) {
+			return null;
+		}
 		return new DateTime(calendar);
 	}
 
@@ -116,11 +125,14 @@ public class DateUtil extends CalendarUtil {
 	 * {@link TemporalAccessor}类型时间转为{@link DateTime}<br>
 	 * 始终根据已有{@link TemporalAccessor} 产生新的{@link DateTime}对象
 	 *
-	 * @param temporalAccessor {@link TemporalAccessor},常用子类： {@link LocalDateTime}、 LocalDate
+	 * @param temporalAccessor {@link TemporalAccessor},常用子类： {@link LocalDateTime}、 LocalDate，如果传入{@code null}，返回{@code null}
 	 * @return 时间对象
 	 * @since 5.0.0
 	 */
 	public static DateTime date(TemporalAccessor temporalAccessor) {
+		if (temporalAccessor == null) {
+			return null;
+		}
 		return new DateTime(temporalAccessor);
 	}
 
@@ -805,6 +817,9 @@ public class DateUtil extends CalendarUtil {
 	 * @since 3.1.1
 	 */
 	public static DateTime parseTimeToday(CharSequence timeString) {
+		// issue#I9C2D4 处理时分秒
+		timeString = StrUtil.replaceChars(timeString, "时分秒", ":");
+
 		timeString = StrUtil.format("{} {}", today(), timeString);
 		if (1 == StrUtil.count(timeString, ':')) {
 			// 时间格式为 HH:mm
@@ -834,7 +849,7 @@ public class DateUtil extends CalendarUtil {
 		if (utcString == null) {
 			return null;
 		}
-		int length = utcString.length();
+		final int length = utcString.length();
 		if (StrUtil.contains(utcString, 'Z')) {
 			if (length == DatePattern.UTC_PATTERN.length() - 4) {
 				// 格式类似：2018-09-13T05:34:31Z，-4表示减去4个单引号的长度
@@ -844,7 +859,8 @@ public class DateUtil extends CalendarUtil {
 			final int patternLength = DatePattern.UTC_MS_PATTERN.length();
 			// 格式类似：2018-09-13T05:34:31.999Z，-4表示减去4个单引号的长度
 			// -4 ~ -6范围表示匹配毫秒1~3位的情况
-			if (length <= patternLength - 4 && length >= patternLength - 6) {
+			if (length <= patternLength && length >= patternLength - 6) {
+				// issue#I7H34N，支持最多6位毫秒
 				return parse(utcString, DatePattern.UTC_MS_FORMAT);
 			}
 		} else if (StrUtil.contains(utcString, '+')) {
@@ -862,17 +878,39 @@ public class DateUtil extends CalendarUtil {
 
 			if (StrUtil.contains(utcString, CharUtil.DOT)) {
 				// 带毫秒，格式类似：2018-09-13T05:34:31.999+08:00
+				utcString = normalizeMillSeconds(utcString, ".", "+");
 				return parse(utcString, DatePattern.UTC_MS_WITH_XXX_OFFSET_FORMAT);
 			} else {
 				// 格式类似：2018-09-13T05:34:31+08:00
 				return parse(utcString, DatePattern.UTC_WITH_XXX_OFFSET_FORMAT);
 			}
+		} else if(ReUtil.contains("-\\d{2}:?00", utcString)){
+			// Issue#2612，类似 2022-09-14T23:59:00-08:00 或者 2022-09-14T23:59:00-0800
+
+			// 去除类似2019-06-01T19:45:43 -08:00加号前的空格
+			utcString = utcString.replace(" -", "-");
+			if(':' != utcString.charAt(utcString.length() - 3)){
+				utcString = utcString.substring(0, utcString.length() - 2) + ":00";
+			}
+
+			if (StrUtil.contains(utcString, CharUtil.DOT)) {
+				// 带毫秒，格式类似：2018-09-13T05:34:31.999-08:00
+				utcString = normalizeMillSeconds(utcString, ".", "-");
+				return new DateTime(utcString, DatePattern.UTC_MS_WITH_XXX_OFFSET_FORMAT);
+			} else {
+				// 格式类似：2018-09-13T05:34:31-08:00
+				return new DateTime(utcString, DatePattern.UTC_WITH_XXX_OFFSET_FORMAT);
+			}
 		} else {
 			if (length == DatePattern.UTC_SIMPLE_PATTERN.length() - 2) {
 				// 格式类似：2018-09-13T05:34:31
 				return parse(utcString, DatePattern.UTC_SIMPLE_FORMAT);
+			} else if (length == DatePattern.UTC_SIMPLE_PATTERN.length() - 5) {
+				// 格式类似：2018-09-13T05:34
+				return parse(utcString + ":00", DatePattern.UTC_SIMPLE_FORMAT);
 			} else if (StrUtil.contains(utcString, CharUtil.DOT)) {
 				// 可能为：  2021-03-17T06:31:33.99
+				utcString = normalizeMillSeconds(utcString, ".", null);
 				return parse(utcString, DatePattern.UTC_SIMPLE_MS_FORMAT);
 			}
 		}
@@ -889,13 +927,40 @@ public class DateUtil extends CalendarUtil {
 	 * @param cstString UTC时间
 	 * @return 日期对象
 	 * @since 4.6.9
+	 * @deprecated 理解错误，请使用{@link #parseRFC2822(CharSequence)}
 	 */
+	@Deprecated
 	public static DateTime parseCST(CharSequence cstString) {
-		if (cstString == null) {
+		return parseRFC2822(cstString);
+	}
+
+	/**
+	 * 解析RFC2822时间，格式：<br>
+	 * <ol>
+	 * <li>EEE MMM dd HH:mm:ss z yyyy（例如：Wed Aug 01 00:00:00 CST 2012）</li>
+	 * </ol>
+	 *
+	 * @param source RFC2822时间
+	 * @return 日期对象
+	 * @since 4.6.9
+	 */
+	public static DateTime parseRFC2822(CharSequence source) {
+		if (source == null) {
 			return null;
 		}
 
-		return parse(cstString, DatePattern.JDK_DATETIME_FORMAT);
+		// issue#I9C2D4
+		if(StrUtil.contains(source, ',')){
+			if(StrUtil.contains(source, "星期")){
+				return parse(source, FastDateFormat.getInstance(DatePattern.HTTP_DATETIME_PATTERN, Locale.CHINA));
+			}
+			return parse(source, DatePattern.HTTP_DATETIME_FORMAT_Z);
+		}
+
+		if(StrUtil.contains(source, "星期")){
+			return parse(source, FastDateFormat.getInstance(DatePattern.JDK_DATETIME_PATTERN, Locale.CHINA));
+		}
+		return parse(source, DatePattern.JDK_DATETIME_FORMAT);
 	}
 
 	/**
@@ -946,6 +1011,9 @@ public class DateUtil extends CalendarUtil {
 				return parse(dateStr, DatePattern.PURE_DATE_FORMAT);
 			} else if (length == DatePattern.PURE_TIME_PATTERN.length()) {
 				return parse(dateStr, DatePattern.PURE_TIME_FORMAT);
+			}else if(length == 13){
+				// 时间戳
+				return date(NumberUtil.parseLong(dateStr));
 			}
 		} else if (ReUtil.isMatch(PatternPool.TIME, dateStr)) {
 			// HH:mm:ss 或者 HH:mm 时间格式匹配单独解析
@@ -955,7 +1023,7 @@ public class DateUtil extends CalendarUtil {
 			// Tue Jun 4 16:25:15 +0800 2019
 			// Thu May 16 17:57:18 GMT+08:00 2019
 			// Wed Aug 01 00:00:00 CST 2012
-			return parseCST(dateStr);
+			return parseRFC2822(dateStr);
 		} else if (StrUtil.contains(dateStr, 'T')) {
 			// UTC时间
 			return parseUTC(dateStr);
@@ -1761,7 +1829,7 @@ public class DateUtil extends CalendarUtil {
 	}
 
 	/**
-	 * 计算相对于dateToCompare的年龄，长用于计算指定生日在某年的年龄
+	 * 计算相对于dateToCompare的年龄，常用于计算指定生日在某年的年龄
 	 *
 	 * @param birthday      生日
 	 * @param dateToCompare 需要对比的日期
@@ -2210,13 +2278,18 @@ public class DateUtil extends CalendarUtil {
 
 	/**
 	 * 检查两个时间段是否有时间重叠<br>
-	 * 重叠指两个时间段是否有交集
-	 *
+	 * 重叠指两个时间段是否有交集，注意此方法时间段重合时如：
+	 * <ul>
+	 *     <li>此方法未纠正开始时间小于结束时间</li>
+	 *     <li>当realStartTime和realEndTime或startTime和endTime相等时,退化为判断区间是否包含点</li>
+	 *     <li>当realStartTime和realEndTime和startTime和endTime相等时,退化为判断点与点是否相等</li>
+	 * </ul>
+	 * See <a href="https://www.ics.uci.edu/~alspaugh/cls/shr/allen.html">准确的区间关系参考:艾伦区间代数</a>
 	 * @param realStartTime 第一个时间段的开始时间
 	 * @param realEndTime   第一个时间段的结束时间
 	 * @param startTime     第二个时间段的开始时间
 	 * @param endTime       第二个时间段的结束时间
-	 * @return true 表示时间有重合
+	 * @return true 表示时间有重合或包含或相等
 	 * @since 5.7.22
 	 */
 	public static boolean isOverlap(Date realStartTime, Date realEndTime,
@@ -2224,8 +2297,28 @@ public class DateUtil extends CalendarUtil {
 
 		// x>b||a>y 无交集
 		// 则有交集的逻辑为 !(x>b||a>y)
-		// 根据德摩根公式，可化简为 x<=b && a<=y
-		return startTime.before(realEndTime) && endTime.after(realStartTime);
+		// 根据德摩根公式，可化简为 x<=b && a<=y 即 realStartTime<=endTime && startTime<=realEndTime
+		return realStartTime.compareTo(endTime) <=0 && startTime.compareTo(realEndTime) <= 0;
+	}
+
+	/**
+	 * 是否为本月最后一天
+	 * @param date {@link Date}
+	 * @return 是否为本月最后一天
+	 * @since 5.8.9
+	 */
+	public static boolean isLastDayOfMonth(Date date){
+		return date(date).isLastDayOfMonth();
+	}
+
+	/**
+	 * 获得本月的最后一天
+	 * @param date {@link Date}
+	 * @return 天
+	 * @since 5.8.9
+	 */
+	public static int getLastDayOfMonth(Date date){
+		return date(date).getLastDayOfMonth();
 	}
 
 	// ------------------------------------------------------------------------ Private method start
@@ -2293,4 +2386,23 @@ public class DateUtil extends CalendarUtil {
 		return builder.toString();
 	}
 	// ------------------------------------------------------------------------ Private method end
+
+	/**
+	 * 如果日期中的毫秒部分超出3位，会导致秒数增加，因此只保留前三位
+	 *
+	 * @param dateStr 日期字符串
+	 * @param before  毫秒部分的前一个字符
+	 * @param after   毫秒部分的后一个字符
+	 * @return 规范之后的毫秒部分
+	 */
+	private static String normalizeMillSeconds(String dateStr, CharSequence before, CharSequence after) {
+		if (StrUtil.isBlank(after)) {
+			String millOrNaco = StrUtil.subPre(StrUtil.subAfter(dateStr, before, true), 3);
+			return StrUtil.subBefore(dateStr, before, true) + before + millOrNaco;
+		}
+		String millOrNaco = StrUtil.subPre(StrUtil.subBetween(dateStr, before, after), 3);
+		return StrUtil.subBefore(dateStr, before, true)
+				+ before
+				+ millOrNaco + after + StrUtil.subAfter(dateStr, after, true);
+	}
 }

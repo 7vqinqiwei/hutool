@@ -5,7 +5,8 @@ import cn.hutool.core.util.StrUtil;
 
 /**
  * 将浮点数类型的number转换成英语的表达方式 <br>
- * 参考博客：http://blog.csdn.net/eric_sunah/article/details/8713226
+ * 参考博客：http://blog.csdn.net/eric_sunah/article/details/8713226<br>
+ * 本质上此类为金额转英文表达，因此没有四舍五入考虑，小数点超过两位直接忽略。
  *
  * @author Looly,totalo
  * @since 3.0.9
@@ -18,7 +19,7 @@ public class NumberWordFormatter {
 			"FIFTEEN", "SIXTEEN", "SEVENTEEN", "EIGHTEEN", "NINETEEN"};
 	private static final String[] NUMBER_TEN = new String[]{"TEN", "TWENTY", "THIRTY", "FORTY", "FIFTY", "SIXTY",
 			"SEVENTY", "EIGHTY", "NINETY"};
-	private static final String[] NUMBER_MORE = new String[]{"", "THOUSAND", "MILLION", "BILLION"};
+	private static final String[] NUMBER_MORE = new String[]{"", "THOUSAND", "MILLION", "BILLION", "TRILLION"};
 
 	private static final String[] NUMBER_SUFFIX = new String[]{"k", "w", "", "m", "", "", "b", "", "", "t", "", "", "p", "", "", "e"};
 

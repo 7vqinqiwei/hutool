@@ -120,7 +120,12 @@ public class HttpConnection {
 
 			// 增加PATCH方法支持
 			if (Method.PATCH.equals(method)) {
-				HttpGlobalConfig.allowPatch();
+				try {
+					HttpGlobalConfig.allowPatch();
+				} catch (Exception ignore){
+					// ignore
+					// https://github.com/dromara/hutool/issues/2832
+				}
 			}
 		}
 
@@ -128,9 +133,13 @@ public class HttpConnection {
 		try {
 			this.conn.setRequestMethod(method.toString());
 		} catch (ProtocolException e) {
-			throw new HttpException(e);
+			if(Method.PATCH.equals(method)){
+				// 如果全局设置失效，此处针对单独链接重新设置
+				reflectSetMethod(method);
+			}else{
+				throw new HttpException(e);
+			}
 		}
-
 		return this;
 	}
 
@@ -267,7 +276,10 @@ public class HttpConnection {
 			// Https请求
 			final HttpsURLConnection httpsConn = (HttpsURLConnection) conn;
 			// 验证域
-			httpsConn.setHostnameVerifier(ObjectUtil.defaultIfNull(hostnameVerifier, DefaultSSLInfo.TRUST_ANY_HOSTNAME_VERIFIER));
+			httpsConn.setHostnameVerifier(ObjectUtil.defaultIfNull(hostnameVerifier,
+				// CVE-2022-22885 https://github.com/dromara/hutool/issues/2042
+				// 增加全局变量可选是否不验证host
+				HttpGlobalConfig.isTrustAnyHost() ? DefaultSSLInfo.TRUST_ANY_HOSTNAME_VERIFIER : HttpsURLConnection.getDefaultHostnameVerifier()));
 			httpsConn.setSSLSocketFactory(ObjectUtil.defaultIfNull(ssf, DefaultSSLInfo.DEFAULT_SSF));
 		}
 
@@ -453,7 +465,7 @@ public class HttpConnection {
 		// 修改为POST，而且无法调用setRequestMethod方法修改，因此此处使用反射强制修改字段属性值
 		// https://stackoverflow.com/questions/978061/http-get-with-request-body/983458
 		if(method == Method.GET && method != getMethod()){
-			ReflectUtil.setFieldValue(this.conn, "method", Method.GET.name());
+			reflectSetMethod(method);
 		}
 
 		return out;
@@ -543,6 +555,20 @@ public class HttpConnection {
 	 */
 	private URLConnection openConnection() throws IOException {
 		return (null == this.proxy) ? url.openConnection() : url.openConnection(this.proxy);
+	}
+
+	/**
+	 * 通过反射设置方法名，首先设置HttpURLConnection本身的方法名，再检查是否为代理类，如果是，设置带路对象的方法名。
+	 * @param method 方法名
+	 */
+	private void reflectSetMethod(Method method){
+		ReflectUtil.setFieldValue(this.conn, "method", method.name());
+
+		// HttpsURLConnectionImpl实现中，使用了代理类，需要修改被代理类的method方法
+		final Object delegate = ReflectUtil.getFieldValue(this.conn, "delegate");
+		if(null != delegate){
+			ReflectUtil.setFieldValue(delegate, "method", method.name());
+		}
 	}
 	// --------------------------------------------------------------- Private Method end
 }

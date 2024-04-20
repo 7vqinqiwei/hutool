@@ -3,6 +3,7 @@ package cn.hutool.json;
 import cn.hutool.core.bean.BeanPath;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Filter;
+import cn.hutool.core.lang.Validator;
 import cn.hutool.core.lang.mutable.Mutable;
 import cn.hutool.core.lang.mutable.MutableObj;
 import cn.hutool.core.lang.mutable.MutablePair;
@@ -12,7 +13,6 @@ import cn.hutool.json.serialize.JSONWriter;
 
 import java.io.StringWriter;
 import java.io.Writer;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -215,7 +215,7 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 
 	@Override
 	public <T> T getByPath(String expression, Class<T> resultType) {
-		return JSONConverter.jsonConvert(resultType, getByPath(expression), true);
+		return JSONConverter.jsonConvert(resultType, getByPath(expression), getConfig());
 	}
 
 	@Override
@@ -260,11 +260,6 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 	public JSONArray put(int index, Object value) throws JSONException {
 		this.set(index, value);
 		return this;
-	}
-
-	@Override
-	public <T> T toBean(Type type) {
-		return JSON.super.toBean(type, config.isIgnoreError());
 	}
 
 	/**
@@ -463,6 +458,8 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 			InternalJSONUtil.testValidity(element);
 			this.rawList.add(index, JSONUtil.wrap(element, this.config));
 		} else {
+			// issue#3286, 增加安全检查，最多增加10倍
+			Validator.checkIndexLimit(index, this.size());
 			while (index != this.size()) {
 				this.add(JSONNull.NULL);
 			}
@@ -537,7 +534,7 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 	 * @return JSON字符串
 	 * @since 5.7.15
 	 */
-	public String toJSONString(int indentFactor, Filter<MutablePair<Integer, Object>> filter) {
+	public String toJSONString(int indentFactor, Filter<MutablePair<Object, Object>> filter) {
 		final StringWriter sw = new StringWriter();
 		synchronized (sw.getBuffer()) {
 			return this.write(sw, indentFactor, 0, filter).toString();
@@ -561,16 +558,10 @@ public class JSONArray implements JSON, JSONGetter<Integer>, List<Object>, Rando
 	 * @throws JSONException JSON相关异常
 	 * @since 5.7.15
 	 */
-	public Writer write(Writer writer, int indentFactor, int indent, Filter<MutablePair<Integer, Object>> filter) throws JSONException {
-		final JSONWriter jsonWriter = JSONWriter.of(writer, indentFactor, indent, config)
-				.beginArray();
+	public Writer write(Writer writer, int indentFactor, int indent, Filter<MutablePair<Object, Object>> filter) throws JSONException {
+		final JSONWriter jsonWriter = JSONWriter.of(writer, indentFactor, indent, config).beginArray();
 
-		CollUtil.forEach(this, (value, index) -> {
-			final MutablePair<Integer, Object> pair = new MutablePair<>(index, value);
-			if (null == filter || filter.accept(pair)) {
-				jsonWriter.writeValue(pair.getValue());
-			}
-		});
+		CollUtil.forEach(this, (value, index) -> jsonWriter.writeField(new MutablePair<>(index, value), filter));
 		jsonWriter.end();
 		// 此处不关闭Writer，考虑writer后续还需要填内容
 		return writer;

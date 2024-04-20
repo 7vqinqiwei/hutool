@@ -1,6 +1,7 @@
 package cn.hutool.db.sql;
 
 import cn.hutool.core.collection.ArrayIter;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.func.Func1;
 import cn.hutool.db.DbUtil;
 import cn.hutool.db.StatementUtil;
@@ -54,7 +55,7 @@ public class SqlExecutor {
 	public static int execute(Connection conn, String sql, Object... params) throws SQLException {
 		PreparedStatement ps = null;
 		try {
-			ps = StatementUtil.prepareStatement(conn, sql, params);
+			ps = StatementUtil.prepareStatement(false, conn, sql, params);
 			return ps.executeUpdate();
 		} finally {
 			DbUtil.close(ps);
@@ -128,7 +129,7 @@ public class SqlExecutor {
 		PreparedStatement ps = null;
 		ResultSet rs = null;
 		try {
-			ps = StatementUtil.prepareStatement(conn, sql, params);
+			ps = StatementUtil.prepareStatement(true, conn, sql, params);
 			ps.executeUpdate();
 			rs = ps.getGeneratedKeys();
 			if (rs != null && rs.next()) {
@@ -271,7 +272,7 @@ public class SqlExecutor {
 	public static <T> T query(Connection conn, String sql, RsHandler<T> rsh, Object... params) throws SQLException {
 		PreparedStatement ps = null;
 		try {
-			ps = StatementUtil.prepareStatement(conn, sql, params);
+			ps = StatementUtil.prepareStatement(false, conn, sql, params);
 			return executeQuery(ps, rsh);
 		} finally {
 			DbUtil.close(ps);
@@ -299,7 +300,7 @@ public class SqlExecutor {
 			if(e instanceof SQLException){
 				throw (SQLException) e;
 			}
-			throw new RuntimeException(e);
+			throw ExceptionUtil.wrapRuntime(e);
 		} finally {
 			DbUtil.close(ps);
 		}

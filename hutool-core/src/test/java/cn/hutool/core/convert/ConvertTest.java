@@ -17,13 +17,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.DoubleAdder;
@@ -144,6 +138,13 @@ public class ConvertTest {
 	}
 
 	@Test
+	public void toLongFromNumberWithFormatTest() {
+		final NumberWithFormat value = new NumberWithFormat(1678285713935L, null);
+		final Long aLong = Convert.convertWithCheck(Long.class, value, null, false);
+		Assert.assertEquals(new Long(1678285713935L), aLong);
+	}
+
+	@Test
 	public void toCharTest() {
 		final String str = "aadfdsfs";
 		final Character c = Convert.toChar(str);
@@ -159,7 +160,7 @@ public class ConvertTest {
 	public void toNumberTest() {
 		final Object a = "12.45";
 		final Number number = Convert.toNumber(a);
-		Assert.assertEquals(12.45D, number.doubleValue(), 2);
+		Assert.assertEquals(12.45D, number.doubleValue(), 0);
 	}
 
 	@Test
@@ -362,28 +363,28 @@ public class ConvertTest {
 		final String hex2 = "CD0CCB43";
 		final byte[] value = HexUtil.decodeHex(hex2);
 		final float f = Convert.toFloat(value);
-		Assert.assertEquals(406.1F, f, 2);
+		Assert.assertEquals(406.1F, f, 0);
 	}
 
 	@Test
 	public void floatToDoubleTest(){
 		final float a = 0.45f;
 		final double b = Convert.toDouble(a);
-		Assert.assertEquals(a, b, 5);
+		Assert.assertEquals(0.45D, b, 0);
 	}
 
 	@Test
 	public void floatToDoubleAddrTest(){
 		final float a = 0.45f;
 		final DoubleAdder adder = Convert.convert(DoubleAdder.class, a);
-		Assert.assertEquals(a, adder.doubleValue(), 5);
+		Assert.assertEquals(0.45D, adder.doubleValue(), 0);
 	}
 
 	@Test
 	public void doubleToFloatTest(){
 		final double a = 0.45f;
 		final float b = Convert.toFloat(a);
-		Assert.assertEquals(a, b, 5);
+		Assert.assertEquals(a, b, 0);
 	}
 
 	@Test
@@ -419,14 +420,19 @@ public class ConvertTest {
 		 */
 		Assert.assertEquals(67556, Convert.chineseMoneyToNumber("陆万柒仟伍佰伍拾陆圆").longValue());
 		Assert.assertEquals(67556, Convert.chineseMoneyToNumber("陆万柒仟伍佰伍拾陆元").longValue());
-		Assert.assertEquals(0.3D, Convert.chineseMoneyToNumber("叁角").doubleValue(), 2);
-		Assert.assertEquals(0.02, Convert.chineseMoneyToNumber("贰分").doubleValue(), 2);
-		Assert.assertEquals(67556.3, Convert.chineseMoneyToNumber("陆万柒仟伍佰伍拾陆元叁角").doubleValue(), 2);
-		Assert.assertEquals(67556.02, Convert.chineseMoneyToNumber("陆万柒仟伍佰伍拾陆元贰分").doubleValue(), 2);
-		Assert.assertEquals(0.32, Convert.chineseMoneyToNumber("叁角贰分").doubleValue(), 2);
-		Assert.assertEquals(67556.32, Convert.chineseMoneyToNumber("陆万柒仟伍佰伍拾陆元叁角贰分").doubleValue(), 2);
+		Assert.assertEquals(0.3D, Convert.chineseMoneyToNumber("叁角").doubleValue(), 0);
+		Assert.assertEquals(0.02, Convert.chineseMoneyToNumber("贰分").doubleValue(), 0);
+		Assert.assertEquals(67556.3, Convert.chineseMoneyToNumber("陆万柒仟伍佰伍拾陆元叁角").doubleValue(), 0);
+		Assert.assertEquals(67556.02, Convert.chineseMoneyToNumber("陆万柒仟伍佰伍拾陆元贰分").doubleValue(), 0);
+		Assert.assertEquals(0.32, Convert.chineseMoneyToNumber("叁角贰分").doubleValue(), 0);
+		Assert.assertEquals(67556.32, Convert.chineseMoneyToNumber("陆万柒仟伍佰伍拾陆元叁角贰分").doubleValue(), 0);
 	}
 
-
+	@Test(expected = IllegalArgumentException.class)
+	public void convertQuietlyTest(){
+		final String a = "12";
+		final Object s = Convert.convert(int.class, a, a);
+		Assert.assertEquals(12, s);
+	}
 
 }

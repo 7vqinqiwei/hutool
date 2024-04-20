@@ -1,5 +1,6 @@
 package cn.hutool.core.compress;
 
+import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.IoUtil;
@@ -26,8 +27,15 @@ import java.util.zip.ZipInputStream;
  */
 public class ZipReader implements Closeable {
 
+	// size of uncompressed zip entry shouldn't be bigger of compressed in MAX_SIZE_DIFF times
+	private static final int DEFAULT_MAX_SIZE_DIFF = 100;
+
 	private ZipFile zipFile;
 	private ZipInputStream in;
+	/**
+	 * 检查ZipBomb文件差异倍数，-1表示不检查ZipBomb
+	 */
+	private int maxSizeDiff = DEFAULT_MAX_SIZE_DIFF;
 
 	/**
 	 * 创建ZipReader
@@ -90,6 +98,18 @@ public class ZipReader implements Closeable {
 	}
 
 	/**
+	 * 设置检查ZipBomb文件差异倍数，-1表示不检查ZipBomb
+	 *
+	 * @param maxSizeDiff 检查ZipBomb文件差异倍数，-1表示不检查ZipBomb
+	 * @return this
+	 * @since 5.8.21
+	 */
+	public ZipReader setMaxSizeDiff(final int maxSizeDiff) {
+		this.maxSizeDiff = maxSizeDiff;
+		return this;
+	}
+
+	/**
 	 * 获取指定路径的文件流<br>
 	 * 如果是文件模式，则直接获取Entry对应的流，如果是流模式，则遍历entry后，找到对应流返回
 	 *
@@ -105,7 +125,6 @@ public class ZipReader implements Closeable {
 			}
 		} else {
 			try {
-				this.in.reset();
 				ZipEntry zipEntry;
 				while (null != (zipEntry = in.getNextEntry())) {
 					if (zipEntry.getName().equals(path)) {
@@ -203,7 +222,7 @@ public class ZipReader implements Closeable {
 	private void readFromZipFile(Consumer<ZipEntry> consumer) {
 		final Enumeration<? extends ZipEntry> em = zipFile.entries();
 		while (em.hasMoreElements()) {
-			consumer.accept(em.nextElement());
+			consumer.accept(checkZipBomb(em.nextElement()));
 		}
 	}
 
@@ -218,9 +237,35 @@ public class ZipReader implements Closeable {
 			ZipEntry zipEntry;
 			while (null != (zipEntry = in.getNextEntry())) {
 				consumer.accept(zipEntry);
+				// 检查ZipBomb放在读取内容之后，以便entry中的信息正常读取
+				checkZipBomb(zipEntry);
 			}
 		} catch (IOException e) {
 			throw new IORuntimeException(e);
 		}
+	}
+
+	/**
+	 * 检查Zip bomb漏洞
+	 *
+	 * @param entry {@link ZipEntry}
+	 * @return 检查后的{@link ZipEntry}
+	 */
+	private ZipEntry checkZipBomb(ZipEntry entry) {
+		if(maxSizeDiff < 0){
+			return entry;
+		}
+		if (null == entry) {
+			return null;
+		}
+		final long compressedSize = entry.getCompressedSize();
+		final long uncompressedSize = entry.getSize();
+		if (compressedSize < 0 || uncompressedSize < 0 ||
+				// 默认压缩比例是100倍，一旦发现压缩率超过这个阈值，被认为是Zip bomb
+				compressedSize * maxSizeDiff < uncompressedSize) {
+			throw new UtilException("Zip bomb attack detected, invalid sizes: compressed {}, uncompressed {}, name {}",
+					compressedSize, uncompressedSize, entry.getName());
+		}
+		return entry;
 	}
 }

@@ -11,6 +11,7 @@ import java.util.Map;
 /**
  * Bean属性拷贝到Bean中的拷贝器
  *
+ * @author Admin
  * @param <S> 源Bean类型
  * @param <T> 目标Bean类型
  * @since 5.8.0
@@ -59,8 +60,13 @@ public class BeanToBeanCopier<S, T> extends AbsCopier<S, T> {
 				return;
 			}
 
+			// 忽略不需要拷贝的 key,
+			if (false == copyOptions.testKeyFilter(sFieldName)) {
+				return;
+			}
+
 			// 检查目标字段可写性
-			final PropDesc tDesc = targetPropDescMap.get(sFieldName);
+			final PropDesc tDesc = this.copyOptions.findPropDesc(targetPropDescMap, sFieldName);
 			if (null == tDesc || false == tDesc.isWritable(this.copyOptions.transientSupport)) {
 				// 字段不可写，跳过之
 				return;

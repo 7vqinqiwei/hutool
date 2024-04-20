@@ -27,7 +27,7 @@ public class DatePattern {
 	 *
 	 * @since 5.3.6
 	 */
-	public static final Pattern REGEX_NORM = Pattern.compile("\\d{4}-\\d{1,2}-\\d{1,2}(\\s\\d{1,2}:\\d{1,2}(:\\d{1,2})?)?(.\\d{1,6})?");
+	public static final Pattern REGEX_NORM = Pattern.compile("\\d{4}-\\d{1,2}-\\d{1,2}(\\s\\d{1,2}:\\d{1,2}(:\\d{1,2})?(.\\d{1,6})?)?");
 
 	//-------------------------------------------------------------------------------------------------------------------------------- Normal
 	/**
@@ -226,6 +226,10 @@ public class DatePattern {
 	 * HTTP头中日期时间格式 {@link FastDateFormat}：EEE, dd MMM yyyy HH:mm:ss z
 	 */
 	public static final FastDateFormat HTTP_DATETIME_FORMAT = FastDateFormat.getInstance(HTTP_DATETIME_PATTERN, TimeZone.getTimeZone("GMT"), Locale.US);
+	/**
+	 * HTTP头中日期时间格式 {@link FastDateFormat}：EEE, dd MMM yyyy HH:mm:ss z
+	 */
+	public static final FastDateFormat HTTP_DATETIME_FORMAT_Z = FastDateFormat.getInstance(HTTP_DATETIME_PATTERN, Locale.US);
 
 	/**
 	 * JDK中日期时间格式：EEE MMM dd HH:mm:ss zzz yyyy
@@ -237,22 +241,22 @@ public class DatePattern {
 	public static final FastDateFormat JDK_DATETIME_FORMAT = FastDateFormat.getInstance(JDK_DATETIME_PATTERN, Locale.US);
 
 	/**
-	 * UTC时间：yyyy-MM-dd'T'HH:mm:ss
+	 * ISO8601时间：yyyy-MM-dd'T'HH:mm:ss
 	 */
 	public static final String UTC_SIMPLE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss";
 	/**
-	 * UTC时间{@link FastDateFormat}：yyyy-MM-dd'T'HH:mm:ss
+	 * ISO8601时间{@link FastDateFormat}：yyyy-MM-dd'T'HH:mm:ss
 	 */
-	public static final FastDateFormat UTC_SIMPLE_FORMAT = FastDateFormat.getInstance(UTC_SIMPLE_PATTERN, TimeZone.getTimeZone("UTC"));
+	public static final FastDateFormat UTC_SIMPLE_FORMAT = FastDateFormat.getInstance(UTC_SIMPLE_PATTERN);
 
 	/**
-	 * UTC时间：yyyy-MM-dd'T'HH:mm:ss.SSS
+	 * ISO8601时间：yyyy-MM-dd'T'HH:mm:ss.SSS
 	 */
 	public static final String UTC_SIMPLE_MS_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS";
 	/**
-	 * UTC时间{@link FastDateFormat}：yyyy-MM-dd'T'HH:mm:ss.SSS
+	 * ISO8601时间{@link FastDateFormat}：yyyy-MM-dd'T'HH:mm:ss.SSS
 	 */
-	public static final FastDateFormat UTC_SIMPLE_MS_FORMAT = FastDateFormat.getInstance(UTC_SIMPLE_MS_PATTERN, TimeZone.getTimeZone("UTC"));
+	public static final FastDateFormat UTC_SIMPLE_MS_FORMAT = FastDateFormat.getInstance(UTC_SIMPLE_MS_PATTERN);
 
 	/**
 	 * UTC时间：yyyy-MM-dd'T'HH:mm:ss'Z'

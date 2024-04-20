@@ -8,6 +8,7 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.sun.imageio.plugins.common.ImageUtil;
 
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageInputStream;
@@ -30,10 +31,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.CropImageFilter;
 import java.awt.image.ImageFilter;
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Path;
 
@@ -43,7 +41,7 @@ import java.nio.file.Path;
  * @author looly
  * @since 4.1.5
  */
-public class Img implements Serializable {
+public class Img implements Flushable, Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private final BufferedImage srcImage;
@@ -60,6 +58,10 @@ public class Img implements Serializable {
 	 * 图片输出质量，用于压缩
 	 */
 	private float quality = -1;
+	/**
+	 * 图片背景色
+	 */
+	private Color backgroundColor;
 
 	/**
 	 * 从Path读取图片并开始处理
@@ -129,7 +131,7 @@ public class Img implements Serializable {
 	 * @return Img
 	 */
 	public static Img from(Image image) {
-		return new Img(ImgUtil.toBufferedImage(image));
+		return new Img(ImgUtil.castToBufferedImage(image, ImgUtil.IMAGE_TYPE_JPG));
 	}
 
 	/**
@@ -217,6 +219,17 @@ public class Img implements Serializable {
 	}
 
 	/**
+	 * 设置图片的背景色
+	 *
+	 * @param backgroundColor{@link Color} 背景色
+	 * @return this
+	 */
+	public Img setBackgroundColor(Color backgroundColor) {
+		this.backgroundColor = backgroundColor;
+		return this;
+	}
+
+	/**
 	 * 缩放图像（按比例缩放）
 	 *
 	 * @param scale 缩放比例。比例大于1时为放大，小于1大于0为缩小
@@ -270,8 +283,8 @@ public class Img implements Serializable {
 	public Img scale(int width, int height, int scaleType) {
 		final Image srcImg = getValidSrcImg();
 
-		int srcHeight = srcImg.getHeight(null);
-		int srcWidth = srcImg.getWidth(null);
+		final int srcHeight = srcImg.getHeight(null);
+		final int srcWidth = srcImg.getWidth(null);
 		if (srcHeight == height && srcWidth == width) {
 			// 源与目标长宽一致返回原图
 			this.targetImage = srcImg;
@@ -709,7 +722,7 @@ public class Img implements Serializable {
 		final Image targetImage = (null == this.targetImage) ? this.srcImage : this.targetImage;
 		Assert.notNull(targetImage, "Target image is null !");
 
-		return ImgUtil.write(targetImage, this.targetImageType, targetImageStream, this.quality);
+		return ImgUtil.write(targetImage, this.targetImageType, targetImageStream, this.quality, this.backgroundColor);
 	}
 
 	/**
@@ -737,6 +750,12 @@ public class Img implements Serializable {
 		} finally {
 			IoUtil.close(out);
 		}
+	}
+
+	@Override
+	public void flush() {
+		ImgUtil.flush(this.srcImage);
+		ImgUtil.flush(this.targetImage);
 	}
 
 	// ---------------------------------------------------------------------------------------------------------------- Private method start

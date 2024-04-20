@@ -615,7 +615,7 @@ public class HttpUtil {
 	 * @return 参数Map
 	 */
 	public static Map<String, List<String>> decodeParams(String paramsStr, String charset) {
-		return decodeParams(paramsStr, CharsetUtil.charset(charset));
+		return decodeParams(paramsStr, charset, false);
 	}
 
 	/**
@@ -623,11 +623,37 @@ public class HttpUtil {
 	 *
 	 * @param paramsStr 参数字符串（或者带参数的Path）
 	 * @param charset   字符集
+	 * @param isFormUrlEncoded 是否为x-www-form-urlencoded模式，此模式下空格会编码为'+'
+	 * @return 参数Map
+	 * @since 5.8.12
+	 */
+	public static Map<String, List<String>> decodeParams(String paramsStr, String charset, boolean isFormUrlEncoded) {
+		return decodeParams(paramsStr, CharsetUtil.charset(charset), isFormUrlEncoded);
+	}
+
+	/**
+	 * 将URL QueryString参数解析为Map
+	 *
+	 * @param paramsStr 参数字符串（或者带参数的Path）
+	 * @param charset   字符集
 	 * @return 参数Map
 	 * @since 5.2.6
 	 */
 	public static Map<String, List<String>> decodeParams(String paramsStr, Charset charset) {
-		final Map<CharSequence, CharSequence> queryMap = UrlQuery.of(paramsStr, charset).getQueryMap();
+		return decodeParams(paramsStr, charset, false);
+	}
+
+	/**
+	 * 将URL参数解析为Map（也可以解析Post中的键值对参数）
+	 *
+	 * @param paramsStr 参数字符串（或者带参数的Path）
+	 * @param charset   字符集
+	 * @param isFormUrlEncoded 是否为x-www-form-urlencoded模式，此模式下空格会编码为'+'
+	 * @return 参数Map
+	 */
+	public static Map<String, List<String>> decodeParams(String paramsStr, Charset charset, boolean isFormUrlEncoded) {
+		final Map<CharSequence, CharSequence> queryMap =
+				UrlQuery.of(paramsStr, charset, true, isFormUrlEncoded).getQueryMap();
 		if (MapUtil.isEmpty(queryMap)) {
 			return MapUtil.empty();
 		}
@@ -652,13 +678,22 @@ public class HttpUtil {
 	 * @return 合成后的URL
 	 */
 	public static String urlWithForm(String url, Map<String, Object> form, Charset charset, boolean isEncodeParams) {
-		if (isEncodeParams && StrUtil.contains(url, '?')) {
-			// 在需要编码的情况下，如果url中已经有部分参数，则编码之
-			url = encodeParams(url, charset);
-		}
-
 		// url和参数是分别编码的
-		return urlWithForm(url, toParams(form, charset), charset, false);
+		return urlWithForm(url, toParams(form, charset), charset, isEncodeParams);
+	}
+
+	/**
+	 * 将表单数据加到URL中（用于GET表单提交）
+	 * 表单的键值对会被url编码，但是url中原参数不会被编码
+	 *  且对form参数进行  FormUrlEncoded ，x-www-form-urlencoded模式，此模式下空格会编码为'+'
+	 *
+	 * @param url            URL
+	 * @param form           表单数据
+	 * @param charset        编码   null表示不encode键值对
+	 * @return 合成后的URL
+	 */
+	public static String urlWithFormUrlEncoded(String url, Map<String, Object> form, Charset charset) {
+		return urlWithForm(url, toParams(form, charset, true), charset, true);
 	}
 
 	/**

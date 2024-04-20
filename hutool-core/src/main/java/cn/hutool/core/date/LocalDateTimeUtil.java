@@ -171,8 +171,25 @@ public class LocalDateTimeUtil {
 			return ((LocalDate) temporalAccessor).atStartOfDay();
 		} else if(temporalAccessor instanceof Instant){
 			return LocalDateTime.ofInstant((Instant) temporalAccessor, ZoneId.systemDefault());
-		} else if(temporalAccessor instanceof ZonedDateTime){
-			return ((ZonedDateTime)temporalAccessor).toLocalDateTime();
+		}
+
+		// issue#3301
+		try{
+			return LocalDateTime.from(temporalAccessor);
+		} catch (final Exception ignore){
+			//ignore
+		}
+
+		try{
+			return ZonedDateTime.from(temporalAccessor).toLocalDateTime();
+		} catch (final Exception ignore){
+			//ignore
+		}
+
+		try{
+			return LocalDateTime.ofInstant(Instant.from(temporalAccessor), ZoneId.systemDefault());
+		} catch (final Exception ignore){
+			//ignore
 		}
 
 		return LocalDateTime.of(
@@ -224,7 +241,7 @@ public class LocalDateTimeUtil {
 
 	/**
 	 * 解析日期时间字符串为{@link LocalDateTime}，格式支持日期时间、日期、时间<br>
-	 * 如果formatter为{code null}，则使用{@link DateTimeFormatter#ISO_LOCAL_DATE_TIME}
+	 * 如果formatter为{@code null}，则使用{@link DateTimeFormatter#ISO_LOCAL_DATE_TIME}
 	 *
 	 * @param text      日期时间字符串
 	 * @param formatter 日期格式化器，预定义的格式见：{@link DateTimeFormatter}
@@ -301,7 +318,7 @@ public class LocalDateTimeUtil {
 	 * @since 5.3.10
 	 */
 	public static LocalDate parseDate(CharSequence text, DateTimeFormatter formatter) {
-		if (null == text) {
+		if (StrUtil.isBlank(text)) {
 			return null;
 		}
 		if (null == formatter) {
@@ -538,13 +555,18 @@ public class LocalDateTimeUtil {
 
 	/**
 	 * 检查两个时间段是否有时间重叠<br>
-	 * 重叠指两个时间段是否有交集
-	 *
+	 * 重叠指两个时间段是否有交集，注意此方法时间段重合时如：
+	 * <ul>
+	 *     <li>此方法未纠正开始时间小于结束时间</li>
+	 *     <li>当realStartTime和realEndTime或startTime和endTime相等时,退化为判断区间是否包含点</li>
+	 *     <li>当realStartTime和realEndTime和startTime和endTime相等时,退化为判断点与点是否相等</li>
+	 * </ul>
+	 * See <a href="https://www.ics.uci.edu/~alspaugh/cls/shr/allen.html">准确的区间关系参考:艾伦区间代数</a>
 	 * @param realStartTime 第一个时间段的开始时间
 	 * @param realEndTime   第一个时间段的结束时间
 	 * @param startTime     第二个时间段的开始时间
 	 * @param endTime       第二个时间段的结束时间
-	 * @return true 表示时间有重合
+	 * @return true 表示时间有重合或包含或相等
 	 * @since 5.7.20
 	 */
 	public static boolean isOverlap(ChronoLocalDateTime<?> realStartTime, ChronoLocalDateTime<?> realEndTime,
@@ -552,8 +574,8 @@ public class LocalDateTimeUtil {
 
 		// x>b||a>y 无交集
 		// 则有交集的逻辑为 !(x>b||a>y)
-		// 根据德摩根公式，可化简为 x<=b && a<=y
-		return startTime.isBefore(realEndTime) && endTime.isAfter(realStartTime);
+		// 根据德摩根公式，可化简为 x<=b && a<=y 即 realStartTime<=endTime && startTime<=realEndTime
+		return realStartTime.compareTo(endTime) <=0 && startTime.compareTo(realEndTime) <= 0;
 	}
 
 	/**
@@ -608,7 +630,27 @@ public class LocalDateTimeUtil {
 	 * @return 是否在范围内
 	 * @since 5.8.5
 	 */
-	public static boolean isIn(ChronoLocalDateTime<?> date, ChronoLocalDateTime<?> beginDate, ChronoLocalDateTime<?> endDate){
+	public static boolean isIn(ChronoLocalDateTime<?> date, ChronoLocalDateTime<?> beginDate, ChronoLocalDateTime<?> endDate) {
 		return TemporalAccessorUtil.isIn(date, beginDate, endDate);
+	}
+
+	/**
+	 * 判断当前时间（默认时区）是否在指定范围内<br>
+	 * 起始时间和结束时间可以互换<br>
+	 * 通过includeBegin, includeEnd参数控制时间范围区间是否为开区间，例如：传入参数：includeBegin=true, includeEnd=false，
+	 * 则本方法会判断 date ∈ (beginDate, endDate] 是否成立
+	 *
+	 * @param date 被判定的日期
+	 * @param beginDate    起始时间（包含）
+	 * @param endDate      结束时间（包含）
+	 * @param includeBegin 时间范围是否包含起始时间
+	 * @param includeEnd   时间范围是否包含结束时间
+	 * @return 是否在范围内
+	 * @author FengBaoheng
+	 * @since 5.8.6
+	 */
+	public static boolean isIn(ChronoLocalDateTime<?> date, ChronoLocalDateTime<?> beginDate,
+							   ChronoLocalDateTime<?> endDate, boolean includeBegin, boolean includeEnd) {
+		return TemporalAccessorUtil.isIn(date, beginDate, endDate, includeBegin, includeEnd);
 	}
 }

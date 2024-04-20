@@ -130,6 +130,12 @@ public class DbTest {
 			ps.setFetchSize(Integer.MIN_VALUE);
 			ps.setFetchDirection(ResultSet.FETCH_FORWARD);
 			return ps;
-		}), new EntityListHandler());
+		}), EntityListHandler.create());
+	}
+
+	@Test
+	@Ignore
+	public void findWithDotTest() throws SQLException {
+		Db.use().find(Entity.create("user").set("a.b", "1"));
 	}
 }

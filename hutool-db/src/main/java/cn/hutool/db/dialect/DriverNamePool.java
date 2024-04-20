@@ -75,7 +75,7 @@ public interface DriverNamePool {
 	/**
 	 * JDBC 驱动 ClickHouse
 	 */
-	String DRIVER_CLICK_HOUSE = "ru.yandex.clickhouse.ClickHouseDriver";
+	String DRIVER_CLICK_HOUSE = "com.clickhouse.jdbc.ClickHouseDriver";
 	/**
 	 * JDBC 驱动 瀚高数据库
 	 */
@@ -109,8 +109,7 @@ public interface DriverNamePool {
 	 */
 	String DRIVER_SYBASE = "com.sybase.jdbc4.jdbc.SybDriver";
 	/**
-	 * JDBC 驱动 虚谷
+	 * JDBC 驱动 OpenGauss
 	 */
-	String DRIVER_XUGO = "com.xugu.cloudjdbc.Driver";
-
+	String DRIVER_OPENGAUSS = "org.opengauss.Driver";
 }

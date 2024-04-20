@@ -41,4 +41,13 @@ public class NamingCaseTest {
 				.set("DEPT_NAME","DEPT_NAME")
 				.forEach((key, value) -> Assert.assertEquals(value, NamingCase.toUnderlineCase(key)));
 	}
+
+	@Test
+	public void issue3031Test() {
+		String camelCase = NamingCase.toCamelCase("user_name,BIRTHDAY");
+		Assert.assertEquals("userName,birthday", camelCase);
+
+		camelCase = NamingCase.toCamelCase("user_name,BIRTHDAY", '_', false);
+		Assert.assertEquals("userName,BIRTHDAY", camelCase);
+	}
 }

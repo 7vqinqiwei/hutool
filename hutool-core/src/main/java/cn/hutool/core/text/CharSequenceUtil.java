@@ -10,22 +10,13 @@ import cn.hutool.core.lang.func.Func1;
 import cn.hutool.core.text.finder.CharFinder;
 import cn.hutool.core.text.finder.Finder;
 import cn.hutool.core.text.finder.StrFinder;
-import cn.hutool.core.util.ArrayUtil;
-import cn.hutool.core.util.CharUtil;
-import cn.hutool.core.util.CharsetUtil;
-import cn.hutool.core.util.DesensitizedUtil;
-import cn.hutool.core.util.NumberUtil;
-import cn.hutool.core.util.ReUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.*;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.text.MessageFormat;
 import java.text.Normalizer;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -65,10 +56,10 @@ public class CharSequenceUtil {
 	 *
 	 * <p>例：</p>
 	 * <ul>
-	 *     <li>{@code StrUtil.isBlank(null)     // true}</li>
-	 *     <li>{@code StrUtil.isBlank("")       // true}</li>
-	 *     <li>{@code StrUtil.isBlank(" \t\n")  // true}</li>
-	 *     <li>{@code StrUtil.isBlank("abc")    // false}</li>
+	 *     <li>{@code CharSequenceUtil.isBlank(null)     // true}</li>
+	 *     <li>{@code CharSequenceUtil.isBlank("")       // true}</li>
+	 *     <li>{@code CharSequenceUtil.isBlank(" \t\n")  // true}</li>
+	 *     <li>{@code CharSequenceUtil.isBlank("abc")    // false}</li>
 	 * </ul>
 	 *
 	 * <p>注意：该方法与 {@link #isEmpty(CharSequence)} 的区别是：
@@ -111,10 +102,10 @@ public class CharSequenceUtil {
 	 *
 	 * <p>例：</p>
 	 * <ul>
-	 *     <li>{@code StrUtil.isNotBlank(null)     // false}</li>
-	 *     <li>{@code StrUtil.isNotBlank("")       // false}</li>
-	 *     <li>{@code StrUtil.isNotBlank(" \t\n")  // false}</li>
-	 *     <li>{@code StrUtil.isNotBlank("abc")    // true}</li>
+	 *     <li>{@code CharSequenceUtil.isNotBlank(null)     // false}</li>
+	 *     <li>{@code CharSequenceUtil.isNotBlank("")       // false}</li>
+	 *     <li>{@code CharSequenceUtil.isNotBlank(" \t\n")  // false}</li>
+	 *     <li>{@code CharSequenceUtil.isNotBlank("abc")    // true}</li>
 	 * </ul>
 	 *
 	 * <p>注意：该方法与 {@link #isNotEmpty(CharSequence)} 的区别是：
@@ -126,7 +117,7 @@ public class CharSequenceUtil {
 	 * @see #isBlank(CharSequence)
 	 */
 	public static boolean isNotBlank(CharSequence str) {
-		return false == isBlank(str);
+		return !isBlank(str);
 	}
 
 	/**
@@ -136,10 +127,10 @@ public class CharSequenceUtil {
 	 *
 	 * <p>例：</p>
 	 * <ul>
-	 *     <li>{@code StrUtil.hasBlank()                  // true}</li>
-	 *     <li>{@code StrUtil.hasBlank("", null, " ")     // true}</li>
-	 *     <li>{@code StrUtil.hasBlank("123", " ")        // true}</li>
-	 *     <li>{@code StrUtil.hasBlank("123", "abc")      // false}</li>
+	 *     <li>{@code CharSequenceUtil.hasBlank()                  // true}</li>
+	 *     <li>{@code CharSequenceUtil.hasBlank("", null, " ")     // true}</li>
+	 *     <li>{@code CharSequenceUtil.hasBlank("123", " ")        // true}</li>
+	 *     <li>{@code CharSequenceUtil.hasBlank("123", "abc")      // false}</li>
 	 * </ul>
 	 *
 	 * <p>注意：该方法与 {@link #isAllBlank(CharSequence...)} 的区别在于：</p>
@@ -171,10 +162,10 @@ public class CharSequenceUtil {
 	 *
 	 * <p>例：</p>
 	 * <ul>
-	 *     <li>{@code StrUtil.isAllBlank()                  // true}</li>
-	 *     <li>{@code StrUtil.isAllBlank("", null, " ")     // true}</li>
-	 *     <li>{@code StrUtil.isAllBlank("123", " ")        // false}</li>
-	 *     <li>{@code StrUtil.isAllBlank("123", "abc")      // false}</li>
+	 *     <li>{@code CharSequenceUtil.isAllBlank()                  // true}</li>
+	 *     <li>{@code CharSequenceUtil.isAllBlank("", null, " ")     // true}</li>
+	 *     <li>{@code CharSequenceUtil.isAllBlank("123", " ")        // false}</li>
+	 *     <li>{@code CharSequenceUtil.isAllBlank("123", "abc")      // false}</li>
 	 * </ul>
 	 *
 	 * <p>注意：该方法与 {@link #hasBlank(CharSequence...)} 的区别在于：</p>
@@ -208,10 +199,10 @@ public class CharSequenceUtil {
 	 *
 	 * <p>例：</p>
 	 * <ul>
-	 *     <li>{@code StrUtil.isEmpty(null)     // true}</li>
-	 *     <li>{@code StrUtil.isEmpty("")       // true}</li>
-	 *     <li>{@code StrUtil.isEmpty(" \t\n")  // false}</li>
-	 *     <li>{@code StrUtil.isEmpty("abc")    // false}</li>
+	 *     <li>{@code CharSequenceUtil.isEmpty(null)     // true}</li>
+	 *     <li>{@code CharSequenceUtil.isEmpty("")       // true}</li>
+	 *     <li>{@code CharSequenceUtil.isEmpty(" \t\n")  // false}</li>
+	 *     <li>{@code CharSequenceUtil.isEmpty("abc")    // false}</li>
 	 * </ul>
 	 *
 	 * <p>注意：该方法与 {@link #isBlank(CharSequence)} 的区别是：该方法不校验空白字符。</p>
@@ -238,10 +229,10 @@ public class CharSequenceUtil {
 	 *
 	 * <p>例：</p>
 	 * <ul>
-	 *     <li>{@code StrUtil.isNotEmpty(null)     // false}</li>
-	 *     <li>{@code StrUtil.isNotEmpty("")       // false}</li>
-	 *     <li>{@code StrUtil.isNotEmpty(" \t\n")  // true}</li>
-	 *     <li>{@code StrUtil.isNotEmpty("abc")    // true}</li>
+	 *     <li>{@code CharSequenceUtil.isNotEmpty(null)     // false}</li>
+	 *     <li>{@code CharSequenceUtil.isNotEmpty("")       // false}</li>
+	 *     <li>{@code CharSequenceUtil.isNotEmpty(" \t\n")  // true}</li>
+	 *     <li>{@code CharSequenceUtil.isNotEmpty("abc")    // true}</li>
 	 * </ul>
 	 *
 	 * <p>注意：该方法与 {@link #isNotBlank(CharSequence)} 的区别是：该方法不校验空白字符。</p>
@@ -252,7 +243,7 @@ public class CharSequenceUtil {
 	 * @see #isEmpty(CharSequence)
 	 */
 	public static boolean isNotEmpty(CharSequence str) {
-		return false == isEmpty(str);
+		return !isEmpty(str);
 	}
 
 	/**
@@ -350,11 +341,11 @@ public class CharSequenceUtil {
 	 *
 	 * <p>例：</p>
 	 * <ul>
-	 *     <li>{@code StrUtil.hasEmpty()                  // true}</li>
-	 *     <li>{@code StrUtil.hasEmpty("", null)          // true}</li>
-	 *     <li>{@code StrUtil.hasEmpty("123", "")         // true}</li>
-	 *     <li>{@code StrUtil.hasEmpty("123", "abc")      // false}</li>
-	 *     <li>{@code StrUtil.hasEmpty(" ", "\t", "\n")   // false}</li>
+	 *     <li>{@code CharSequenceUtil.hasEmpty()                  // true}</li>
+	 *     <li>{@code CharSequenceUtil.hasEmpty("", null)          // true}</li>
+	 *     <li>{@code CharSequenceUtil.hasEmpty("123", "")         // true}</li>
+	 *     <li>{@code CharSequenceUtil.hasEmpty("123", "abc")      // false}</li>
+	 *     <li>{@code CharSequenceUtil.hasEmpty(" ", "\t", "\n")   // false}</li>
 	 * </ul>
 	 *
 	 * <p>注意：该方法与 {@link #isAllEmpty(CharSequence...)} 的区别在于：</p>
@@ -386,11 +377,11 @@ public class CharSequenceUtil {
 	 *
 	 * <p>例：</p>
 	 * <ul>
-	 *     <li>{@code StrUtil.isAllEmpty()                  // true}</li>
-	 *     <li>{@code StrUtil.isAllEmpty("", null)          // true}</li>
-	 *     <li>{@code StrUtil.isAllEmpty("123", "")         // false}</li>
-	 *     <li>{@code StrUtil.isAllEmpty("123", "abc")      // false}</li>
-	 *     <li>{@code StrUtil.isAllEmpty(" ", "\t", "\n")   // false}</li>
+	 *     <li>{@code CharSequenceUtil.isAllEmpty()                  // true}</li>
+	 *     <li>{@code CharSequenceUtil.isAllEmpty("", null)          // true}</li>
+	 *     <li>{@code CharSequenceUtil.isAllEmpty("123", "")         // false}</li>
+	 *     <li>{@code CharSequenceUtil.isAllEmpty("123", "abc")      // false}</li>
+	 *     <li>{@code CharSequenceUtil.isAllEmpty(" ", "\t", "\n")   // false}</li>
 	 * </ul>
 	 *
 	 * <p>注意：该方法与 {@link #hasEmpty(CharSequence...)} 的区别在于：</p>
@@ -422,11 +413,11 @@ public class CharSequenceUtil {
 	 *
 	 * <p>例：</p>
 	 * <ul>
-	 *     <li>{@code StrUtil.isAllNotEmpty()                  // false}</li>
-	 *     <li>{@code StrUtil.isAllNotEmpty("", null)          // false}</li>
-	 *     <li>{@code StrUtil.isAllNotEmpty("123", "")         // false}</li>
-	 *     <li>{@code StrUtil.isAllNotEmpty("123", "abc")      // true}</li>
-	 *     <li>{@code StrUtil.isAllNotEmpty(" ", "\t", "\n")   // true}</li>
+	 *     <li>{@code CharSequenceUtil.isAllNotEmpty()                  // false}</li>
+	 *     <li>{@code CharSequenceUtil.isAllNotEmpty("", null)          // false}</li>
+	 *     <li>{@code CharSequenceUtil.isAllNotEmpty("123", "")         // false}</li>
+	 *     <li>{@code CharSequenceUtil.isAllNotEmpty("123", "abc")      // true}</li>
+	 *     <li>{@code CharSequenceUtil.isAllNotEmpty(" ", "\t", "\n")   // true}</li>
 	 * </ul>
 	 *
 	 * <p>注意：该方法与 {@link #isAllEmpty(CharSequence...)} 的区别在于：</p>
@@ -534,11 +525,11 @@ public class CharSequenceUtil {
 	 * 除去字符串头尾部的空白，如果字符串是{@code null}，返回{@code ""}。
 	 *
 	 * <pre>
-	 * StrUtil.trimToEmpty(null)          = ""
-	 * StrUtil.trimToEmpty("")            = ""
-	 * StrUtil.trimToEmpty("     ")       = ""
-	 * StrUtil.trimToEmpty("abc")         = "abc"
-	 * StrUtil.trimToEmpty("    abc    ") = "abc"
+	 * CharSequenceUtil.trimToEmpty(null)          = ""
+	 * CharSequenceUtil.trimToEmpty("")            = ""
+	 * CharSequenceUtil.trimToEmpty("     ")       = ""
+	 * CharSequenceUtil.trimToEmpty("abc")         = "abc"
+	 * CharSequenceUtil.trimToEmpty("    abc    ") = "abc"
 	 * </pre>
 	 *
 	 * @param str 字符串
@@ -553,11 +544,11 @@ public class CharSequenceUtil {
 	 * 除去字符串头尾部的空白，如果字符串是{@code null}或者""，返回{@code null}。
 	 *
 	 * <pre>
-	 * StrUtil.trimToNull(null)          = null
-	 * StrUtil.trimToNull("")            = null
-	 * StrUtil.trimToNull("     ")       = null
-	 * StrUtil.trimToNull("abc")         = "abc"
-	 * StrUtil.trimToEmpty("    abc    ") = "abc"
+	 * CharSequenceUtil.trimToNull(null)          = null
+	 * CharSequenceUtil.trimToNull("")            = null
+	 * CharSequenceUtil.trimToNull("     ")       = null
+	 * CharSequenceUtil.trimToNull("abc")         = "abc"
+	 * CharSequenceUtil.trimToEmpty("    abc    ") = "abc"
 	 * </pre>
 	 *
 	 * @param str 字符串
@@ -780,12 +771,12 @@ public class CharSequenceUtil {
 	}
 
 	/**
-	 * 给定字符串是否以任何一个字符串结尾（忽略大小写）<br>
+	 * 给定字符串是否以任何一个字符串开始（忽略大小写）<br>
 	 * 给定字符串和数组为空都返回false
 	 *
 	 * @param str      给定字符串
-	 * @param suffixes 需要检测的结尾字符串
-	 * @return 给定字符串是否以任何一个字符串结尾
+	 * @param suffixes 需要检测的开始字符串
+	 * @return 给定字符串是否以任何一个字符串开始
 	 * @since 5.8.1
 	 */
 	public static boolean startWithAnyIgnoreCase(final CharSequence str, final CharSequence... suffixes) {
@@ -1064,7 +1055,7 @@ public class CharSequenceUtil {
 			return null;
 		}
 		for (CharSequence checkStr : testStrs) {
-			if (str.toString().contains(checkStr)) {
+			if (null != checkStr && str.toString().contains(checkStr)) {
 				return checkStr.toString();
 			}
 		}
@@ -1169,17 +1160,17 @@ public class CharSequenceUtil {
 	 * 指定范围内查找字符串，忽略大小写<br>
 	 *
 	 * <pre>
-	 * StrUtil.indexOfIgnoreCase(null, *, *)          = -1
-	 * StrUtil.indexOfIgnoreCase(*, null, *)          = -1
-	 * StrUtil.indexOfIgnoreCase("", "", 0)           = 0
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "A", 0)  = 0
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "B", 0)  = 2
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "AB", 0) = 1
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "B", 3)  = 5
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "B", 9)  = -1
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "B", -1) = 2
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "", 2)   = 2
-	 * StrUtil.indexOfIgnoreCase("abc", "", 9)        = -1
+	 * CharSequenceUtil.indexOfIgnoreCase(null, *, *)          = -1
+	 * CharSequenceUtil.indexOfIgnoreCase(*, null, *)          = -1
+	 * CharSequenceUtil.indexOfIgnoreCase("", "", 0)           = 0
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "A", 0)  = 0
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "B", 0)  = 2
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "AB", 0) = 1
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "B", 3)  = 5
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "B", 9)  = -1
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "B", -1) = 2
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "", 2)   = 2
+	 * CharSequenceUtil.indexOfIgnoreCase("abc", "", 9)        = -1
 	 * </pre>
 	 *
 	 * @param str       字符串
@@ -1195,17 +1186,17 @@ public class CharSequenceUtil {
 	 * 指定范围内查找字符串
 	 *
 	 * <pre>
-	 * StrUtil.indexOfIgnoreCase(null, *, *)          = -1
-	 * StrUtil.indexOfIgnoreCase(*, null, *)          = -1
-	 * StrUtil.indexOfIgnoreCase("", "", 0)           = 0
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "A", 0)  = 0
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "B", 0)  = 2
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "AB", 0) = 1
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "B", 3)  = 5
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "B", 9)  = -1
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "B", -1) = 2
-	 * StrUtil.indexOfIgnoreCase("aabaabaa", "", 2)   = 2
-	 * StrUtil.indexOfIgnoreCase("abc", "", 9)        = -1
+	 * CharSequenceUtil.indexOfIgnoreCase(null, *, *)          = -1
+	 * CharSequenceUtil.indexOfIgnoreCase(*, null, *)          = -1
+	 * CharSequenceUtil.indexOfIgnoreCase("", "", 0)           = 0
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "A", 0)  = 0
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "B", 0)  = 2
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "AB", 0) = 1
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "B", 3)  = 5
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "B", 9)  = -1
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "B", -1) = 2
+	 * CharSequenceUtil.indexOfIgnoreCase("aabaabaa", "", 2)   = 2
+	 * CharSequenceUtil.indexOfIgnoreCase("abc", "", 9)        = -1
 	 * </pre>
 	 *
 	 * @param str       字符串
@@ -1230,7 +1221,7 @@ public class CharSequenceUtil {
 	 */
 	public static int indexOf(CharSequence text, CharSequence searchStr, int from, boolean ignoreCase) {
 		if (isEmpty(text) || isEmpty(searchStr)) {
-			if (StrUtil.equals(text, searchStr)) {
+			if (CharSequenceUtil.equals(text, searchStr)) {
 				return 0;
 			} else {
 				return INDEX_NOT_FOUND;
@@ -1278,7 +1269,7 @@ public class CharSequenceUtil {
 	 */
 	public static int lastIndexOf(CharSequence text, CharSequence searchStr, int from, boolean ignoreCase) {
 		if (isEmpty(text) || isEmpty(searchStr)) {
-			if (StrUtil.equals(text, searchStr)) {
+			if (CharSequenceUtil.equals(text, searchStr)) {
 				return 0;
 			} else {
 				return INDEX_NOT_FOUND;
@@ -1292,23 +1283,23 @@ public class CharSequenceUtil {
 	 * 返回字符串 searchStr 在字符串 str 中第 ordinal 次出现的位置。
 	 *
 	 * <p>
-	 * 如果 str=null 或 searchStr=null 或 ordinal&ge;0 则返回-1<br>
+	 * 如果 str=null 或 searchStr=null 或 ordinal&le;0 则返回-1<br>
 	 * 此方法来自：Apache-Commons-Lang
 	 * <p>
 	 * 例子（*代表任意字符）：
 	 *
 	 * <pre>
-	 * StrUtil.ordinalIndexOf(null, *, *)          = -1
-	 * StrUtil.ordinalIndexOf(*, null, *)          = -1
-	 * StrUtil.ordinalIndexOf("", "", *)           = 0
-	 * StrUtil.ordinalIndexOf("aabaabaa", "a", 1)  = 0
-	 * StrUtil.ordinalIndexOf("aabaabaa", "a", 2)  = 1
-	 * StrUtil.ordinalIndexOf("aabaabaa", "b", 1)  = 2
-	 * StrUtil.ordinalIndexOf("aabaabaa", "b", 2)  = 5
-	 * StrUtil.ordinalIndexOf("aabaabaa", "ab", 1) = 1
-	 * StrUtil.ordinalIndexOf("aabaabaa", "ab", 2) = 4
-	 * StrUtil.ordinalIndexOf("aabaabaa", "", 1)   = 0
-	 * StrUtil.ordinalIndexOf("aabaabaa", "", 2)   = 0
+	 * CharSequenceUtil.ordinalIndexOf(null, *, *)          = -1
+	 * CharSequenceUtil.ordinalIndexOf(*, null, *)          = -1
+	 * CharSequenceUtil.ordinalIndexOf("", "", *)           = 0
+	 * CharSequenceUtil.ordinalIndexOf("aabaabaa", "a", 1)  = 0
+	 * CharSequenceUtil.ordinalIndexOf("aabaabaa", "a", 2)  = 1
+	 * CharSequenceUtil.ordinalIndexOf("aabaabaa", "b", 1)  = 2
+	 * CharSequenceUtil.ordinalIndexOf("aabaabaa", "b", 2)  = 5
+	 * CharSequenceUtil.ordinalIndexOf("aabaabaa", "ab", 1) = 1
+	 * CharSequenceUtil.ordinalIndexOf("aabaabaa", "ab", 2) = 4
+	 * CharSequenceUtil.ordinalIndexOf("aabaabaa", "", 1)   = 0
+	 * CharSequenceUtil.ordinalIndexOf("aabaabaa", "", 2)   = 0
 	 * </pre>
 	 *
 	 * @param str       被检查的字符串，可以为null
@@ -2106,13 +2097,13 @@ public class CharSequenceUtil {
 	 * 切割指定长度的后部分的字符串
 	 *
 	 * <pre>
-	 * StrUtil.subSufByLength("abcde", 3)      =    "cde"
-	 * StrUtil.subSufByLength("abcde", 0)      =    ""
-	 * StrUtil.subSufByLength("abcde", -5)     =    ""
-	 * StrUtil.subSufByLength("abcde", -1)     =    ""
-	 * StrUtil.subSufByLength("abcde", 5)       =    "abcde"
-	 * StrUtil.subSufByLength("abcde", 10)     =    "abcde"
-	 * StrUtil.subSufByLength(null, 3)               =    null
+	 * CharSequenceUtil.subSufByLength("abcde", 3)      =    "cde"
+	 * CharSequenceUtil.subSufByLength("abcde", 0)      =    ""
+	 * CharSequenceUtil.subSufByLength("abcde", -5)     =    ""
+	 * CharSequenceUtil.subSufByLength("abcde", -1)     =    ""
+	 * CharSequenceUtil.subSufByLength("abcde", 5)       =    "abcde"
+	 * CharSequenceUtil.subSufByLength("abcde", 10)     =    "abcde"
+	 * CharSequenceUtil.subSufByLength(null, 3)               =    null
 	 * </pre>
 	 *
 	 * @param string 字符串
@@ -2132,15 +2123,22 @@ public class CharSequenceUtil {
 
 	/**
 	 * 截取字符串,从指定位置开始,截取指定长度的字符串<br>
-	 * author weibaohui
+	 * 如果fromIndex为正数，则向后截取指定length长度，如果为负数，则向前截取length长度。
 	 *
 	 * @param input     原始字符串
 	 * @param fromIndex 开始的index,包括
 	 * @param length    要截取的长度
 	 * @return 截取后的字符串
+	 * @author weibaohui
 	 */
 	public static String subWithLength(String input, int fromIndex, int length) {
-		return sub(input, fromIndex, fromIndex + length);
+		final int toIndex;
+		if (fromIndex < 0) {
+			toIndex = fromIndex - length;
+		} else {
+			toIndex = fromIndex + length;
+		}
+		return sub(input, fromIndex, toIndex);
 	}
 
 	/**
@@ -2149,14 +2147,14 @@ public class CharSequenceUtil {
 	 * 如果分隔字符串为空串""，则返回空串，如果分隔字符串未找到，返回原字符串，举例如下：
 	 *
 	 * <pre>
-	 * StrUtil.subBefore(null, *, false)      = null
-	 * StrUtil.subBefore("", *, false)        = ""
-	 * StrUtil.subBefore("abc", "a", false)   = ""
-	 * StrUtil.subBefore("abcba", "b", false) = "a"
-	 * StrUtil.subBefore("abc", "c", false)   = "ab"
-	 * StrUtil.subBefore("abc", "d", false)   = "abc"
-	 * StrUtil.subBefore("abc", "", false)    = ""
-	 * StrUtil.subBefore("abc", null, false)  = "abc"
+	 * CharSequenceUtil.subBefore(null, *, false)      = null
+	 * CharSequenceUtil.subBefore("", *, false)        = ""
+	 * CharSequenceUtil.subBefore("abc", "a", false)   = ""
+	 * CharSequenceUtil.subBefore("abcba", "b", false) = "a"
+	 * CharSequenceUtil.subBefore("abc", "c", false)   = "ab"
+	 * CharSequenceUtil.subBefore("abc", "d", false)   = "abc"
+	 * CharSequenceUtil.subBefore("abc", "", false)    = ""
+	 * CharSequenceUtil.subBefore("abc", null, false)  = "abc"
 	 * </pre>
 	 *
 	 * @param string          被查找的字符串
@@ -2191,12 +2189,12 @@ public class CharSequenceUtil {
 	 * 如果分隔字符串未找到，返回原字符串，举例如下：
 	 *
 	 * <pre>
-	 * StrUtil.subBefore(null, *, false)      = null
-	 * StrUtil.subBefore("", *, false)        = ""
-	 * StrUtil.subBefore("abc", 'a', false)   = ""
-	 * StrUtil.subBefore("abcba", 'b', false) = "a"
-	 * StrUtil.subBefore("abc", 'c', false)   = "ab"
-	 * StrUtil.subBefore("abc", 'd', false)   = "abc"
+	 * CharSequenceUtil.subBefore(null, *, false)      = null
+	 * CharSequenceUtil.subBefore("", *, false)        = ""
+	 * CharSequenceUtil.subBefore("abc", 'a', false)   = ""
+	 * CharSequenceUtil.subBefore("abcba", 'b', false) = "a"
+	 * CharSequenceUtil.subBefore("abc", 'c', false)   = "ab"
+	 * CharSequenceUtil.subBefore("abc", 'd', false)   = "abc"
 	 * </pre>
 	 *
 	 * @param string          被查找的字符串
@@ -2227,14 +2225,14 @@ public class CharSequenceUtil {
 	 * 如果分隔字符串为空串（null或""），则返回空串，如果分隔字符串未找到，返回空串，举例如下：
 	 *
 	 * <pre>
-	 * StrUtil.subAfter(null, *, false)      = null
-	 * StrUtil.subAfter("", *, false)        = ""
-	 * StrUtil.subAfter(*, null, false)      = ""
-	 * StrUtil.subAfter("abc", "a", false)   = "bc"
-	 * StrUtil.subAfter("abcba", "b", false) = "cba"
-	 * StrUtil.subAfter("abc", "c", false)   = ""
-	 * StrUtil.subAfter("abc", "d", false)   = ""
-	 * StrUtil.subAfter("abc", "", false)    = "abc"
+	 * CharSequenceUtil.subAfter(null, *, false)      = null
+	 * CharSequenceUtil.subAfter("", *, false)        = ""
+	 * CharSequenceUtil.subAfter(*, null, false)      = ""
+	 * CharSequenceUtil.subAfter("abc", "a", false)   = "bc"
+	 * CharSequenceUtil.subAfter("abcba", "b", false) = "cba"
+	 * CharSequenceUtil.subAfter("abc", "c", false)   = ""
+	 * CharSequenceUtil.subAfter("abc", "d", false)   = ""
+	 * CharSequenceUtil.subAfter("abc", "", false)    = "abc"
 	 * </pre>
 	 *
 	 * @param string          被查找的字符串
@@ -2265,12 +2263,12 @@ public class CharSequenceUtil {
 	 * 如果分隔字符串为空串（null或""），则返回空串，如果分隔字符串未找到，返回空串，举例如下：
 	 *
 	 * <pre>
-	 * StrUtil.subAfter(null, *, false)      = null
-	 * StrUtil.subAfter("", *, false)        = ""
-	 * StrUtil.subAfter("abc", 'a', false)   = "bc"
-	 * StrUtil.subAfter("abcba", 'b', false) = "cba"
-	 * StrUtil.subAfter("abc", 'c', false)   = ""
-	 * StrUtil.subAfter("abc", 'd', false)   = ""
+	 * CharSequenceUtil.subAfter(null, *, false)      = null
+	 * CharSequenceUtil.subAfter("", *, false)        = ""
+	 * CharSequenceUtil.subAfter("abc", 'a', false)   = "bc"
+	 * CharSequenceUtil.subAfter("abcba", 'b', false) = "cba"
+	 * CharSequenceUtil.subAfter("abc", 'c', false)   = ""
+	 * CharSequenceUtil.subAfter("abc", 'd', false)   = ""
 	 * </pre>
 	 *
 	 * @param string          被查找的字符串
@@ -2297,16 +2295,16 @@ public class CharSequenceUtil {
 	 * 栗子：
 	 *
 	 * <pre>
-	 * StrUtil.subBetween("wx[b]yz", "[", "]") = "b"
-	 * StrUtil.subBetween(null, *, *)          = null
-	 * StrUtil.subBetween(*, null, *)          = null
-	 * StrUtil.subBetween(*, *, null)          = null
-	 * StrUtil.subBetween("", "", "")          = ""
-	 * StrUtil.subBetween("", "", "]")         = null
-	 * StrUtil.subBetween("", "[", "]")        = null
-	 * StrUtil.subBetween("yabcz", "", "")     = ""
-	 * StrUtil.subBetween("yabcz", "y", "z")   = "abc"
-	 * StrUtil.subBetween("yabczyabcz", "y", "z")   = "abc"
+	 * CharSequenceUtil.subBetween("wx[b]yz", "[", "]") = "b"
+	 * CharSequenceUtil.subBetween(null, *, *)          = null
+	 * CharSequenceUtil.subBetween(*, null, *)          = null
+	 * CharSequenceUtil.subBetween(*, *, null)          = null
+	 * CharSequenceUtil.subBetween("", "", "")          = ""
+	 * CharSequenceUtil.subBetween("", "", "]")         = null
+	 * CharSequenceUtil.subBetween("", "[", "]")        = null
+	 * CharSequenceUtil.subBetween("yabcz", "", "")     = ""
+	 * CharSequenceUtil.subBetween("yabcz", "y", "z")   = "abc"
+	 * CharSequenceUtil.subBetween("yabczyabcz", "y", "z")   = "abc"
 	 * </pre>
 	 *
 	 * @param str    被切割的字符串
@@ -2340,12 +2338,12 @@ public class CharSequenceUtil {
 	 * 栗子：
 	 *
 	 * <pre>
-	 * StrUtil.subBetween(null, *)            = null
-	 * StrUtil.subBetween("", "")             = ""
-	 * StrUtil.subBetween("", "tag")          = null
-	 * StrUtil.subBetween("tagabctag", null)  = null
-	 * StrUtil.subBetween("tagabctag", "")    = ""
-	 * StrUtil.subBetween("tagabctag", "tag") = "abc"
+	 * CharSequenceUtil.subBetween(null, *)            = null
+	 * CharSequenceUtil.subBetween("", "")             = ""
+	 * CharSequenceUtil.subBetween("", "tag")          = null
+	 * CharSequenceUtil.subBetween("tagabctag", null)  = null
+	 * CharSequenceUtil.subBetween("tagabctag", "")    = ""
+	 * CharSequenceUtil.subBetween("tagabctag", "tag") = "abc"
 	 * </pre>
 	 *
 	 * @param str            被切割的字符串
@@ -2363,17 +2361,17 @@ public class CharSequenceUtil {
 	 * 栗子：
 	 *
 	 * <pre>
-	 * StrUtil.subBetweenAll("wx[b]y[z]", "[", "]") 		= ["b","z"]
-	 * StrUtil.subBetweenAll(null, *, *)          			= []
-	 * StrUtil.subBetweenAll(*, null, *)          			= []
-	 * StrUtil.subBetweenAll(*, *, null)          			= []
-	 * StrUtil.subBetweenAll("", "", "")          			= []
-	 * StrUtil.subBetweenAll("", "", "]")         			= []
-	 * StrUtil.subBetweenAll("", "[", "]")        			= []
-	 * StrUtil.subBetweenAll("yabcz", "", "")     			= []
-	 * StrUtil.subBetweenAll("yabcz", "y", "z")   			= ["abc"]
-	 * StrUtil.subBetweenAll("yabczyabcz", "y", "z")   		= ["abc","abc"]
-	 * StrUtil.subBetweenAll("[yabc[zy]abcz]", "[", "]");   = ["zy"]           重叠时只截取内部，
+	 * CharSequenceUtil.subBetweenAll("wx[b]y[z]", "[", "]") 		= ["b","z"]
+	 * CharSequenceUtil.subBetweenAll(null, *, *)          			= []
+	 * CharSequenceUtil.subBetweenAll(*, null, *)          			= []
+	 * CharSequenceUtil.subBetweenAll(*, *, null)          			= []
+	 * CharSequenceUtil.subBetweenAll("", "", "")          			= []
+	 * CharSequenceUtil.subBetweenAll("", "", "]")         			= []
+	 * CharSequenceUtil.subBetweenAll("", "[", "]")        			= []
+	 * CharSequenceUtil.subBetweenAll("yabcz", "", "")     			= []
+	 * CharSequenceUtil.subBetweenAll("yabcz", "y", "z")   			= ["abc"]
+	 * CharSequenceUtil.subBetweenAll("yabczyabcz", "y", "z")   		= ["abc","abc"]
+	 * CharSequenceUtil.subBetweenAll("[yabc[zy]abcz]", "[", "]");   = ["zy"]           重叠时只截取内部，
 	 * </pre>
 	 *
 	 * @param str    被切割的字符串
@@ -2418,15 +2416,15 @@ public class CharSequenceUtil {
 	 * 栗子：
 	 *
 	 * <pre>
-	 * StrUtil.subBetweenAll(null, *)          			= []
-	 * StrUtil.subBetweenAll(*, null)          			= []
-	 * StrUtil.subBetweenAll(*, *)          			= []
-	 * StrUtil.subBetweenAll("", "")          			= []
-	 * StrUtil.subBetweenAll("", "#")         			= []
-	 * StrUtil.subBetweenAll("gotanks", "")     		= []
-	 * StrUtil.subBetweenAll("#gotanks#", "#")   		= ["gotanks"]
-	 * StrUtil.subBetweenAll("#hello# #world#!", "#")   = ["hello", "world"]
-	 * StrUtil.subBetweenAll("#hello# world#!", "#");   = ["hello"]
+	 * CharSequenceUtil.subBetweenAll(null, *)          			= []
+	 * CharSequenceUtil.subBetweenAll(*, null)          			= []
+	 * CharSequenceUtil.subBetweenAll(*, *)          			= []
+	 * CharSequenceUtil.subBetweenAll("", "")          			= []
+	 * CharSequenceUtil.subBetweenAll("", "#")         			= []
+	 * CharSequenceUtil.subBetweenAll("gotanks", "")     		= []
+	 * CharSequenceUtil.subBetweenAll("#gotanks#", "#")   		= ["gotanks"]
+	 * CharSequenceUtil.subBetweenAll("#hello# #world#!", "#")   = ["hello", "world"]
+	 * CharSequenceUtil.subBetweenAll("#hello# world#!", "#");   = ["hello"]
 	 * </pre>
 	 *
 	 * @param str             被切割的字符串
@@ -2445,9 +2443,9 @@ public class CharSequenceUtil {
 	 * 重复某个字符
 	 *
 	 * <pre>
-	 * StrUtil.repeat('e', 0)  = ""
-	 * StrUtil.repeat('e', 3)  = "eee"
-	 * StrUtil.repeat('e', -2) = ""
+	 * CharSequenceUtil.repeat('e', 0)  = ""
+	 * CharSequenceUtil.repeat('e', 3)  = "eee"
+	 * CharSequenceUtil.repeat('e', -2) = ""
 	 * </pre>
 	 *
 	 * @param c     被重复的字符
@@ -2460,9 +2458,7 @@ public class CharSequenceUtil {
 		}
 
 		char[] result = new char[count];
-		for (int i = 0; i < count; i++) {
-			result[i] = c;
-		}
+		Arrays.fill(result, c);
 		return new String(result);
 	}
 
@@ -2515,7 +2511,7 @@ public class CharSequenceUtil {
 			return null;
 		}
 		if (padLen <= 0) {
-			return StrUtil.EMPTY;
+			return CharSequenceUtil.EMPTY;
 		}
 		final int strLen = str.length();
 		if (strLen == padLen) {
@@ -2536,9 +2532,9 @@ public class CharSequenceUtil {
 	 * 重复某个字符串并通过分界符连接
 	 *
 	 * <pre>
-	 * StrUtil.repeatAndJoin("?", 5, ",")   = "?,?,?,?,?"
-	 * StrUtil.repeatAndJoin("?", 0, ",")   = ""
-	 * StrUtil.repeatAndJoin("?", 5, null) = "?????"
+	 * CharSequenceUtil.repeatAndJoin("?", 5, ",")   = "?,?,?,?,?"
+	 * CharSequenceUtil.repeatAndJoin("?", 0, ",")   = ""
+	 * CharSequenceUtil.repeatAndJoin("?", 5, null) = "?????"
 	 * </pre>
 	 *
 	 * @param str       被重复的字符串
@@ -3064,10 +3060,10 @@ public class CharSequenceUtil {
 	 * 同：leftPad (org.apache.commons.lang3.leftPad)
 	 *
 	 * <pre>
-	 * StrUtil.padPre(null, *, *);//null
-	 * StrUtil.padPre("1", 3, "ABC");//"AB1"
-	 * StrUtil.padPre("123", 2, "ABC");//"12"
-	 * StrUtil.padPre("1039", -1, "0");//"103"
+	 * CharSequenceUtil.padPre(null, *, *);//null
+	 * CharSequenceUtil.padPre("1", 3, "ABC");//"AB1"
+	 * CharSequenceUtil.padPre("123", 2, "ABC");//"12"
+	 * CharSequenceUtil.padPre("1039", -1, "0");//"103"
 	 * </pre>
 	 *
 	 * @param str    字符串
@@ -3095,9 +3091,9 @@ public class CharSequenceUtil {
 	 * 同：leftPad (org.apache.commons.lang3.leftPad)
 	 *
 	 * <pre>
-	 * StrUtil.padPre(null, *, *);//null
-	 * StrUtil.padPre("1", 3, '0');//"001"
-	 * StrUtil.padPre("123", 2, '0');//"12"
+	 * CharSequenceUtil.padPre(null, *, *);//null
+	 * CharSequenceUtil.padPre("1", 3, '0');//"001"
+	 * CharSequenceUtil.padPre("123", 2, '0');//"12"
 	 * </pre>
 	 *
 	 * @param str     字符串
@@ -3124,10 +3120,10 @@ public class CharSequenceUtil {
 	 * 补充字符串以满足最小长度，如果提供的字符串大于指定长度，截断之
 	 *
 	 * <pre>
-	 * StrUtil.padAfter(null, *, *);//null
-	 * StrUtil.padAfter("1", 3, '0');//"100"
-	 * StrUtil.padAfter("123", 2, '0');//"23"
-	 * StrUtil.padAfter("123", -1, '0')//"" 空串
+	 * CharSequenceUtil.padAfter(null, *, *);//null
+	 * CharSequenceUtil.padAfter("1", 3, '0');//"100"
+	 * CharSequenceUtil.padAfter("123", 2, '0');//"23"
+	 * CharSequenceUtil.padAfter("123", -1, '0')//"" 空串
 	 * </pre>
 	 *
 	 * @param str     字符串，如果为{@code null}，直接返回null
@@ -3154,9 +3150,9 @@ public class CharSequenceUtil {
 	 * 补充字符串以满足最小长度
 	 *
 	 * <pre>
-	 * StrUtil.padAfter(null, *, *);//null
-	 * StrUtil.padAfter("1", 3, "ABC");//"1AB"
-	 * StrUtil.padAfter("123", 2, "ABC");//"23"
+	 * CharSequenceUtil.padAfter(null, *, *);//null
+	 * CharSequenceUtil.padAfter("1", 3, "ABC");//"1AB"
+	 * CharSequenceUtil.padAfter("123", 2, "ABC");//"23"
 	 * </pre>
 	 *
 	 * @param str    字符串，如果为{@code null}，直接返回null
@@ -3186,12 +3182,12 @@ public class CharSequenceUtil {
 	 * 居中字符串，两边补充指定字符串，如果指定长度小于字符串，则返回原字符串
 	 *
 	 * <pre>
-	 * StrUtil.center(null, *)   = null
-	 * StrUtil.center("", 4)     = "    "
-	 * StrUtil.center("ab", -1)  = "ab"
-	 * StrUtil.center("ab", 4)   = " ab "
-	 * StrUtil.center("abcd", 2) = "abcd"
-	 * StrUtil.center("a", 4)    = " a  "
+	 * CharSequenceUtil.center(null, *)   = null
+	 * CharSequenceUtil.center("", 4)     = "    "
+	 * CharSequenceUtil.center("ab", -1)  = "ab"
+	 * CharSequenceUtil.center("ab", 4)   = " ab "
+	 * CharSequenceUtil.center("abcd", 2) = "abcd"
+	 * CharSequenceUtil.center("a", 4)    = " a  "
 	 * </pre>
 	 *
 	 * @param str  字符串
@@ -3207,14 +3203,14 @@ public class CharSequenceUtil {
 	 * 居中字符串，两边补充指定字符串，如果指定长度小于字符串，则返回原字符串
 	 *
 	 * <pre>
-	 * StrUtil.center(null, *, *)     = null
-	 * StrUtil.center("", 4, ' ')     = "    "
-	 * StrUtil.center("ab", -1, ' ')  = "ab"
-	 * StrUtil.center("ab", 4, ' ')   = " ab "
-	 * StrUtil.center("abcd", 2, ' ') = "abcd"
-	 * StrUtil.center("a", 4, ' ')    = " a  "
-	 * StrUtil.center("a", 4, 'y')   = "yayy"
-	 * StrUtil.center("abc", 7, ' ')   = "  abc  "
+	 * CharSequenceUtil.center(null, *, *)     = null
+	 * CharSequenceUtil.center("", 4, ' ')     = "    "
+	 * CharSequenceUtil.center("ab", -1, ' ')  = "ab"
+	 * CharSequenceUtil.center("ab", 4, ' ')   = " ab "
+	 * CharSequenceUtil.center("abcd", 2, ' ') = "abcd"
+	 * CharSequenceUtil.center("a", 4, ' ')    = " a  "
+	 * CharSequenceUtil.center("a", 4, 'y')   = "yayy"
+	 * CharSequenceUtil.center("abc", 7, ' ')   = "  abc  "
 	 * </pre>
 	 *
 	 * @param str     字符串
@@ -3241,15 +3237,15 @@ public class CharSequenceUtil {
 	 * 居中字符串，两边补充指定字符串，如果指定长度小于字符串，则返回原字符串
 	 *
 	 * <pre>
-	 * StrUtil.center(null, *, *)     = null
-	 * StrUtil.center("", 4, " ")     = "    "
-	 * StrUtil.center("ab", -1, " ")  = "ab"
-	 * StrUtil.center("ab", 4, " ")   = " ab "
-	 * StrUtil.center("abcd", 2, " ") = "abcd"
-	 * StrUtil.center("a", 4, " ")    = " a  "
-	 * StrUtil.center("a", 4, "yz")   = "yayz"
-	 * StrUtil.center("abc", 7, null) = "  abc  "
-	 * StrUtil.center("abc", 7, "")   = "  abc  "
+	 * CharSequenceUtil.center(null, *, *)     = null
+	 * CharSequenceUtil.center("", 4, " ")     = "    "
+	 * CharSequenceUtil.center("ab", -1, " ")  = "ab"
+	 * CharSequenceUtil.center("ab", 4, " ")   = " ab "
+	 * CharSequenceUtil.center("abcd", 2, " ") = "abcd"
+	 * CharSequenceUtil.center("a", 4, " ")    = " a  "
+	 * CharSequenceUtil.center("a", 4, "yz")   = "yayz"
+	 * CharSequenceUtil.center("abc", 7, null) = "  abc  "
+	 * CharSequenceUtil.center("abc", 7, "")   = "  abc  "
 	 * </pre>
 	 *
 	 * @param str    字符串
@@ -3293,13 +3289,13 @@ public class CharSequenceUtil {
 	 * 参数为 {@code null} 或者 "" 返回 {@code 0}.
 	 *
 	 * <pre>
-	 * StrUtil.count(null, *)       = 0
-	 * StrUtil.count("", *)         = 0
-	 * StrUtil.count("abba", null)  = 0
-	 * StrUtil.count("abba", "")    = 0
-	 * StrUtil.count("abba", "a")   = 2
-	 * StrUtil.count("abba", "ab")  = 1
-	 * StrUtil.count("abba", "xxx") = 0
+	 * CharSequenceUtil.count(null, *)       = 0
+	 * CharSequenceUtil.count("", *)         = 0
+	 * CharSequenceUtil.count("abba", null)  = 0
+	 * CharSequenceUtil.count("abba", "")    = 0
+	 * CharSequenceUtil.count("abba", "a")   = 2
+	 * CharSequenceUtil.count("abba", "ab")  = 1
+	 * CharSequenceUtil.count("abba", "xxx") = 0
 	 * </pre>
 	 *
 	 * @param content      被查找的字符串
@@ -3349,16 +3345,16 @@ public class CharSequenceUtil {
 	 * 比较两个字符串，用于排序
 	 *
 	 * <pre>
-	 * StrUtil.compare(null, null, *)     = 0
-	 * StrUtil.compare(null , "a", true)  &lt; 0
-	 * StrUtil.compare(null , "a", false) &gt; 0
-	 * StrUtil.compare("a", null, true)   &gt; 0
-	 * StrUtil.compare("a", null, false)  &lt; 0
-	 * StrUtil.compare("abc", "abc", *)   = 0
-	 * StrUtil.compare("a", "b", *)       &lt; 0
-	 * StrUtil.compare("b", "a", *)       &gt; 0
-	 * StrUtil.compare("a", "B", *)       &gt; 0
-	 * StrUtil.compare("ab", "abc", *)    &lt; 0
+	 * CharSequenceUtil.compare(null, null, *)     = 0
+	 * CharSequenceUtil.compare(null , "a", true)  &lt; 0
+	 * CharSequenceUtil.compare(null , "a", false) &gt; 0
+	 * CharSequenceUtil.compare("a", null, true)   &gt; 0
+	 * CharSequenceUtil.compare("a", null, false)  &lt; 0
+	 * CharSequenceUtil.compare("abc", "abc", *)   = 0
+	 * CharSequenceUtil.compare("a", "b", *)       &lt; 0
+	 * CharSequenceUtil.compare("b", "a", *)       &gt; 0
+	 * CharSequenceUtil.compare("a", "B", *)       &gt; 0
+	 * CharSequenceUtil.compare("ab", "abc", *)    &lt; 0
 	 * </pre>
 	 *
 	 * @param str1       字符串1
@@ -3383,18 +3379,18 @@ public class CharSequenceUtil {
 	 * 比较两个字符串，用于排序，大小写不敏感
 	 *
 	 * <pre>
-	 * StrUtil.compareIgnoreCase(null, null, *)     = 0
-	 * StrUtil.compareIgnoreCase(null , "a", true)  &lt; 0
-	 * StrUtil.compareIgnoreCase(null , "a", false) &gt; 0
-	 * StrUtil.compareIgnoreCase("a", null, true)   &gt; 0
-	 * StrUtil.compareIgnoreCase("a", null, false)  &lt; 0
-	 * StrUtil.compareIgnoreCase("abc", "abc", *)   = 0
-	 * StrUtil.compareIgnoreCase("abc", "ABC", *)   = 0
-	 * StrUtil.compareIgnoreCase("a", "b", *)       &lt; 0
-	 * StrUtil.compareIgnoreCase("b", "a", *)       &gt; 0
-	 * StrUtil.compareIgnoreCase("a", "B", *)       &lt; 0
-	 * StrUtil.compareIgnoreCase("A", "b", *)       &lt; 0
-	 * StrUtil.compareIgnoreCase("ab", "abc", *)    &lt; 0
+	 * CharSequenceUtil.compareIgnoreCase(null, null, *)     = 0
+	 * CharSequenceUtil.compareIgnoreCase(null , "a", true)  &lt; 0
+	 * CharSequenceUtil.compareIgnoreCase(null , "a", false) &gt; 0
+	 * CharSequenceUtil.compareIgnoreCase("a", null, true)   &gt; 0
+	 * CharSequenceUtil.compareIgnoreCase("a", null, false)  &lt; 0
+	 * CharSequenceUtil.compareIgnoreCase("abc", "abc", *)   = 0
+	 * CharSequenceUtil.compareIgnoreCase("abc", "ABC", *)   = 0
+	 * CharSequenceUtil.compareIgnoreCase("a", "b", *)       &lt; 0
+	 * CharSequenceUtil.compareIgnoreCase("b", "a", *)       &gt; 0
+	 * CharSequenceUtil.compareIgnoreCase("a", "B", *)       &lt; 0
+	 * CharSequenceUtil.compareIgnoreCase("A", "b", *)       &lt; 0
+	 * CharSequenceUtil.compareIgnoreCase("ab", "abc", *)    &lt; 0
 	 * </pre>
 	 *
 	 * @param str1       字符串1
@@ -3420,14 +3416,14 @@ public class CharSequenceUtil {
 	 * null版本排在最小：即：
 	 *
 	 * <pre>
-	 * StrUtil.compareVersion(null, "v1") &lt; 0
-	 * StrUtil.compareVersion("v1", "v1")  = 0
-	 * StrUtil.compareVersion(null, null)   = 0
-	 * StrUtil.compareVersion("v1", null) &gt; 0
-	 * StrUtil.compareVersion("1.0.0", "1.0.2") &lt; 0
-	 * StrUtil.compareVersion("1.0.2", "1.0.2a") &lt; 0
-	 * StrUtil.compareVersion("1.13.0", "1.12.1c") &gt; 0
-	 * StrUtil.compareVersion("V0.0.20170102", "V0.0.20170101") &gt; 0
+	 * CharSequenceUtil.compareVersion(null, "v1") &lt; 0
+	 * CharSequenceUtil.compareVersion("v1", "v1")  = 0
+	 * CharSequenceUtil.compareVersion(null, null)   = 0
+	 * CharSequenceUtil.compareVersion("v1", null) &gt; 0
+	 * CharSequenceUtil.compareVersion("1.0.0", "1.0.2") &lt; 0
+	 * CharSequenceUtil.compareVersion("1.0.2", "1.0.2a") &lt; 0
+	 * CharSequenceUtil.compareVersion("1.13.0", "1.12.1c") &gt; 0
+	 * CharSequenceUtil.compareVersion("V0.0.20170102", "V0.0.20170101") &gt; 0
 	 * </pre>
 	 *
 	 * @param version1 版本1
@@ -3535,7 +3531,7 @@ public class CharSequenceUtil {
 		if (str == null || isEmpty(prefix) || startWith(str, prefix, ignoreCase)) {
 			return str(str);
 		}
-		if (prefixes != null && prefixes.length > 0) {
+		if (prefixes != null) {
 			for (final CharSequence s : prefixes) {
 				if (startWith(str, s, ignoreCase)) {
 					return str.toString();
@@ -3649,8 +3645,25 @@ public class CharSequenceUtil {
 	 * @param replacedChar 被替换的字符
 	 * @return 替换后的字符串
 	 * @since 3.2.1
+	 * @deprecated 歧义，请使用{@link #replaceByCodePoint(CharSequence, int, int, char)}
 	 */
+	@Deprecated
 	public static String replace(CharSequence str, int startInclude, int endExclude, char replacedChar) {
+		return replaceByCodePoint(str, startInclude, endExclude, replacedChar);
+	}
+
+	/**
+	 * 替换指定字符串的指定区间内字符为固定字符<br>
+	 * 此方法使用{@link String#codePoints()}完成拆分替换
+	 *
+	 * @param str          字符串
+	 * @param startInclude 开始位置（包含）
+	 * @param endExclude   结束位置（不包含）
+	 * @param replacedChar 被替换的字符
+	 * @return 替换后的字符串
+	 * @since 5.8.27
+	 */
+	public static String replaceByCodePoint(CharSequence str, int startInclude, int endExclude, char replacedChar) {
 		if (isEmpty(str)) {
 			return str(str);
 		}
@@ -3689,8 +3702,25 @@ public class CharSequenceUtil {
 	 * @param replacedStr  被替换的字符串
 	 * @return 替换后的字符串
 	 * @since 3.2.1
+	 * @deprecated 歧义，请使用{@link #replaceByCodePoint(CharSequence, int, int, CharSequence)}
 	 */
+	@Deprecated
 	public static String replace(CharSequence str, int startInclude, int endExclude, CharSequence replacedStr) {
+		return replaceByCodePoint(str, startInclude, endExclude, replacedStr);
+	}
+
+	/**
+	 * 替换指定字符串的指定区间内字符为指定字符串，字符串只重复一次<br>
+	 * 此方法使用{@link String#codePoints()}完成拆分替换
+	 *
+	 * @param str          字符串
+	 * @param startInclude 开始位置（包含）
+	 * @param endExclude   结束位置（不包含）
+	 * @param replacedStr  被替换的字符串
+	 * @return 替换后的字符串
+	 * @since 5.8.27
+	 */
+	public static String replaceByCodePoint(CharSequence str, int startInclude, int endExclude, CharSequence replacedStr) {
 		if (isEmpty(str)) {
 			return str(str);
 		}
@@ -3753,17 +3783,81 @@ public class CharSequenceUtil {
 	}
 
 	/**
+	 * 替换字符串中最后一个指定字符串
+	 *
+	 * @param str         字符串
+	 * @param searchStr   被查找的字符串
+	 * @param replacedStr 被替换的字符串
+	 * @return 替换后的字符串
+	 */
+	public static String replaceLast(CharSequence str, CharSequence searchStr, CharSequence replacedStr) {
+		return replaceLast(str, searchStr, replacedStr, false);
+	}
+
+	/**
+	 * 替换字符串中最后一个指定字符串
+	 *
+	 * @param str         字符串
+	 * @param searchStr   被查找的字符串
+	 * @param replacedStr 被替换的字符串
+	 * @param ignoreCase  是否忽略大小写
+	 * @return 替换后的字符串
+	 */
+	public static String replaceLast(CharSequence str, CharSequence searchStr, CharSequence replacedStr, boolean ignoreCase) {
+		if (isEmpty(str)) {
+			return str(str);
+		}
+		int lastIndex = lastIndexOf(str, searchStr, str.length(), ignoreCase);
+		if (INDEX_NOT_FOUND == lastIndex) {
+			return str(str);
+		}
+		return replace(str, lastIndex, searchStr, replacedStr, ignoreCase);
+	}
+
+	/**
+	 * 替换字符串中第一个指定字符串
+	 *
+	 * @param str         字符串
+	 * @param searchStr   被查找的字符串
+	 * @param replacedStr 被替换的字符串
+	 * @return 替换后的字符串
+	 */
+	public static String replaceFirst(CharSequence str, CharSequence searchStr, CharSequence replacedStr) {
+		return replaceFirst(str, searchStr, replacedStr, false);
+	}
+
+	/**
+	 * 替换字符串中第一个指定字符串
+	 *
+	 * @param str         字符串
+	 * @param searchStr   被查找的字符串
+	 * @param replacedStr 被替换的字符串
+	 * @param ignoreCase  是否忽略大小写
+	 * @return 替换后的字符串
+	 */
+	public static String replaceFirst(CharSequence str, CharSequence searchStr, CharSequence replacedStr, boolean ignoreCase) {
+		if (isEmpty(str)) {
+			return str(str);
+		}
+		int startInclude = indexOf(str, searchStr, 0, ignoreCase);
+		if (INDEX_NOT_FOUND == startInclude) {
+			return str(str);
+		}
+		return replaceByCodePoint(str, startInclude, startInclude + searchStr.length(), replacedStr);
+	}
+
+	/**
 	 * 替换指定字符串的指定区间内字符为"*"
 	 * 俗称：脱敏功能，后面其他功能，可以见：DesensitizedUtil(脱敏工具类)
 	 *
 	 * <pre>
-	 * StrUtil.hide(null,*,*)=null
-	 * StrUtil.hide("",0,*)=""
-	 * StrUtil.hide("jackduan@163.com",-1,4)   ****duan@163.com
-	 * StrUtil.hide("jackduan@163.com",2,3)    ja*kduan@163.com
-	 * StrUtil.hide("jackduan@163.com",3,2)    jackduan@163.com
-	 * StrUtil.hide("jackduan@163.com",16,16)  jackduan@163.com
-	 * StrUtil.hide("jackduan@163.com",16,17)  jackduan@163.com
+	 * CharSequenceUtil.hide(null,*,*)=null
+	 * CharSequenceUtil.hide("",0,*)=""
+	 * CharSequenceUtil.hide("jackduan@163.com",-1,4)   ****duan@163.com
+	 * CharSequenceUtil.hide("jackduan@163.com",2,3)    ja*kduan@163.com
+	 * CharSequenceUtil.hide("jackduan@163.com",3,2)    jackduan@163.com
+	 * CharSequenceUtil.hide("jackduan@163.com",16,16)  jackduan@163.com
+	 * CharSequenceUtil.hide("jackduan@163.com",16,17)  jackduan@163.com
 	 * </pre>
 	 *
 	 * @param str          字符串
@@ -3773,23 +3867,23 @@ public class CharSequenceUtil {
 	 * @since 4.1.14
 	 */
 	public static String hide(CharSequence str, int startInclude, int endExclude) {
-		return replace(str, startInclude, endExclude, '*');
+		return replaceByCodePoint(str, startInclude, endExclude, '*');
 	}
 
 	/**
 	 * 脱敏，使用默认的脱敏策略
 	 *
 	 * <pre>
-	 * StrUtil.desensitized("100", DesensitizedUtil.DesensitizedType.USER_ID)) =  "0"
-	 * StrUtil.desensitized("段正淳", DesensitizedUtil.DesensitizedType.CHINESE_NAME)) = "段**"
-	 * StrUtil.desensitized("51343620000320711X", DesensitizedUtil.DesensitizedType.ID_CARD)) = "5***************1X"
-	 * StrUtil.desensitized("09157518479", DesensitizedUtil.DesensitizedType.FIXED_PHONE)) = "0915*****79"
-	 * StrUtil.desensitized("18049531999", DesensitizedUtil.DesensitizedType.MOBILE_PHONE)) = "180****1999"
-	 * StrUtil.desensitized("北京市海淀区马连洼街道289号", DesensitizedUtil.DesensitizedType.ADDRESS)) = "北京市海淀区马********"
-	 * StrUtil.desensitized("duandazhi-jack@gmail.com.cn", DesensitizedUtil.DesensitizedType.EMAIL)) = "d*************@gmail.com.cn"
-	 * StrUtil.desensitized("1234567890", DesensitizedUtil.DesensitizedType.PASSWORD)) = "**********"
-	 * StrUtil.desensitized("苏D40000", DesensitizedUtil.DesensitizedType.CAR_LICENSE)) = "苏D4***0"
-	 * StrUtil.desensitized("11011111222233333256", DesensitizedType.BANK_CARD)) = "1101 **** **** **** 3256"
+	 * CharSequenceUtil.desensitized("100", DesensitizedUtil.DesensitizedType.USER_ID)) =  "0"
+	 * CharSequenceUtil.desensitized("段正淳", DesensitizedUtil.DesensitizedType.CHINESE_NAME)) = "段**"
+	 * CharSequenceUtil.desensitized("51343620000320711X", DesensitizedUtil.DesensitizedType.ID_CARD)) = "5***************1X"
+	 * CharSequenceUtil.desensitized("09157518479", DesensitizedUtil.DesensitizedType.FIXED_PHONE)) = "0915*****79"
+	 * CharSequenceUtil.desensitized("18049531999", DesensitizedUtil.DesensitizedType.MOBILE_PHONE)) = "180****1999"
+	 * CharSequenceUtil.desensitized("北京市海淀区马连洼街道289号", DesensitizedUtil.DesensitizedType.ADDRESS)) = "北京市海淀区马********"
+	 * CharSequenceUtil.desensitized("duandazhi-jack@gmail.com.cn", DesensitizedUtil.DesensitizedType.EMAIL)) = "d*************@gmail.com.cn"
+	 * CharSequenceUtil.desensitized("1234567890", DesensitizedUtil.DesensitizedType.PASSWORD)) = "**********"
+	 * CharSequenceUtil.desensitized("苏D40000", DesensitizedUtil.DesensitizedType.CAR_LICENSE)) = "苏D4***0"
+	 * CharSequenceUtil.desensitized("11011111222233333256", DesensitizedType.BANK_CARD)) = "1101 **** **** **** 3256"
 	 * </pre>
 	 *
 	 * @param str              字符串
@@ -3934,7 +4028,7 @@ public class CharSequenceUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T extends CharSequence> T firstNonEmpty(T... strs) {
-		return ArrayUtil.firstMatch(StrUtil::isNotEmpty, strs);
+		return ArrayUtil.firstMatch(CharSequenceUtil::isNotEmpty, strs);
 	}
 
 	/**
@@ -3948,7 +4042,7 @@ public class CharSequenceUtil {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T extends CharSequence> T firstNonBlank(T... strs) {
-		return ArrayUtil.firstMatch(StrUtil::isNotBlank, strs);
+		return ArrayUtil.firstMatch(CharSequenceUtil::isNotBlank, strs);
 	}
 
 	// ------------------------------------------------------------------------ lower and upper
@@ -4090,9 +4184,9 @@ public class CharSequenceUtil {
 	 * 切换给定字符串中的大小写。大写转小写，小写转大写。
 	 *
 	 * <pre>
-	 * StrUtil.swapCase(null)                 = null
-	 * StrUtil.swapCase("")                   = ""
-	 * StrUtil.swapCase("The dog has a BONE") = "tHE DOG HAS A bone"
+	 * CharSequenceUtil.swapCase(null)                 = null
+	 * CharSequenceUtil.swapCase("")                   = ""
+	 * CharSequenceUtil.swapCase("The dog has a BONE") = "tHE DOG HAS A bone"
 	 * </pre>
 	 *
 	 * @param str 字符串
@@ -4186,7 +4280,7 @@ public class CharSequenceUtil {
 	 * @return 是否包围，空串不包围
 	 */
 	public static boolean isSurround(CharSequence str, CharSequence prefix, CharSequence suffix) {
-		if (StrUtil.isBlank(str)) {
+		if (CharSequenceUtil.isBlank(str)) {
 			return false;
 		}
 		if (str.length() < (prefix.length() + suffix.length())) {
@@ -4206,7 +4300,7 @@ public class CharSequenceUtil {
 	 * @return 是否包围，空串不包围
 	 */
 	public static boolean isSurround(CharSequence str, char prefix, char suffix) {
-		if (StrUtil.isBlank(str)) {
+		if (CharSequenceUtil.isBlank(str)) {
 			return false;
 		}
 		if (str.length() < 2) {
@@ -4391,7 +4485,7 @@ public class CharSequenceUtil {
 	 * @since 3.2.3
 	 */
 	public static boolean isAllCharMatch(CharSequence value, Matcher<Character> matcher) {
-		if (StrUtil.isBlank(value)) {
+		if (CharSequenceUtil.isBlank(value)) {
 			return false;
 		}
 		for (int i = value.length(); --i >= 0; ) {
@@ -4495,4 +4589,69 @@ public class CharSequenceUtil {
 		}
 		return str + repeat(fixedChar, fixedLength);
 	}
+
+	/**
+	 * <p>指定字符串数组中，是否包含空字符串。</p>
+	 * <p>如果传入参数对象不是为空,则返回false。如果字符串包含字母,不区分大小写,则返回true</p>
+	 *
+	 * @param str 对象
+	 * @return 如果为字符串, 是否有字母
+	 */
+	public static boolean hasLetter(CharSequence str) {
+		if (null == str) {
+			return false;
+		}
+		for (int i = 0; i < str.length(); i++) {
+			if (CharUtil.isLetter(str.charAt(i))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * 字符串1和字符串2的公共前缀
+	 *
+	 * @param str1 字符串1
+	 * @param str2 字符串2
+	 * @return 字符串1和字符串2的公共前缀
+	 */
+	public static CharSequence commonPrefix(CharSequence str1, CharSequence str2) {
+		if (isEmpty(str1) || isEmpty(str2)) {
+			return EMPTY;
+		}
+		final int minLength = Math.min(str1.length(), str2.length());
+
+		int index = 0;
+
+		for (; index < minLength; index++) {
+
+			if (str1.charAt(index) != str2.charAt(index)) {
+				break;
+			}
+		}
+		return str1.subSequence(0, index);
+	}
+
+	/**
+	 * 字符串1和字符串2的公共后缀
+	 *
+	 * @param str1 字符串1
+	 * @param str2 字符串2
+	 * @return 字符串1和字符串2的公共后缀
+	 */
+	public static CharSequence commonSuffix(CharSequence str1, CharSequence str2) {
+		if (isEmpty(str1) || isEmpty(str2)) {
+			return EMPTY;
+		}
+		int str1Index = str1.length() - 1;
+		int str2Index = str2.length() - 1;
+		for (; str1Index >= 0 && str2Index >= 0; str1Index--, str2Index--) {
+			if (str1.charAt(str1Index) != str2.charAt(str2Index)) {
+				break;
+			}
+		}
+		return str1.subSequence(str1Index + 1, str1.length());
+	}
+
 }

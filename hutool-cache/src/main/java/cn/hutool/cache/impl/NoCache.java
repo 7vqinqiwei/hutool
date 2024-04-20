@@ -1,6 +1,7 @@
 package cn.hutool.cache.impl;
 
 import cn.hutool.cache.Cache;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.func.Func0;
 
 import java.util.Iterator;
@@ -57,10 +58,15 @@ public class NoCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public V get(K key, boolean isUpdateLastAccess, Func0<V> supplier) {
+		return get(key, isUpdateLastAccess, 0, supplier);
+	}
+
+	@Override
+	public V get(K key, boolean isUpdateLastAccess, long timeout, Func0<V> supplier) {
 		try {
 			return (null == supplier) ? null : supplier.call();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw ExceptionUtil.wrapRuntime(e);
 		}
 	}
 

@@ -6,13 +6,14 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.StreamProgress;
+import cn.hutool.core.io.resource.BytesResource;
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ReUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.URLUtil;
 import cn.hutool.http.cookie.GlobalCookieManager;
 
-import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.EOFException;
 import java.io.File;
@@ -221,7 +222,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 	 * @since 4.1.4
 	 */
 	public String getCookieValue(String name) {
-		HttpCookie cookie = getCookie(name);
+		final HttpCookie cookie = getCookie(name);
 		return (null == cookie) ? null : cookie.getValue();
 	}
 	// ---------------------------------------------------------------- Http Response Header end
@@ -240,7 +241,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 		if (isAsync) {
 			return this.in;
 		}
-		return new ByteArrayInputStream(this.bodyBytes);
+		return null == this.body ? null : this.body.getStream();
 	}
 
 	/**
@@ -252,7 +253,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 	@Override
 	public byte[] bodyBytes() {
 		sync();
-		return this.bodyBytes;
+		return super.bodyBytes();
 	}
 
 	/**
@@ -265,7 +266,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 	public HttpResponse body(byte[] bodyBytes) {
 		sync();
 		if (null != bodyBytes) {
-			this.bodyBytes = bodyBytes;
+			this.body = new BytesResource(bodyBytes);
 		}
 		return this;
 	}
@@ -448,7 +449,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 		}
 
 		// 从头信息中获取文件名
-		String fileName = getFileNameFromDisposition();
+		String fileName = getFileNameFromDisposition(null);
 		if (StrUtil.isBlank(fileName)) {
 			final String path = httpConnection.getUrl().getPath();
 			// 从路径中获取文件名
@@ -462,6 +463,25 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 			}
 		}
 		return FileUtil.file(targetFileOrDir, fileName);
+	}
+
+	/**
+	 * 从Content-Disposition头中获取文件名
+	 * @param paramName 文件参数名
+	 *
+	 * @return 文件名，empty表示无
+	 */
+	public String getFileNameFromDisposition(String paramName) {
+		paramName = ObjUtil.defaultIfNull(paramName, "filename");
+		String fileName = null;
+		final String disposition = header(Header.CONTENT_DISPOSITION);
+		if (StrUtil.isNotBlank(disposition)) {
+			fileName = ReUtil.get(paramName+"=\"(.*?)\"", disposition, 1);
+			if (StrUtil.isBlank(fileName)) {
+				fileName = StrUtil.subAfter(disposition, paramName + "=", true);
+			}
+		}
+		return fileName;
 	}
 
 	// ---------------------------------------------------------------- Private method start
@@ -586,7 +606,7 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 		final long contentLength = contentLength();
 		final FastByteArrayOutputStream out = new FastByteArrayOutputStream((int) contentLength);
 		copyBody(in, out, contentLength, null, this.config.ignoreEOFError);
-		this.bodyBytes = out.toByteArray();
+		this.body = new BytesResource(out.toByteArray());
 	}
 
 	/**
@@ -620,23 +640,5 @@ public class HttpResponse extends HttpBase<HttpResponse> implements Closeable {
 		}
 		return copyLength;
 	}
-
-	/**
-	 * 从Content-Disposition头中获取文件名
-	 *
-	 * @return 文件名，empty表示无
-	 */
-	private String getFileNameFromDisposition() {
-		String fileName = null;
-		final String disposition = header(Header.CONTENT_DISPOSITION);
-		if (StrUtil.isNotBlank(disposition)) {
-			fileName = ReUtil.get("filename=\"(.*?)\"", disposition, 1);
-			if (StrUtil.isBlank(fileName)) {
-				fileName = StrUtil.subAfter(disposition, "filename=", true);
-			}
-		}
-		return fileName;
-	}
-
 	// ---------------------------------------------------------------- Private method end
 }

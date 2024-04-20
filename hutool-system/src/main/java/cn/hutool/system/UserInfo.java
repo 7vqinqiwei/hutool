@@ -19,7 +19,7 @@ public class UserInfo implements Serializable{
 	private final String USER_COUNTRY;
 
 	public UserInfo(){
-		USER_NAME = fixPath(SystemUtil.get("user.name", false));
+		USER_NAME = SystemUtil.get("user.name", false);
 		USER_HOME = fixPath(SystemUtil.get("user.home", false));
 		USER_DIR = fixPath(SystemUtil.get("user.dir", false));
 		JAVA_IO_TMPDIR = fixPath(SystemUtil.get("java.io.tmpdir", false));
@@ -28,7 +28,7 @@ public class UserInfo implements Serializable{
 		// JDK1.4 {@code user.country}，JDK1.2 {@code user.region}
 		String userCountry = SystemUtil.get("user.country", false);
 		if(null == userCountry){
-			userCountry = SystemUtil.get("user.country", false);
+			userCountry = SystemUtil.get("user.region", false);
 		}
 		USER_COUNTRY = userCountry;
 	}

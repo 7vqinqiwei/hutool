@@ -27,18 +27,22 @@ public class HexUtil {
 	 * @return 是否为16进制
 	 */
 	public static boolean isHexNumber(String value) {
-		final int index = (value.startsWith("-") ? 1 : 0);
-		if (value.startsWith("0x", index) || value.startsWith("0X", index) || value.startsWith("#", index)) {
-			try {
-				//noinspection ResultOfMethodCallIgnored
-				Long.decode(value);
-			} catch (NumberFormatException e) {
-				return false;
-			}
-			return true;
+		if(StrUtil.startWith(value, '-')){
+			// issue#2875
+			return false;
 		}
-
-		return false;
+		int index = 0;
+		if (value.startsWith("0x", index) || value.startsWith("0X", index)) {
+			index += 2;
+		} else if (value.startsWith("#", index)) {
+			index ++;
+		}
+		try {
+			new BigInteger(value.substring(index), 16);
+		} catch (final NumberFormatException e) {
+			return false;
+		}
+		return true;
 	}
 
 	// ---------------------------------------------------------------------------------------------------- encode
@@ -360,12 +364,30 @@ public class HexUtil {
 	 * @param hexStr Hex字符串
 	 * @return 格式化后的字符串
 	 */
-	public static String format(String hexStr) {
+	public static String format(final String hexStr) {
+		return format(hexStr, StrUtil.EMPTY);
+	}
+
+	/**
+	 * 格式化Hex字符串，结果为每2位加一个空格，类似于：
+	 * <pre>
+	 *     e8 8c 67 03 80 cb 22 00 95 26 8f
+	 * </pre>
+	 *
+	 * @param hexStr Hex字符串
+	 * @param prefix 自定义前缀，如0x
+	 * @return 格式化后的字符串
+	 */
+	public static String format(final String hexStr, String prefix) {
+		if (null == prefix) {
+			prefix = StrUtil.EMPTY;
+		}
+
 		final int length = hexStr.length();
-		final StringBuilder builder = StrUtil.builder(length + length / 2);
-		builder.append(hexStr.charAt(0)).append(hexStr.charAt(1));
+		final StringBuilder builder = StrUtil.builder(length + length / 2 + (length / 2 * prefix.length()));
+		builder.append(prefix).append(hexStr.charAt(0)).append(hexStr.charAt(1));
 		for (int i = 2; i < length - 1; i += 2) {
-			builder.append(CharUtil.SPACE).append(hexStr.charAt(i)).append(hexStr.charAt(i + 1));
+			builder.append(CharUtil.SPACE).append(prefix).append(hexStr.charAt(i)).append(hexStr.charAt(i + 1));
 		}
 		return builder.toString();
 	}

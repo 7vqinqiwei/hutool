@@ -57,6 +57,11 @@ public class BeanToMapCopier extends AbsCopier<Object, Map> {
 				return;
 			}
 
+			// 忽略不需要拷贝的 key,
+			if (false == copyOptions.testKeyFilter(sFieldName)) {
+				return;
+			}
+
 			// 检查源对象属性是否过滤属性
 			Object sValue = sDesc.getValue(this.source);
 			if (false == copyOptions.testPropertyFilter(sDesc.getField(), sValue)) {
@@ -65,7 +70,7 @@ public class BeanToMapCopier extends AbsCopier<Object, Map> {
 
 			// 获取目标值真实类型并转换源值
 			final Type[] typeArguments = TypeUtil.getTypeArguments(this.targetType);
-			if(null != typeArguments){
+			if(null != typeArguments && typeArguments.length > 1){
 				//sValue = Convert.convertWithCheck(typeArguments[1], sValue, null, this.copyOptions.ignoreError);
 				sValue = this.copyOptions.convertField(typeArguments[1], sValue);
 				sValue = copyOptions.editFieldValue(sFieldName, sValue);

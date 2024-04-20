@@ -123,7 +123,7 @@ public class TreeUtil {
 	 */
 	public static <T, E> Tree<E> buildSingle(List<T> list, E rootId, TreeNodeConfig treeNodeConfig, NodeParser<T, E> nodeParser) {
 		return TreeBuilder.of(rootId, treeNodeConfig)
-				.append(list, nodeParser).build();
+				.append(list, rootId, nodeParser).build();
 	}
 
 	/**
@@ -218,9 +218,50 @@ public class TreeUtil {
 		}
 
 		Tree<T> parent = node.getParent();
+		CharSequence name;
 		while (null != parent) {
-			result.add(parent.getName());
+			name = parent.getName();
 			parent = parent.getParent();
+			if(null != name || null != parent){
+				// issue#I795IN，根节点的null不加入
+				result.add(name);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 *  获取所有父节点ID列表
+	 *
+	 * <p>
+	 * 比如有个人在研发1部，他上面有研发部，接着上面有技术中心<br>
+	 * 返回结果就是：[研发部, 技术中心]
+	 *
+	 * @param <T>                节点ID类型
+	 * @param node               节点
+	 * @param includeCurrentNode 是否包含当前节点的名称
+	 * @return 所有父节点ID列表，node为null返回空List
+	 * @since 5.8.22
+	 */
+	public static <T> List<T> getParentsId(Tree<T> node, boolean includeCurrentNode) {
+		final List<T> result = new ArrayList<>();
+		if (null == node) {
+			return result;
+		}
+
+		if (includeCurrentNode) {
+			result.add(node.getId());
+		}
+
+		Tree<T> parent = node.getParent();
+		T id;
+		while (null != parent) {
+			id = parent.getId();
+			parent = parent.getParent();
+			if(null != id || null != parent){
+				// issue#I795IN，根节点的null不加入
+				result.add(id);
+			}
 		}
 		return result;
 	}

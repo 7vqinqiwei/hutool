@@ -2,6 +2,7 @@ package cn.hutool.extra.ftp;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.CharsetUtil;
 import cn.hutool.core.util.StrUtil;
 
@@ -18,6 +19,9 @@ import java.util.List;
  */
 public abstract class AbstractFtp implements Closeable {
 
+	/**
+	 * 默认编码
+	 */
 	public static final Charset DEFAULT_CHARSET = CharsetUtil.CHARSET_UTF_8;
 
 	protected FtpConfig ftpConfig;
@@ -73,7 +77,12 @@ public abstract class AbstractFtp implements Closeable {
 	 * @since 5.7.5
 	 */
 	public boolean isDir(String dir) {
-		return cd(dir);
+		final String workDir = pwd();
+		try {
+			return cd(dir);
+		} finally {
+			cd(workDir);
+		}
 	}
 
 	/**
@@ -91,8 +100,27 @@ public abstract class AbstractFtp implements Closeable {
 	 * @return 是否存在
 	 */
 	public boolean exist(String path) {
+		if (StrUtil.isBlank(path)) {
+			return false;
+		}
+		// 目录验证
+		if (isDir(path)) {
+			return true;
+		}
+		if (CharUtil.isFileSeparator(path.charAt(path.length() - 1))) {
+			return false;
+		}
 		final String fileName = FileUtil.getName(path);
-		final String dir = StrUtil.removeSuffix(path, fileName);
+		if (".".equals(fileName) || "..".equals(fileName)) {
+			return false;
+		}
+		// 文件验证
+		final String dir = StrUtil.emptyToDefault(StrUtil.removeSuffix(path, fileName), ".");
+		// issue#I7CSQ9 检查父目录为目录且是否存在
+		if(false == isDir(dir)){
+			return false;
+		}
+
 		final List<String> names;
 		try {
 			names = ls(dir);

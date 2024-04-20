@@ -3,8 +3,7 @@ package cn.hutool.crypto;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.lang.Validator;
-import cn.hutool.core.util.HexUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.*;
 import cn.hutool.crypto.asymmetric.AsymmetricAlgorithm;
 import cn.hutool.crypto.asymmetric.RSA;
 import cn.hutool.crypto.asymmetric.Sign;
@@ -53,6 +52,9 @@ import java.util.Map;
  * @author Looly, Gsealy
  */
 public class SecureUtil {
+
+	/** Hutool自定义系统属性：是否解码Hex字符 issue#I90M9D */
+	public static String HUTOOL_CRYPTO_DECODE_HEX = "hutool.crypto.decodeHex";
 
 	/**
 	 * 默认密钥字节数
@@ -633,7 +635,7 @@ public class SecureUtil {
 	 * @since 3.3.0
 	 */
 	public static HMac hmac(HmacAlgorithm algorithm, String key) {
-		return new HMac(algorithm, StrUtil.utf8Bytes(key));
+		return hmac(algorithm, StrUtil.isNotEmpty(key)? StrUtil.utf8Bytes(key): null);
 	}
 
 	/**
@@ -645,6 +647,9 @@ public class SecureUtil {
 	 * @since 3.0.3
 	 */
 	public static HMac hmac(HmacAlgorithm algorithm, byte[] key) {
+		if (ArrayUtil.isEmpty(key)) {
+			key = generateKey(algorithm.getValue()).getEncoded();
+		}
 		return new HMac(algorithm, key);
 	}
 
@@ -657,6 +662,9 @@ public class SecureUtil {
 	 * @since 3.0.3
 	 */
 	public static HMac hmac(HmacAlgorithm algorithm, SecretKey key) {
+		if (ObjectUtil.isNull(key)) {
+			key = generateKey(algorithm.getValue());
+		}
 		return new HMac(algorithm, key);
 	}
 
@@ -671,7 +679,7 @@ public class SecureUtil {
 	 * @since 3.3.0
 	 */
 	public static HMac hmacMd5(String key) {
-		return hmacMd5(StrUtil.utf8Bytes(key));
+		return hmacMd5(StrUtil.isNotEmpty(key)? StrUtil.utf8Bytes(key): null);
 	}
 
 	/**
@@ -684,6 +692,9 @@ public class SecureUtil {
 	 * @return {@link HMac}
 	 */
 	public static HMac hmacMd5(byte[] key) {
+		if (ArrayUtil.isEmpty(key)) {
+			key = generateKey(HmacAlgorithm.HmacMD5.getValue()).getEncoded();
+		}
 		return new HMac(HmacAlgorithm.HmacMD5, key);
 	}
 
@@ -710,7 +721,7 @@ public class SecureUtil {
 	 * @since 3.3.0
 	 */
 	public static HMac hmacSha1(String key) {
-		return hmacSha1(StrUtil.utf8Bytes(key));
+		return hmacSha1(StrUtil.isNotEmpty(key)? StrUtil.utf8Bytes(key): null);
 	}
 
 	/**
@@ -723,6 +734,9 @@ public class SecureUtil {
 	 * @return {@link HMac}
 	 */
 	public static HMac hmacSha1(byte[] key) {
+		if (ArrayUtil.isEmpty(key)) {
+			key = generateKey(HmacAlgorithm.HmacMD5.getValue()).getEncoded();
+		}
 		return new HMac(HmacAlgorithm.HmacSHA1, key);
 	}
 
@@ -749,7 +763,7 @@ public class SecureUtil {
 	 * @since 5.6.0
 	 */
 	public static HMac hmacSha256(String key) {
-		return hmacSha256(StrUtil.utf8Bytes(key));
+		return hmacSha256(StrUtil.isNotEmpty(key)? StrUtil.utf8Bytes(key): null);
 	}
 
 	/**
@@ -763,6 +777,9 @@ public class SecureUtil {
 	 * @since 5.6.0
 	 */
 	public static HMac hmacSha256(byte[] key) {
+		if (ArrayUtil.isEmpty(key)) {
+			key = generateKey(HmacAlgorithm.HmacMD5.getValue()).getEncoded();
+		}
 		return new HMac(HmacAlgorithm.HmacSHA256, key);
 	}
 
@@ -997,7 +1014,10 @@ public class SecureUtil {
 	 * @since 4.3.3
 	 */
 	public static byte[] decode(String key) {
-		return Validator.isHex(key) ? HexUtil.decodeHex(key) : Base64.decode(key);
+		// issue#I90M9D
+		// 某些特殊字符串会无法区分Hex还是Base64，此处使用系统属性强制关闭Hex解析
+		final boolean decodeHex = SystemPropsUtil.getBoolean(HUTOOL_CRYPTO_DECODE_HEX, true);
+		return (decodeHex && Validator.isHex(key)) ? HexUtil.decodeHex(key) : Base64.decode(key);
 	}
 
 	/**
@@ -1038,6 +1058,20 @@ public class SecureUtil {
 		}
 
 		return messageDigest;
+	}
+
+	/**
+	 * 创建{@link MessageDigest}，使用JDK默认的Provider<br>
+	 *
+	 * @param algorithm 算法
+	 * @return {@link MessageDigest}
+	 */
+	public static MessageDigest createJdkMessageDigest(final String algorithm) {
+		try {
+			return MessageDigest.getInstance(algorithm);
+		} catch (final NoSuchAlgorithmException e) {
+			throw new CryptoException(e);
+		}
 	}
 
 	/**

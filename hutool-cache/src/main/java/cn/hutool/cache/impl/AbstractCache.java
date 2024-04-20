@@ -2,14 +2,15 @@ package cn.hutool.cache.impl;
 
 import cn.hutool.cache.Cache;
 import cn.hutool.cache.CacheListener;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.func.Func0;
 import cn.hutool.core.lang.mutable.Mutable;
 import cn.hutool.core.lang.mutable.MutableObj;
+import cn.hutool.core.map.SafeConcurrentHashMap;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -35,7 +36,7 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 	/**
 	 * 写的时候每个key一把锁，降低锁的粒度
 	 */
-	protected final Map<K, Lock> keyLockMap = new ConcurrentHashMap<>();
+	protected final SafeConcurrentHashMap<K, Lock> keyLockMap = new SafeConcurrentHashMap<>();
 
 	/**
 	 * 返回缓存容量，{@code 0}表示无大小限制
@@ -108,6 +109,11 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 
 	@Override
 	public V get(K key, boolean isUpdateLastAccess, Func0<V> supplier) {
+		return get(key, isUpdateLastAccess, this.timeout, supplier);
+	}
+
+	@Override
+	public V get(K key, boolean isUpdateLastAccess, long timeout, Func0<V> supplier) {
 		V v = get(key, isUpdateLastAccess);
 		if (null == v && null != supplier) {
 			//每个key单独获取一把锁，降低锁的粒度提高并发能力，see pr#1385@Github
@@ -120,9 +126,11 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 					try {
 						v = supplier.call();
 					} catch (Exception e) {
-						throw new RuntimeException(e);
+						// issue#I7RJZT 运行时异常不做包装
+						throw ExceptionUtil.wrapRuntime(e);
+						//throw new RuntimeException(e);
 					}
-					put(key, v, this.timeout);
+					put(key, v, timeout);
 				} else {
 					v = co.get(isUpdateLastAccess);
 				}
@@ -246,16 +254,10 @@ public abstract class AbstractCache<K, V> implements Cache<K, V> {
 	 * 移除key对应的对象，不加锁
 	 *
 	 * @param key           键
-	 * @param withMissCount 是否计数丢失数
 	 * @return 移除的对象，无返回null
 	 */
-	protected CacheObj<K, V> removeWithoutLock(K key, boolean withMissCount) {
-		final CacheObj<K, V> co = cacheMap.remove(MutableObj.of(key));
-		if (withMissCount) {
-			// 在丢失计数有效的情况下，移除一般为get时的超时操作，此处应该丢失数+1
-			this.missCount.increment();
-		}
-		return co;
+	protected CacheObj<K, V> removeWithoutLock(K key) {
+		return cacheMap.remove(MutableObj.of(key));
 	}
 
 	/**

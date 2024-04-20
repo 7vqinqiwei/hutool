@@ -12,7 +12,6 @@ import org.apache.poi.ss.util.CellRangeUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -126,7 +125,7 @@ public class RowUtil {
 			return;
 		}
 		// 插入位置的行，如果插入的行不存在则创建新行
-		Row sourceRow = Optional.ofNullable(sheet.getRow(startRow)).orElseGet(() -> sheet.createRow(insertNumber));
+		Row sourceRow = getOrCreateRow(sheet, startRow);
 		// 从插入行开始到最后一行向下移动
 		sheet.shiftRows(startRow, sheet.getLastRowNum(), insertNumber, true, false);
 

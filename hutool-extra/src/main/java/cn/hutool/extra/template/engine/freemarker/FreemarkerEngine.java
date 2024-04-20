@@ -15,7 +15,7 @@ import java.io.IOException;
 
 /**
  * FreeMarker模板引擎封装<br>
- * 见：https://freemarker.apache.org/
+ * 见：<a href="https://freemarker.apache.org/">https://freemarker.apache.org/</a>
  *
  * @author looly
  */
@@ -83,6 +83,16 @@ public class FreemarkerEngine implements TemplateEngine {
 	}
 
 	/**
+	 * 获取原始引擎的钩子方法，用于自定义特殊属性，如插件等
+	 *
+	 * @return {@link Configuration}
+	 * @since 5.8.7
+	 */
+	public Configuration getConfiguration() {
+		return this.cfg;
+	}
+
+	/**
 	 * 创建配置项
 	 *
 	 * @param config 模板配置
@@ -93,7 +103,7 @@ public class FreemarkerEngine implements TemplateEngine {
 			config = new TemplateConfig();
 		}
 
-		final Configuration cfg = new Configuration(Configuration.VERSION_2_3_28);
+		final Configuration cfg = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
 		cfg.setLocalizedLookup(false);
 		cfg.setDefaultEncoding(config.getCharset().toString());
 

@@ -67,8 +67,13 @@ public class MapToBeanCopier<T> extends AbsCopier<Map<?, ?>, T> {
 				return;
 			}
 
+			// 忽略不需要拷贝的 key,
+			if (false == copyOptions.testKeyFilter(sKeyStr)) {
+				return;
+			}
+
 			// 检查目标字段可写性
-			final PropDesc tDesc = findPropDesc(targetPropDescMap, sKeyStr);
+			final PropDesc tDesc = this.copyOptions.findPropDesc(targetPropDescMap, sKeyStr);
 			if (null == tDesc || false == tDesc.isWritable(this.copyOptions.transientSupport)) {
 				// 字段不可写，跳过之
 				return;
@@ -90,36 +95,5 @@ public class MapToBeanCopier<T> extends AbsCopier<Map<?, ?>, T> {
 			tDesc.setValue(this.target, newValue, copyOptions.ignoreNullValue, copyOptions.ignoreError, copyOptions.override);
 		});
 		return this.target;
-	}
-
-	/**
-	 * 查找Map对应Bean的名称<br>
-	 * 尝试原名称、转驼峰名称、isXxx去掉is的名称
-	 *
-	 * @param targetPropDescMap 目标bean的属性描述Map
-	 * @param sKeyStr 键或字段名
-	 * @return {@link PropDesc}
-	 */
-	private PropDesc findPropDesc(Map<String, PropDesc> targetPropDescMap, String sKeyStr){
-		PropDesc propDesc = targetPropDescMap.get(sKeyStr);
-		if(null != propDesc){
-			return propDesc;
-		}
-
-		// 转驼峰尝试查找
-		sKeyStr = StrUtil.toCamelCase(sKeyStr);
-		propDesc = targetPropDescMap.get(sKeyStr);
-		if(null != propDesc){
-			return propDesc;
-		}
-
-		// boolean类型参数名转换尝试查找
-		if(sKeyStr.startsWith("is")){
-			sKeyStr = StrUtil.removePreAndLowerFirst(sKeyStr, 2);
-			propDesc = targetPropDescMap.get(sKeyStr);
-			return propDesc;
-		}
-
-		return null;
 	}
 }

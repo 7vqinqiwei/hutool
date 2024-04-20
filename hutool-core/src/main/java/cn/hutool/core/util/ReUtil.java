@@ -1,6 +1,7 @@
 package cn.hutool.core.util;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.comparator.LengthComparator;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.lang.Assert;
@@ -458,7 +459,7 @@ public class ReUtil {
 	 * @return 删除后剩余的内容
 	 */
 	public static String delAll(String regex, CharSequence content) {
-		if (StrUtil.hasBlank(regex, content)) {
+		if (StrUtil.hasEmpty(regex, content)) {
 			return StrUtil.str(content);
 		}
 
@@ -474,7 +475,7 @@ public class ReUtil {
 	 * @return 删除后剩余的内容
 	 */
 	public static String delAll(Pattern pattern, CharSequence content) {
-		if (null == pattern || StrUtil.isBlank(content)) {
+		if (null == pattern || StrUtil.isEmpty(content)) {
 			return StrUtil.str(content);
 		}
 
@@ -878,12 +879,12 @@ public class ReUtil {
 		final Matcher matcher = pattern.matcher(content);
 		boolean result = matcher.find();
 		if (result) {
-			final Set<String> varNums = findAll(PatternPool.GROUP_VAR, replacementTemplate, 1, new HashSet<>());
+			final Set<String> varNums = findAll(PatternPool.GROUP_VAR, replacementTemplate, 1, new TreeSet<>(LengthComparator.INSTANCE.reversed()));
 			final StringBuffer sb = new StringBuffer();
 			do {
 				String replacement = replacementTemplate;
-				for (String var : varNums) {
-					int group = Integer.parseInt(var);
+				for (final String var : varNums) {
+					final int group = Integer.parseInt(var);
 					replacement = replacement.replace("$" + var, matcher.group(group));
 				}
 				matcher.appendReplacement(sb, escape(replacement));

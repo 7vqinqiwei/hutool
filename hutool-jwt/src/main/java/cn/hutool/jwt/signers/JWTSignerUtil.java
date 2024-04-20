@@ -1,6 +1,7 @@
 package cn.hutool.jwt.signers;
 
 import cn.hutool.core.lang.Assert;
+import cn.hutool.core.util.ReUtil;
 
 import java.security.Key;
 import java.security.KeyPair;
@@ -121,6 +122,109 @@ public class JWTSignerUtil {
 	}
 
 	/**
+	 * HMD5(HmacMD5)签名器
+	 *
+	 * @param key 密钥
+	 * @return 签名器
+	 */
+	public static JWTSigner hmd5(Key key) {
+		return createSigner("HMD5",key);
+	}
+
+	/**
+	 * HSHA1(HmacSHA1)签名器
+	 *
+	 * @param key 密钥
+	 * @return 签名器
+	 */
+	public static JWTSigner hsha1(Key key) {
+		return createSigner("HSHA1",key);
+	}
+
+	/**
+	 * SM4CMAC(SM4CMAC)签名器
+	 *
+	 * @param key 密钥
+	 * @return 签名器
+	 */
+	public static JWTSigner sm4cmac(Key key) {
+		return createSigner("SM4CMAC",key);
+	}
+
+	/**
+	 * RMD2(MD2withRSA)签名器
+	 *
+	 * @param key 密钥
+	 * @return 签名器
+	 */
+	public static JWTSigner rmd2(Key key) {
+		return createSigner("RMD2",key);
+	}
+
+	/**
+	 * RMD5(MD5withRSA)签名器
+	 *
+	 * @param key 密钥
+	 * @return 签名器
+	 */
+	public static JWTSigner rmd5(Key key) {
+		return createSigner("RMD5",key);
+	}
+
+	/**
+	 * RSHA1(SHA1withRSA)签名器
+	 *
+	 * @param key 密钥
+	 * @return 签名器
+	 */
+	public static JWTSigner rsha1(Key key) {
+		return createSigner("RSHA1",key);
+	}
+
+	/**
+	 * DNONE(NONEwithDSA)签名器
+	 *
+	 * @param key 密钥
+	 * @return 签名器
+	 */
+	public static JWTSigner dnone(Key key) {
+		return createSigner("DNONE",key);
+	}
+
+	/**
+	 * DSHA1(SHA1withDSA)签名器
+	 *
+	 * @param key 密钥
+	 * @return 签名器
+	 */
+	public static JWTSigner dsha1(Key key) {
+		return createSigner("DSHA1",key);
+	}
+
+	/**
+	 * ENONE(NONEwithECDSA)签名器
+	 *
+	 * @param key 密钥
+	 * @return 签名器
+	 */
+	public static JWTSigner enone(Key key) {
+		return createSigner("ENONE",key);
+	}
+
+	/**
+	 * ESHA1(SHA1withECDSA)签名器
+	 *
+	 * @param key 密钥
+	 * @return 签名器
+	 */
+	public static JWTSigner esha1(Key key) {
+		return createSigner("ESHA1",key);
+	}
+
+
+
+
+	/**
 	 * 创建签名器
 	 *
 	 * @param algorithmId 算法ID，见{@link AlgorithmUtil}
@@ -149,6 +253,12 @@ public class JWTSignerUtil {
 		if (null == algorithmId || NoneJWTSigner.ID_NONE.equals(algorithmId)) {
 			return none();
 		}
+
+		// issue3205@Github
+		if(ReUtil.isMatch("es\\d{3}", algorithmId.toLowerCase())){
+			return new EllipticCurveJWTSigner(AlgorithmUtil.getAlgorithm(algorithmId), keyPair);
+		}
+
 		return new AsymmetricJWTSigner(AlgorithmUtil.getAlgorithm(algorithmId), keyPair);
 	}
 
@@ -166,6 +276,11 @@ public class JWTSignerUtil {
 			return NoneJWTSigner.NONE;
 		}
 		if (key instanceof PrivateKey || key instanceof PublicKey) {
+			// issue3205@Github
+			if(ReUtil.isMatch("ES\\d{3}", algorithmId)){
+				return new EllipticCurveJWTSigner(algorithmId, key);
+			}
+
 			return new AsymmetricJWTSigner(AlgorithmUtil.getAlgorithm(algorithmId), key);
 		}
 		return new HMacJWTSigner(AlgorithmUtil.getAlgorithm(algorithmId), key);

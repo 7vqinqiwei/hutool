@@ -7,6 +7,9 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -253,6 +256,14 @@ public class CollUtilTest {
 	}
 
 	@Test
+	public void splitTest2() {
+		final ArrayList<Integer> list = CollUtil.newArrayList(1, 2, 3, 4, 5, 6, 7, 8, 9);
+		final List<List<Integer>> split = CollUtil.split(list, Integer.MAX_VALUE);
+		Assert.assertEquals(1, split.size());
+		Assert.assertEquals(9, split.get(0).size());
+	}
+
+	@Test
 	public void foreachTest() {
 		final HashMap<String, String> map = MapUtil.newHashMap();
 		map.put("a", "1");
@@ -303,7 +314,7 @@ public class CollUtilTest {
 
 		final List<String> removed = new ArrayList<>();
 		final ArrayList<String> filtered = CollUtil.filter(list, t -> {
-			if("a".equals(t)){
+			if ("a".equals(t)) {
 				removed.add(t);
 				return false;
 			}
@@ -378,9 +389,9 @@ public class CollUtilTest {
 	@Test
 	public void sortByPropertyTest() {
 		final List<TestBean> list = CollUtil.newArrayList(
-				new TestBean("张三", 12, DateUtil.parse("2018-05-01")), //
-				new TestBean("李四", 13, DateUtil.parse("2018-03-01")), //
-				new TestBean("王五", 12, DateUtil.parse("2018-04-01"))//
+			new TestBean("张三", 12, DateUtil.parse("2018-05-01")), //
+			new TestBean("李四", 13, DateUtil.parse("2018-03-01")), //
+			new TestBean("王五", 12, DateUtil.parse("2018-04-01"))//
 		);
 
 		CollUtil.sortByProperty(list, "createTime");
@@ -392,9 +403,9 @@ public class CollUtilTest {
 	@Test
 	public void sortByPropertyTest2() {
 		final List<TestBean> list = CollUtil.newArrayList(
-				new TestBean("张三", 0, DateUtil.parse("2018-05-01")), //
-				new TestBean("李四", -12, DateUtil.parse("2018-03-01")), //
-				new TestBean("王五", 23, DateUtil.parse("2018-04-01"))//
+			new TestBean("张三", 0, DateUtil.parse("2018-05-01")), //
+			new TestBean("李四", -12, DateUtil.parse("2018-03-01")), //
+			new TestBean("王五", 23, DateUtil.parse("2018-04-01"))//
 		);
 
 		CollUtil.sortByProperty(list, "age");
@@ -406,8 +417,8 @@ public class CollUtilTest {
 	@Test
 	public void fieldValueMapTest() {
 		final List<TestBean> list = CollUtil.newArrayList(new TestBean("张三", 12, DateUtil.parse("2018-05-01")), //
-				new TestBean("李四", 13, DateUtil.parse("2018-03-01")), //
-				new TestBean("王五", 12, DateUtil.parse("2018-04-01"))//
+			new TestBean("李四", 13, DateUtil.parse("2018-03-01")), //
+			new TestBean("王五", 12, DateUtil.parse("2018-04-01"))//
 		);
 
 		final Map<String, TestBean> map = CollUtil.fieldValueMap(list, "name");
@@ -419,8 +430,8 @@ public class CollUtilTest {
 	@Test
 	public void fieldValueAsMapTest() {
 		final List<TestBean> list = CollUtil.newArrayList(new TestBean("张三", 12, DateUtil.parse("2018-05-01")), //
-				new TestBean("李四", 13, DateUtil.parse("2018-03-01")), //
-				new TestBean("王五", 14, DateUtil.parse("2018-04-01"))//
+			new TestBean("李四", 13, DateUtil.parse("2018-03-01")), //
+			new TestBean("王五", 14, DateUtil.parse("2018-04-01"))//
 		);
 
 		final Map<String, Integer> map = CollUtil.fieldValueAsMap(list, "name", "age");
@@ -746,20 +757,38 @@ public class CollUtilTest {
 	}
 
 	@Test
-	public void mapToMapTest(){
+	public void addIfAbsentTest() {
+		// 为false的情况
+		Assert.assertFalse(CollUtil.addIfAbsent(null, null));
+		Assert.assertFalse(CollUtil.addIfAbsent(CollUtil.newArrayList(), null));
+		Assert.assertFalse(CollUtil.addIfAbsent(null, "123"));
+		Assert.assertFalse(CollUtil.addIfAbsent(CollUtil.newArrayList("123"), "123"));
+		Assert.assertFalse(CollUtil.addIfAbsent(CollUtil.newArrayList(new Animal("jack", 20)),
+			new Animal("jack", 20)));
+
+		// 正常情况
+		Assert.assertTrue(CollUtil.addIfAbsent(CollUtil.newArrayList("456"), "123"));
+		Assert.assertTrue(CollUtil.addIfAbsent(CollUtil.newArrayList(new Animal("jack", 20)),
+			new Dog("jack", 20)));
+		Assert.assertTrue(CollUtil.addIfAbsent(CollUtil.newArrayList(new Animal("jack", 20)),
+			new Animal("tom", 20)));
+	}
+
+	@Test
+	public void mapToMapTest() {
 		final HashMap<String, String> oldMap = new HashMap<>();
 		oldMap.put("a", "1");
 		oldMap.put("b", "12");
 		oldMap.put("c", "134");
 
 		final Map<String, Long> map = CollUtil.toMap(oldMap.entrySet(),
-				new HashMap<>(),
-				Map.Entry::getKey,
-				entry -> Long.parseLong(entry.getValue()));
+			new HashMap<>(),
+			Map.Entry::getKey,
+			entry -> Long.parseLong(entry.getValue()));
 
-		Assert.assertEquals(1L, (long)map.get("a"));
-		Assert.assertEquals(12L, (long)map.get("b"));
-		Assert.assertEquals(134L, (long)map.get("c"));
+		Assert.assertEquals(1L, (long) map.get("a"));
+		Assert.assertEquals(12L, (long) map.get("b"));
+		Assert.assertEquals(134L, (long) map.get("c"));
 	}
 
 	@Test
@@ -813,7 +842,7 @@ public class CollUtilTest {
 
 		final List<Long> result = CollUtil.subtractToList(list1, list2);
 		Assert.assertEquals(1, result.size());
-		Assert.assertEquals(1L, result.get(0), 1);
+		Assert.assertEquals(1L, (long) result.get(0));
 	}
 
 	@Test
@@ -824,15 +853,15 @@ public class CollUtilTest {
 	}
 
 	@Test
-	public void setValueByMapTest(){
+	public void setValueByMapTest() {
 		// https://gitee.com/dromara/hutool/pulls/482
 		final List<Person> people = Arrays.asList(
-				new Person("aa", 12, "man", 1),
-				new Person("bb", 13, "woman", 2),
-				new Person("cc", 14, "man", 3),
-				new Person("dd", 15, "woman", 4),
-				new Person("ee", 16, "woman", 5),
-				new Person("ff", 17, "man", 6)
+			new Person("aa", 12, "man", 1),
+			new Person("bb", 13, "woman", 2),
+			new Person("cc", 14, "man", 3),
+			new Person("dd", 15, "woman", 4),
+			new Person("ee", 16, "woman", 5),
+			new Person("ff", 17, "man", 6)
 		);
 
 		final Map<Integer, String> genderMap = new HashMap<>();
@@ -865,20 +894,20 @@ public class CollUtilTest {
 	}
 
 	@Test
-	public void distinctTest(){
+	public void distinctTest() {
 		final ArrayList<Integer> distinct = CollUtil.distinct(ListUtil.of(5, 3, 10, 9, 0, 5, 10, 9));
 		Assert.assertEquals(ListUtil.of(5, 3, 10, 9, 0), distinct);
 	}
 
 	@Test
-	public void distinctByFunctionTest(){
+	public void distinctByFunctionTest() {
 		final List<Person> people = Arrays.asList(
-				new Person("aa", 12, "man", 1),
-				new Person("bb", 13, "woman", 2),
-				new Person("cc", 14, "man", 3),
-				new Person("dd", 15, "woman", 4),
-				new Person("ee", 16, "woman", 5),
-				new Person("ff", 17, "man", 6)
+			new Person("aa", 12, "man", 1),
+			new Person("bb", 13, "woman", 2),
+			new Person("cc", 14, "man", 3),
+			new Person("dd", 15, "woman", 4),
+			new Person("ee", 16, "woman", 5),
+			new Person("ff", 17, "man", 6)
 		);
 
 		// 覆盖模式下ff覆盖了aa，ee覆盖了bb
@@ -894,6 +923,7 @@ public class CollUtilTest {
 		Assert.assertEquals("bb", distinct.get(1).getName());
 	}
 
+	@SuppressWarnings("ConstantValue")
 	@Test
 	public void unionNullTest() {
 		final List<String> list1 = new ArrayList<>();
@@ -903,6 +933,7 @@ public class CollUtilTest {
 		Assert.assertNotNull(union);
 	}
 
+	@SuppressWarnings("ConstantValue")
 	@Test
 	public void unionDistinctNullTest() {
 		final List<String> list1 = new ArrayList<>();
@@ -912,6 +943,7 @@ public class CollUtilTest {
 		Assert.assertNotNull(set);
 	}
 
+	@SuppressWarnings({"ConfusingArgumentToVarargsMethod", "ConstantValue"})
 	@Test
 	public void unionAllNullTest() {
 		final List<String> list1 = new ArrayList<>();
@@ -919,8 +951,57 @@ public class CollUtilTest {
 		final List<String> list3 = null;
 		final List<String> list = CollUtil.unionAll(list1, list2, list3);
 		Assert.assertNotNull(list);
+
+		final List<String> resList2 = CollUtil.unionAll(null, null, null);
+		Assert.assertNotNull(resList2);
 	}
 
+	@Test
+	public void unionAllOrdinaryTest() {
+		final List<Integer> list1 = CollectionUtil.newArrayList(1, 2, 2, 3, 3);
+		final List<Integer> list2 = CollectionUtil.newArrayList(1, 2, 3);
+		final List<Integer> list3 = CollectionUtil.newArrayList(4, 5, 6);
+		final List<Integer> list = CollUtil.unionAll(list1, list2, list3);
+		Assert.assertNotNull(list);
+		Assert.assertArrayEquals(
+			CollectionUtil.newArrayList(1, 2, 2, 3, 3, 1, 2, 3, 4, 5, 6).toArray(),
+			list.toArray());
+	}
+
+	@Test
+	public void unionAllTwoOrdinaryTest() {
+		final List<Integer> list1 = CollectionUtil.newArrayList(1, 2, 2, 3, 3);
+		final List<Integer> list2 = CollectionUtil.newArrayList(1, 2, 3);
+		final List<Integer> list = CollUtil.unionAll(list1, list2);
+		Assert.assertNotNull(list);
+		Assert.assertArrayEquals(
+			CollectionUtil.newArrayList(1, 2, 2, 3, 3, 1, 2, 3).toArray(),
+			list.toArray());
+	}
+
+	@Test
+	public void unionAllOtherIsNullTest() {
+		final List<Integer> list1 = CollectionUtil.newArrayList(1, 2, 2, 3, 3);
+		final List<Integer> list2 = CollectionUtil.newArrayList(1, 2, 3);
+		@SuppressWarnings("ConfusingArgumentToVarargsMethod") final List<Integer> list = CollUtil.unionAll(list1, list2, null);
+		Assert.assertNotNull(list);
+		Assert.assertArrayEquals(
+			CollectionUtil.newArrayList(1, 2, 2, 3, 3, 1, 2, 3).toArray(),
+			list.toArray());
+	}
+
+	@Test
+	public void unionAllOtherTwoNullTest() {
+		final List<Integer> list1 = CollectionUtil.newArrayList(1, 2, 2, 3, 3);
+		final List<Integer> list2 = CollectionUtil.newArrayList(1, 2, 3);
+		final List<Integer> list = CollUtil.unionAll(list1, list2, null, null);
+		Assert.assertNotNull(list);
+		Assert.assertArrayEquals(
+			CollectionUtil.newArrayList(1, 2, 2, 3, 3, 1, 2, 3).toArray(),
+			list.toArray());
+	}
+
+	@SuppressWarnings("ConstantValue")
 	@Test
 	public void intersectionNullTest() {
 		final List<String> list1 = new ArrayList<>();
@@ -950,5 +1031,73 @@ public class CollUtilTest {
 		private Integer age;
 		private String gender;
 		private Integer id;
+	}
+
+	@Data
+	@AllArgsConstructor
+	@NoArgsConstructor
+	static class Animal {
+		private String name;
+		private Integer age;
+	}
+
+	@ToString(callSuper = true)
+	@EqualsAndHashCode(callSuper = true)
+	@Data
+	static class Dog extends Animal {
+
+		public Dog(String name, Integer age) {
+			super(name, age);
+		}
+	}
+
+	@Test
+	public void getFirstTest() {
+		final List<?> nullList = null;
+		final Object first = CollUtil.getFirst(nullList);
+		Assert.assertNull(first);
+	}
+
+	@Test
+	public void testMatch() {
+		List<Integer> list = Arrays.asList(1, 2, 3, 4, 5, 6);
+		Assert.assertTrue(CollUtil.anyMatch(list, i -> i == 1));
+		Assert.assertFalse(CollUtil.anyMatch(list, i -> i > 6));
+		Assert.assertFalse(CollUtil.allMatch(list, i -> i == 1));
+		Assert.assertTrue(CollUtil.allMatch(list, i -> i <= 6));
+	}
+
+	@Test
+	public void maxTest() {
+		List<Integer> list = Arrays.asList(1, 2, 3, 4, 5, 6);
+		Assert.assertEquals((Integer) 6, CollUtil.max(list));
+	}
+
+	@Test
+	public void maxEmptyTest() {
+		final List<? extends Comparable> emptyList = Collections.emptyList();
+		Assert.assertNull(CollUtil.max(emptyList));
+	}
+
+	@Test
+	public void minNullTest() {
+		Assert.assertNull(CollUtil.max(null));
+	}
+
+	@Test
+	public void issueI8Z2Q4Test() {
+		ArrayList<String> coll1 = new ArrayList<>();
+		coll1.add("1");
+		coll1.add("2");
+		coll1.add("3");
+		coll1.add("4");
+		ArrayList<String> coll2 = new ArrayList<>();
+		coll2.add("1");
+		coll2.add("1");
+		coll2.add("1");
+		coll2.add("1");
+		coll2.add("1");
+
+		Assert.assertTrue(CollUtil.containsAll(coll1, coll2));
 	}
 }

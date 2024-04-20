@@ -121,6 +121,8 @@ public class RedisDS implements Closeable, Serializable {
 				setting.getInt("connectionTimeout", group, setting.getInt("timeout", group, Protocol.DEFAULT_TIMEOUT)),
 				// 读取数据超时
 				setting.getInt("soTimeout", group, setting.getInt("timeout", group, Protocol.DEFAULT_TIMEOUT)),
+				// 用户名，issue#I8XEQ4
+				setting.getStr("user", group, null),
 				// 密码
 				setting.getStr("password", group, null),
 				// 数据库序号
@@ -157,7 +159,7 @@ public class RedisDS implements Closeable, Serializable {
 	}
 
 	/**
-	 * 从Redis中获取值
+	 * 从Redis中设置值
 	 *
 	 * @param key 键
 	 * @param value 值

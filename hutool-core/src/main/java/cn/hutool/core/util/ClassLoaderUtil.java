@@ -4,8 +4,7 @@ import cn.hutool.core.convert.BasicType;
 import cn.hutool.core.exceptions.UtilException;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.lang.JarClassLoader;
-import cn.hutool.core.lang.Pair;
-import cn.hutool.core.map.WeakConcurrentMap;
+import cn.hutool.core.map.SafeConcurrentHashMap;
 import cn.hutool.core.text.CharPool;
 
 import java.io.File;
@@ -15,7 +14,6 @@ import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * {@link ClassLoader}工具类
@@ -49,11 +47,10 @@ public class ClassLoaderUtil {
 	/**
 	 * 原始类型名和其class对应表，例如：int =》 int.class
 	 */
-	private static final Map<String, Class<?>> PRIMITIVE_TYPE_NAME_MAP = new ConcurrentHashMap<>(32);
-	private static final WeakConcurrentMap<Pair<String, ClassLoader>, Class<?>> CLASS_CACHE = new WeakConcurrentMap<>();
+	private static final Map<String, Class<?>> PRIMITIVE_TYPE_NAME_MAP = new SafeConcurrentHashMap<>(32);
 
 	static {
-		List<Class<?>> primitiveTypes = new ArrayList<>(32);
+		final List<Class<?>> primitiveTypes = new ArrayList<>(32);
 		// 加入原始类型
 		primitiveTypes.addAll(BasicType.PRIMITIVE_WRAPPER_MAP.keySet());
 		// 加入原始类型数组类型
@@ -66,7 +63,7 @@ public class ClassLoaderUtil {
 		primitiveTypes.add(long[].class);
 		primitiveTypes.add(short[].class);
 		primitiveTypes.add(void.class);
-		for (Class<?> primitiveType : primitiveTypes) {
+		for (final Class<?> primitiveType : primitiveTypes) {
 			PRIMITIVE_TYPE_NAME_MAP.put(primitiveType.getName(), primitiveType);
 		}
 	}
@@ -197,9 +194,7 @@ public class ClassLoaderUtil {
 		// 加载原始类型和缓存中的类
 		Class<?> clazz = loadPrimitiveClass(name);
 		if (clazz == null) {
-			final String finalName = name;
-			final ClassLoader finalClassLoader = classLoader;
-			clazz = CLASS_CACHE.computeIfAbsent(Pair.of(name, classLoader), (key)-> doLoadClass(finalName, finalClassLoader, isInitialized));
+			clazz = doLoadClass(name, classLoader, isInitialized);
 		}
 		return clazz;
 	}
