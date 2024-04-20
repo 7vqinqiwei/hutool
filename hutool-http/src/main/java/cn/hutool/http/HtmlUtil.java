@@ -26,19 +26,21 @@ public class HtmlUtil {
 	public static final String RE_HTML_MARK = "(<[^<]*?>)|(<[\\s]*?/[^<]*?>)|(<[^<]*?/[\\s]*?>)";
 	public static final String RE_SCRIPT = "<[\\s]*?script[^>]*?>.*?<[\\s]*?\\/[\\s]*?script[\\s]*?>";
 
-	private static final char[][] TEXT = new char[64][];
+	private static final char[][] TEXT = new char[256][];
 
 	static {
-		for (int i = 0; i < 64; i++) {
+		// ascii码值最大的是【0x7f=127】，扩展ascii码值最大的是【0xFF=255】，因为ASCII码使用指定的7位或8位二进制数组合来表示128或256种可能的字符，标准ASCII码也叫基础ASCII码。
+		for (int i = 0; i < 256; i++) {
 			TEXT[i] = new char[] { (char) i };
 		}
 
 		// special HTML characters
 		TEXT['\''] = "&#039;".toCharArray(); // 单引号 ('&apos;' doesn't work - it is not by the w3 specs)
-		TEXT['"'] = QUOTE.toCharArray(); // 单引号
+		TEXT['"'] = QUOTE.toCharArray(); // 双引号
 		TEXT['&'] = AMP.toCharArray(); // &符
 		TEXT['<'] = LT.toCharArray(); // 小于号
 		TEXT['>'] = GT.toCharArray(); // 大于号
+		TEXT[' '] = NBSP.toCharArray(); // 不断开空格（non-breaking space，缩写nbsp。ASCII值是32：是用键盘输入的空格；ASCII值是160：不间断空格，即 &nbsp，所产生的空格，作用是在页面换行时不被打断）
 	}
 
 	/**
@@ -147,15 +149,25 @@ public class HtmlUtil {
 	 */
 	public static String removeHtmlAttr(String content, String... attrs) {
 		String regex;
-		for (String attr : attrs) {
+		for (final String attr : attrs) {
 			// (?i)     表示忽略大小写
 			// \s*      属性名前后的空白符去除
 			// [^>]+?   属性值，至少有一个非>的字符，>表示标签结束
 			// \s+(?=>) 表示属性值后跟空格加>，即末尾的属性，此时去掉空格
 			// (?=\s|>) 表示属性值后跟空格（属性后还有别的属性）或者跟>（最后一个属性）
-			regex = StrUtil.format("(?i)(\\s*{}\\s*=[^>]+?\\s+(?=>))|(\\s*{}\\s*=[^>]+?(?=\\s|>))", attr, attr);
+			regex = StrUtil.format("(?i)(\\s*{}\\s*=\\s*)" +
+				"(" +
+				// name="xxxx"
+				"([\"][^\"]+?[\"])|" +
+				// name=xxx > 或者 name=xxx> 或者 name=xxx name2=xxx
+				"([^>]+?\\s*(?=\\s|>))" +
+				")", attr);
 			content = content.replaceAll(regex, StrUtil.EMPTY);
 		}
+
+		// issue#I8YV0K 去除尾部空格
+		content = ReUtil.replaceAll(content, "\\s+(>|/>)", "$1");
+
 		return content;
 	}
 
@@ -190,7 +202,7 @@ public class HtmlUtil {
 		char c;
 		for (int i = 0; i < len; i++) {
 			c = text.charAt(i);
-			if (c < 64) {
+			if (c < 256) {
 				buffer.append(TEXT[c]);
 			} else {
 				buffer.append(c);

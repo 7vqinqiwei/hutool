@@ -14,6 +14,10 @@ import org.junit.Test;
 public class IdcardUtilTest {
 
 	private static final String ID_18 = "321083197812162119";
+	/**
+	 * 新版外国人永久居留身份证号码
+	 */
+	private static final String FOREIGN_ID_18 = "932682198501010017";
 	private static final String ID_15 = "150102880730303";
 
 	@Test
@@ -23,6 +27,8 @@ public class IdcardUtilTest {
 
 		boolean valid15 = IdcardUtil.isValidCard(ID_15);
 		Assert.assertTrue(valid15);
+
+		Assert.assertTrue(IdcardUtil.isValidCard(FOREIGN_ID_18));
 
 		// 无效
 		String idCard = "360198910283844";
@@ -47,11 +53,18 @@ public class IdcardUtilTest {
 	}
 
 	@Test
+	public void convert18To15Test() {
+		String idcard15 = IdcardUtil.convert18To15("150102198807303035");
+		Assert.assertEquals(ID_15, idcard15);
+	}
+
+	@Test
 	public void getAgeByIdCardTest() {
 		DateTime date = DateUtil.parse("2017-04-10");
 
 		int age = IdcardUtil.getAgeByIdCard(ID_18, date);
 		Assert.assertEquals(age, 38);
+		Assert.assertEquals(IdcardUtil.getAgeByIdCard(FOREIGN_ID_18, date), 32);
 
 		int age2 = IdcardUtil.getAgeByIdCard(ID_15, date);
 		Assert.assertEquals(age2, 28);
@@ -121,6 +134,10 @@ public class IdcardUtilTest {
 		// 台湾人在大陆身份证
 		isValidCard18 = IdcardUtil.isValidCard18("830000200209060065");
 		Assert.assertTrue(isValidCard18);
+
+		// 新版外国人永久居留身份证
+		isValidCard18 = IdcardUtil.isValidCard18("932682198501010017");
+		Assert.assertTrue(isValidCard18);
 	}
 
 	@Test
@@ -141,5 +158,10 @@ public class IdcardUtilTest {
 		String errTwCard2 = "B2216903112";
 		flag = IdcardUtil.isValidTWCard(errTwCard2);
 		Assert.assertFalse(flag);
+	}
+
+	@Test
+	public void issueI88YKMTest() {
+		Assert.assertTrue(IdcardUtil.isValidCard("111111111111111"));
 	}
 }

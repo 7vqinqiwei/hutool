@@ -696,7 +696,16 @@ public class DateUtilTest {
 	}
 
 	@Test
-	public void parseCSTTest() {
+	public void parseUTCTest3() {
+		// issue#I5M6DP
+		final String dateStr = "2022-08-13T09:30";
+		final DateTime dateTime = DateUtil.parse(dateStr);
+		Assert.assertNotNull(dateTime);
+		Assert.assertEquals("2022-08-13 09:30:00", dateTime.toString());
+	}
+
+	@Test
+	public void parseRFC2822Test() {
 		final String dateStr = "Wed Sep 16 11:26:23 CST 2009";
 
 		final SimpleDateFormat sdf = new SimpleDateFormat(DatePattern.JDK_DATETIME_PATTERN, Locale.US);
@@ -704,7 +713,7 @@ public class DateUtilTest {
 		sdf.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
 		final DateTime parse = DateUtil.parse(dateStr, sdf);
 
-		DateTime dateTime = DateUtil.parseCST(dateStr);
+		DateTime dateTime = DateUtil.parseRFC2822(dateStr);
 		Assert.assertEquals(parse, dateTime);
 
 		dateTime = DateUtil.parse(dateStr);
@@ -859,7 +868,9 @@ public class DateUtilTest {
 		final String d1 = "2000-02-29";
 		final String d2 = "2018-02-28";
 		final int age = DateUtil.age(DateUtil.parseDate(d1), DateUtil.parseDate(d2));
-		Assert.assertEquals(18, age);
+
+		// issue#I6E6ZG，法定生日当天不算年龄，从第二天开始计算
+		Assert.assertEquals(17, age);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
@@ -867,6 +878,28 @@ public class DateUtilTest {
 		final String d1 = "2019-02-29";
 		final String d2 = "2018-02-28";
 		DateUtil.age(DateUtil.parseDate(d1), DateUtil.parseDate(d2));
+	}
+
+	@Test
+	public void ageTest3() {
+		// 按照《最高人民法院关于审理未成年人刑事案件具体应用法律若干问题的解释》第二条规定刑法第十七条规定的“周岁”，按照公历的年、月、日计算，从周岁生日的第二天起算。
+		// 那我们认为就算当年是闰年，29日也算周岁生日的第二天，可以算作一岁
+		final String d1 = "1998-02-28";
+		final String d2 = "2000-02-29";
+		final int age = DateUtil.age(DateUtil.parse(d1), DateUtil.parse(d2));
+		// issue#I6E6ZG，法定生日当天不算年龄，从第二天开始计算
+		Assert.assertEquals(2, age);
+	}
+
+	@Test
+	public void ageTest4() {
+		// 按照《最高人民法院关于审理未成年人刑事案件具体应用法律若干问题的解释》第二条规定刑法第十七条规定的“周岁”，按照公历的年、月、日计算，从周岁生日的第二天起算。
+		// 那我们认为就算当年是闰年，29日也算周岁生日的第二天，可以算作一岁
+		final String d1 = "1999-02-28";
+		final String d2 = "2000-02-29";
+		final int age = DateUtil.age(DateUtil.parse(d1), DateUtil.parse(d2));
+		// issue#I6E6ZG，法定生日当天不算年龄，从第二天开始计算
+		Assert.assertEquals(1, age);
 	}
 
 	@Test
@@ -1062,6 +1095,11 @@ public class DateUtilTest {
 
 		Assert.assertFalse(DateUtil.isOverlap(realStartTime1,realEndTime1,startTime,endTime));
 		Assert.assertFalse(DateUtil.isOverlap(startTime,endTime,realStartTime1,realEndTime1));
+
+		Assert.assertTrue(DateUtil.isOverlap(startTime,startTime,startTime,startTime));
+		Assert.assertTrue(DateUtil.isOverlap(startTime,startTime,startTime,endTime));
+		Assert.assertFalse(DateUtil.isOverlap(startTime,startTime,endTime,endTime));
+		Assert.assertTrue(DateUtil.isOverlap(startTime,endTime,endTime,endTime));
 	}
 
 	@Test
@@ -1084,5 +1122,56 @@ public class DateUtilTest {
 				DateUtil.parse(endTimeStr),
 				DateUtil.parse(sourceStr));
 		Assert.assertTrue(between);
+	}
+
+	@Test
+	public void isLastDayTest() {
+		final DateTime dateTime = DateUtil.parse("2022-09-30");
+		final int dayOfMonth = DateUtil.getLastDayOfMonth(dateTime);
+		Assert.assertEquals(dayOfMonth, dateTime.dayOfMonth());
+		Assert.assertTrue("not is last day of this month !!", DateUtil.isLastDayOfMonth(dateTime));
+	}
+
+
+	/**
+	 * issue#2887 由于UTC时间的毫秒部分超出3位导致的秒数增加的问题
+	 */
+	@Test
+	public void parseUTCTest4() {
+		final String dateStr = "2023-02-07T00:02:16.12345+08:00";
+		final DateTime dateTime = DateUtil.parse(dateStr);
+		Assert.assertNotNull(dateTime);
+		Assert.assertEquals("2023-02-07 00:02:16", dateTime.toString());
+
+		final String dateStr2 = "2023-02-07T00:02:16.12345-08:00";
+		final DateTime dateTime2 = DateUtil.parse(dateStr2);
+		Assert.assertNotNull(dateTime2);
+		Assert.assertEquals("2023-02-07 00:02:16", dateTime2.toString());
+
+		final String dateStr3 = "2021-03-17T06:31:33.9999";
+		final DateTime dateTime3 = DateUtil.parse(dateStr3);
+		Assert.assertNotNull(dateTime3);
+		Assert.assertEquals("2021-03-17 06:31:33", dateTime3.toString());
+	}
+
+	@Test
+	public void calendarTest() {
+		final Date date = DateUtil.date();
+		final Calendar c = DateUtil.calendar(date);
+		Assert.assertEquals(DateUtil.date(c), date);
+	}
+
+	@Test
+	public void issueI7H34NTest() {
+		final DateTime parse = DateUtil.parse("2019-10-22T09:56:03.000123Z");
+		Assert.assertNotNull(parse);
+		Assert.assertEquals("2019-10-22 09:56:03", parse.toString());
+	}
+
+	@Test
+	public void issueI8NMP7Test() {
+		final String str = "1702262524444";
+		final DateTime parse = DateUtil.parse(str);
+		Assert.assertEquals("2023-12-11 10:42:04", Objects.requireNonNull(parse).toString());
 	}
 }

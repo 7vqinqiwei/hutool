@@ -14,6 +14,8 @@ public class DesensitizedUtilTest {
 	@Test
 	public void desensitizedTest() {
 		Assert.assertEquals("0", DesensitizedUtil.desensitized("100", DesensitizedUtil.DesensitizedType.USER_ID));
+		Assert.assertEquals("", DesensitizedUtil.desensitized("100", DesensitizedUtil.DesensitizedType.CLEAR_TO_EMPTY));
+		Assert.assertNull(DesensitizedUtil.desensitized("100", DesensitizedUtil.DesensitizedType.CLEAR_TO_NULL));
 		Assert.assertEquals("段**", DesensitizedUtil.desensitized("段正淳", DesensitizedUtil.DesensitizedType.CHINESE_NAME));
 		Assert.assertEquals("5***************1X", DesensitizedUtil.desensitized("51343620000320711X", DesensitizedUtil.DesensitizedType.ID_CARD));
 		Assert.assertEquals("0915*****79", DesensitizedUtil.desensitized("09157518479", DesensitizedUtil.DesensitizedType.FIXED_PHONE));
@@ -31,7 +33,9 @@ public class DesensitizedUtilTest {
 		Assert.assertEquals("d*************@gmail.com.cn", DesensitizedUtil.desensitized("duandazhi-jack@gmail.com.cn", DesensitizedUtil.DesensitizedType.EMAIL));
 		Assert.assertEquals("**********", DesensitizedUtil.desensitized("1234567890", DesensitizedUtil.DesensitizedType.PASSWORD));
 		Assert.assertEquals("1101 **** **** **** 3256", DesensitizedUtil.desensitized("11011111222233333256", DesensitizedUtil.DesensitizedType.BANK_CARD));
-		Assert.assertEquals("6227 **** **** *** 5123", DesensitizedUtil.desensitized("6227880100100105123", DesensitizedUtil.DesensitizedType.BANK_CARD));
+		Assert.assertEquals("6227 **** **** **** 123", DesensitizedUtil.desensitized("6227880100100105123", DesensitizedUtil.DesensitizedType.BANK_CARD));
+		Assert.assertEquals("192.*.*.*", DesensitizedUtil.desensitized("192.168.1.1", DesensitizedUtil.DesensitizedType.IPV4));
+		Assert.assertEquals("2001:*:*:*:*:*:*:*", DesensitizedUtil.desensitized("2001:0db8:86a3:08d3:1319:8a2e:0370:7344", DesensitizedUtil.DesensitizedType.IPV6));
 	}
 
 	@Test
@@ -86,5 +90,16 @@ public class DesensitizedUtilTest {
 		Assert.assertEquals("苏D4***0", DesensitizedUtil.carLicense("苏D40000"));
 		Assert.assertEquals("陕A1****D", DesensitizedUtil.carLicense("陕A12345D"));
 		Assert.assertEquals("京A123", DesensitizedUtil.carLicense("京A123"));
+	}
+
+	@Test
+	public void bankCardTest(){
+		Assert.assertEquals(null, DesensitizedUtil.bankCard(null));
+		Assert.assertEquals("", DesensitizedUtil.bankCard(""));
+		Assert.assertEquals("1234 **** **** **** **** 9", DesensitizedUtil.bankCard("1234 2222 3333 4444 6789 9"));
+		Assert.assertEquals("1234 **** **** **** **** 91", DesensitizedUtil.bankCard("1234 2222 3333 4444 6789 91"));
+		Assert.assertEquals("1234 **** **** **** 6789", DesensitizedUtil.bankCard("1234 2222 3333 4444 6789"));
+		Assert.assertEquals("1234 **** **** **** 678", DesensitizedUtil.bankCard("1234 2222 3333 4444 678"));
+
 	}
 }

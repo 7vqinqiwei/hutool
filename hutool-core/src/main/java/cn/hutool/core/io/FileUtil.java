@@ -10,6 +10,7 @@ import cn.hutool.core.io.file.FileWriter;
 import cn.hutool.core.io.file.LineSeparator;
 import cn.hutool.core.io.file.PathUtil;
 import cn.hutool.core.io.file.Tailer;
+import cn.hutool.core.io.resource.Resource;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.io.unit.DataSizeUtil;
 import cn.hutool.core.lang.Assert;
@@ -29,9 +30,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.LineNumberReader;
@@ -56,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
@@ -917,7 +917,7 @@ public class FileUtil extends PathUtil {
 
 	/**
 	 * 创建临时文件<br>
-	 * 创建后的文件名为 prefix[Randon].tmp
+	 * 创建后的文件名为 prefix[Random.tmp
 	 *
 	 * @param dir 临时文件创建的所在目录
 	 * @return 临时文件
@@ -928,7 +928,7 @@ public class FileUtil extends PathUtil {
 	}
 
 	/**
-	 * 在默认临时文件目录下创建临时文件，创建后的文件名为 prefix[Randon].tmp。
+	 * 在默认临时文件目录下创建临时文件，创建后的文件名为 prefix[Random].tmp。
 	 * 默认临时文件目录由系统属性 {@code java.io.tmpdir} 指定。
 	 * 在 UNIX 系统上，此属性的默认值通常是 {@code "tmp"} 或 {@code "vartmp"}；
 	 * 在 Microsoft Windows 系统上，它通常是 {@code "C:\\WINNT\\TEMP"}。
@@ -943,7 +943,7 @@ public class FileUtil extends PathUtil {
 	}
 
 	/**
-	 * 在默认临时文件目录下创建临时文件，创建后的文件名为 prefix[Randon].suffix。
+	 * 在默认临时文件目录下创建临时文件，创建后的文件名为 prefix[Random].suffix。
 	 * 默认临时文件目录由系统属性 {@code java.io.tmpdir} 指定。
 	 * 在 UNIX 系统上，此属性的默认值通常是 {@code "tmp"} 或 {@code "vartmp"}；
 	 * 在 Microsoft Windows 系统上，它通常是 {@code "C:\\WINNT\\TEMP"}。
@@ -960,7 +960,7 @@ public class FileUtil extends PathUtil {
 	}
 
 	/**
-	 * 在默认临时文件目录下创建临时文件，创建后的文件名为 prefix[Randon].suffix。
+	 * 在默认临时文件目录下创建临时文件，创建后的文件名为 prefix[Random].suffix。
 	 * 默认临时文件目录由系统属性 {@code java.io.tmpdir} 指定。
 	 * 在 UNIX 系统上，此属性的默认值通常是 {@code "tmp"} 或 {@code "vartmp"}；
 	 * 在 Microsoft Windows 系统上，它通常是 {@code "C:\\WINNT\\TEMP"}。
@@ -979,7 +979,7 @@ public class FileUtil extends PathUtil {
 
 	/**
 	 * 创建临时文件<br>
-	 * 创建后的文件名为 prefix[Randon].tmp
+	 * 创建后的文件名为 prefix[Random].tmp
 	 *
 	 * @param dir       临时文件创建的所在目录
 	 * @param isReCreat 是否重新创建文件（删掉原来的，创建新的）
@@ -992,7 +992,7 @@ public class FileUtil extends PathUtil {
 
 	/**
 	 * 创建临时文件<br>
-	 * 创建后的文件名为 prefix[Randon].suffix From com.jodd.io.FileUtil
+	 * 创建后的文件名为 prefix[Random].suffix From com.jodd.io.FileUtil
 	 *
 	 * @param prefix    前缀，至少3个字符
 	 * @param suffix    后缀，如果null则使用默认.tmp
@@ -1005,7 +1005,9 @@ public class FileUtil extends PathUtil {
 		int exceptionsCount = 0;
 		while (true) {
 			try {
-				File file = File.createTempFile(prefix, suffix, mkdir(dir)).getCanonicalFile();
+				// https://github.com/dromara/hutool/issues/3103
+				//File file = File.createTempFile(prefix, suffix, mkdir(dir)).getCanonicalFile();
+				final File file = PathUtil.createTempFile(prefix, suffix, null == dir ? null : dir.toPath()).toFile().getCanonicalFile();
 				if (isReCreat) {
 					//noinspection ResultOfMethodCallIgnored
 					file.delete();
@@ -1034,6 +1036,40 @@ public class FileUtil extends PathUtil {
 		Assert.notBlank(src, "Source File path is blank !");
 		Assert.notBlank(dest, "Destination File path is blank !");
 		return copyFile(Paths.get(src), Paths.get(dest), options).toFile();
+	}
+
+	/**
+	 * 通过JDK7+的 Files#copy(InputStream, Path, CopyOption...) 方法拷贝文件
+	 *
+	 * @param src     源文件
+	 * @param dest    目标文件或目录，如果为目录使用与源文件相同的文件名
+	 * @param options {@link StandardCopyOption}
+	 * @return 目标文件
+	 * @throws IORuntimeException IO异常
+	 * @since 5.8.27
+	 */
+	public static File copyFile(Resource src, File dest, StandardCopyOption... options) throws IORuntimeException {
+		// check
+		Assert.notNull(src, "Source File is null !");
+		Assert.notNull(dest, "Destination File or directiory is null !");
+		return copyFile(src, dest.toPath(), options).toFile();
+	}
+
+	/**
+	 * 通过JDK7+的 Files#copy(InputStream, Path, CopyOption...) 方法拷贝文件
+	 *
+	 * @param src     源文件流，使用后不关闭
+	 * @param dest    目标文件，不存在自动创建
+	 * @param options {@link StandardCopyOption}
+	 * @return 目标文件
+	 * @throws IORuntimeException IO异常
+	 * @since 5.8.27
+	 */
+	public static File copyFile(InputStream src, File dest, StandardCopyOption... options) throws IORuntimeException {
+		// check
+		Assert.notNull(src, "Source File is null !");
+		Assert.notNull(dest, "Destination File or directiory is null !");
+		return copyFile(src, dest.toPath(), options).toFile();
 	}
 
 	/**
@@ -1117,7 +1153,7 @@ public class FileUtil extends PathUtil {
 	 * 情况如下：
 	 *
 	 * <pre>
-	 * 1、src和dest都为目录，则将src下所有文件（包括子目录）拷贝到dest下
+	 * 1、src和dest都为目录，则将src下所有文件（不包括子目录）拷贝到dest下
 	 * 2、src和dest都为文件，直接复制，名字为dest
 	 * 3、src为文件，dest为目录，将src拷贝到dest目录下
 	 * </pre>
@@ -1606,6 +1642,11 @@ public class FileUtil extends PathUtil {
 			return null;
 		}
 
+		//兼容Windows下的共享目录路径（原始路径如果以\\开头，则保留这种路径）
+		if (path.startsWith("\\\\")) {
+			return path;
+		}
+
 		// 兼容Spring风格的ClassPath路径，去除前缀，不区分大小写
 		String pathToUse = StrUtil.removePrefixIgnoreCase(path, URLUtil.CLASSPATH_URL_PREFIX);
 		// 去除file:前缀
@@ -1620,10 +1661,6 @@ public class FileUtil extends PathUtil {
 		pathToUse = pathToUse.replaceAll("[/\\\\]+", StrUtil.SLASH);
 		// 去除开头空白符，末尾空白符合法，不去除
 		pathToUse = StrUtil.trimStart(pathToUse);
-		//兼容Windows下的共享目录路径（原始路径如果以\\开头，则保留这种路径）
-		if (path.startsWith("\\\\")) {
-			pathToUse = "\\" + pathToUse;
-		}
 
 		String prefix = StrUtil.EMPTY;
 		int prefixIndex = pathToUse.indexOf(StrUtil.COLON);
@@ -1917,7 +1954,7 @@ public class FileUtil extends PathUtil {
 	 */
 	public static BOMInputStream getBOMInputStream(File file) throws IORuntimeException {
 		try {
-			return new BOMInputStream(new FileInputStream(file));
+			return new BOMInputStream(Files.newInputStream(file.toPath()));
 		} catch (IOException e) {
 			throw new IORuntimeException(e);
 		}
@@ -2373,6 +2410,19 @@ public class FileUtil extends PathUtil {
 	/**
 	 * 从文件中读取每一行数据
 	 *
+	 * @param file   文件
+	 * @param filter 过滤器
+	 * @return 文件中的每行内容的集合List
+	 * @throws IORuntimeException IO异常
+	 * @since 3.1.1
+	 */
+	public static List<String> readUtf8Lines(File file, Predicate<String> filter) throws IORuntimeException {
+		return readLines(file, CharsetUtil.CHARSET_UTF_8, filter);
+	}
+
+	/**
+	 * 从文件中读取每一行数据
+	 *
 	 * @param file    文件
 	 * @param charset 字符集
 	 * @return 文件中的每行内容的集合List
@@ -2392,6 +2442,25 @@ public class FileUtil extends PathUtil {
 	 */
 	public static List<String> readLines(File file, Charset charset) throws IORuntimeException {
 		return readLines(file, charset, new ArrayList<>());
+	}
+
+	/**
+	 * 从文件中读取每一行数据
+	 *
+	 * @param file    文件
+	 * @param charset 字符集
+	 * @param filter  过滤器
+	 * @return 文件中的每行内容的集合List
+	 * @throws IORuntimeException IO异常
+	 */
+	public static List<String> readLines(File file, Charset charset, Predicate<String> filter) throws IORuntimeException {
+		final List<String> result = new ArrayList<>();
+		readLines(file, charset, (LineHandler) line -> {
+			if (filter.test(line)) {
+				result.add(line);
+			}
+		});
+		return result;
 	}
 
 	/**
@@ -2561,8 +2630,8 @@ public class FileUtil extends PathUtil {
 	public static BufferedOutputStream getOutputStream(File file) throws IORuntimeException {
 		final OutputStream out;
 		try {
-			out = new FileOutputStream(touch(file));
-		} catch (IOException e) {
+			out = Files.newOutputStream(touch(file).toPath());
+		} catch (final IOException e) {
 			throw new IORuntimeException(e);
 		}
 		return IoUtil.toBuffered(out);
@@ -3337,8 +3406,8 @@ public class FileUtil extends PathUtil {
 			throw new IllegalArgumentException("Checksums can't be computed on directories");
 		}
 		try {
-			return IoUtil.checksum(new FileInputStream(file), checksum);
-		} catch (FileNotFoundException e) {
+			return IoUtil.checksum(Files.newInputStream(file.toPath()), checksum);
+		} catch (IOException e) {
 			throw new IORuntimeException(e);
 		}
 	}
@@ -3426,18 +3495,7 @@ public class FileUtil extends PathUtil {
 	 */
 	public static File checkSlip(File parentFile, File file) throws IllegalArgumentException {
 		if (null != parentFile && null != file) {
-			String parentCanonicalPath;
-			String canonicalPath;
-			try {
-				parentCanonicalPath = parentFile.getCanonicalPath();
-				canonicalPath = file.getCanonicalPath();
-			} catch (IOException e) {
-				// issue#I4CWMO@Gitee
-				// getCanonicalPath有时会抛出奇怪的IO异常，此时忽略异常，使用AbsolutePath判断。
-				parentCanonicalPath = parentFile.getAbsolutePath();
-				canonicalPath = file.getAbsolutePath();
-			}
-			if (false == canonicalPath.startsWith(parentCanonicalPath)) {
+			if (false == isSub(parentFile, file)) {
 				throw new IllegalArgumentException("New file is outside of the parent dir: " + file.getName());
 			}
 		}
@@ -3452,21 +3510,27 @@ public class FileUtil extends PathUtil {
 	 * @since 4.1.15
 	 */
 	public static String getMimeType(String filePath) {
-		String contentType = URLConnection.getFileNameMap().getContentTypeFor(filePath);
-		if (null == contentType) {
-			// 补充一些常用的mimeType
-			if (StrUtil.endWithIgnoreCase(filePath, ".css")) {
-				contentType = "text/css";
-			} else if (StrUtil.endWithIgnoreCase(filePath, ".js")) {
-				contentType = "application/x-javascript";
-			} else if (StrUtil.endWithIgnoreCase(filePath, ".rar")) {
-				contentType = "application/x-rar-compressed";
-			} else if (StrUtil.endWithIgnoreCase(filePath, ".7z")) {
-				contentType = "application/x-7z-compressed";
-			}
+		if(StrUtil.isBlank(filePath)){
+			return null;
 		}
 
-		// 补充
+		// 补充一些常用的mimeType
+		if (StrUtil.endWithIgnoreCase(filePath, ".css")) {
+			return "text/css";
+		} else if (StrUtil.endWithIgnoreCase(filePath, ".js")) {
+			return "application/x-javascript";
+		} else if (StrUtil.endWithIgnoreCase(filePath, ".rar")) {
+			return "application/x-rar-compressed";
+		} else if (StrUtil.endWithIgnoreCase(filePath, ".7z")) {
+			return "application/x-7z-compressed";
+		} else if (StrUtil.endWithIgnoreCase(filePath, ".wgt")) {
+			return "application/widget";
+		} else if (StrUtil.endWithIgnoreCase(filePath, ".webp")) {
+			// JDK8不支持
+			return "image/webp";
+		}
+
+		String contentType = URLConnection.getFileNameMap().getContentTypeFor(filePath);
 		if (null == contentType) {
 			contentType = getMimeType(Paths.get(filePath));
 		}

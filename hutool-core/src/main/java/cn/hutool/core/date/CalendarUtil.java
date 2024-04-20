@@ -62,7 +62,7 @@ public class CalendarUtil {
 	/**
 	 * 转换为Calendar对象
 	 *
-	 * @param millis 时间戳
+	 * @param millis   时间戳
 	 * @param timeZone 时区
 	 * @return Calendar对象
 	 * @since 5.7.22
@@ -356,15 +356,26 @@ public class CalendarUtil {
 			throw new IllegalArgumentException("The date must not be null");
 		}
 		return cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR) && //
-				cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && //
-				cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA);
+			cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && //
+			cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA);
+	}
+
+	/**
+	 * 是否为本月最后一天
+	 *
+	 * @param calendar {@link Calendar}
+	 * @return 是否为本月最后一天
+	 * @since 5.8.27
+	 */
+	public static boolean isLastDayOfMonth(Calendar calendar) {
+		return calendar.get(Calendar.DAY_OF_MONTH) == calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
 	}
 
 	/**
 	 * 比较两个日期是否为同一周
 	 *
-	 * @param cal1 日期1
-	 * @param cal2 日期2
+	 * @param cal1  日期1
+	 * @param cal2  日期2
 	 * @param isMon 是否为周一。国内第一天为星期一，国外第一天为星期日
 	 * @return 是否为同一周
 	 * @since 5.7.21
@@ -395,7 +406,8 @@ public class CalendarUtil {
 	}
 
 	/**
-	 * 比较两个日期是否为同一月
+	 * 比较两个日期是否为同一月<br>
+	 * 同一个月的意思是：ERA（公元）、year（年）、month（月）都一致。
 	 *
 	 * @param cal1 日期1
 	 * @param cal2 日期2
@@ -407,7 +419,9 @@ public class CalendarUtil {
 			throw new IllegalArgumentException("The date must not be null");
 		}
 		return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && //
-				cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH);
+			cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
+			// issue#3011@Github
+			cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA);
 	}
 
 	/**
@@ -626,7 +640,12 @@ public class CalendarUtil {
 	}
 
 	/**
-	 * 计算相对于dateToCompare的年龄，长用于计算指定生日在某年的年龄
+	 * 计算相对于dateToCompare的年龄，常用于计算指定生日在某年的年龄<br>
+	 * 按照《最高人民法院关于审理未成年人刑事案件具体应用法律若干问题的解释》第二条规定刑法第十七条规定的“周岁”，按照公历的年、月、日计算，从周岁生日的第二天起算。
+	 * <ul>
+	 *     <li>2022-03-01出生，则相对2023-03-01，周岁为0，相对于2023-03-02才是1岁。</li>
+	 *     <li>1999-02-28出生，则相对2000-02-29，周岁为1</li>
+	 * </ul>
 	 *
 	 * @param birthday      生日
 	 * @param dateToCompare 需要对比的日期
@@ -643,17 +662,21 @@ public class CalendarUtil {
 		final int year = cal.get(Calendar.YEAR);
 		final int month = cal.get(Calendar.MONTH);
 		final int dayOfMonth = cal.get(Calendar.DAY_OF_MONTH);
-		final boolean isLastDayOfMonth = dayOfMonth == cal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
+		// 复用cal
 		cal.setTimeInMillis(birthday);
 		int age = year - cal.get(Calendar.YEAR);
 
+		//当前日期，则为0岁
+		if (age == 0) {
+			return 0;
+		}
+
 		final int monthBirth = cal.get(Calendar.MONTH);
 		if (month == monthBirth) {
-
 			final int dayOfMonthBirth = cal.get(Calendar.DAY_OF_MONTH);
-			final boolean isLastDayOfMonthBirth = dayOfMonthBirth == cal.getActualMaximum(Calendar.DAY_OF_MONTH);
-			if ((false == isLastDayOfMonth || false == isLastDayOfMonthBirth) && dayOfMonth < dayOfMonthBirth) {
+			// issue#I6E6ZG，法定生日当天不算年龄，从第二天开始计算
+			if (dayOfMonth <= dayOfMonthBirth) {
 				// 如果生日在当月，但是未达到生日当天的日期，年龄减一
 				age--;
 			}

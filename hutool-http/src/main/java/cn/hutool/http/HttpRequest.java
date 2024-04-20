@@ -16,23 +16,20 @@ import cn.hutool.core.net.url.UrlQuery;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.body.BytesBody;
 import cn.hutool.http.body.FormUrlEncodedBody;
 import cn.hutool.http.body.MultipartBody;
 import cn.hutool.http.body.RequestBody;
+import cn.hutool.http.body.ResourceBody;
 import cn.hutool.http.cookie.GlobalCookieManager;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.File;
 import java.io.IOException;
-import java.net.CookieManager;
-import java.net.HttpCookie;
-import java.net.HttpURLConnection;
-import java.net.Proxy;
-import java.net.URLStreamHandler;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -499,7 +496,7 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 		}
 
 		// 停用body
-		this.bodyBytes = null;
+		this.body = null;
 
 		if (value instanceof File) {
 			// 文件上传
@@ -752,8 +749,22 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	 * @return this
 	 */
 	public HttpRequest body(byte[] bodyBytes) {
-		if (null != bodyBytes) {
-			this.bodyBytes = bodyBytes;
+		if (ArrayUtil.isNotEmpty(bodyBytes)) {
+			return body(new BytesResource(bodyBytes));
+		}
+		return this;
+	}
+
+	/**
+	 * 设置主体字节码<br>
+	 * 需在此方法调用前使用charset方法设置编码，否则使用默认编码UTF-8
+	 *
+	 * @param resource 主体
+	 * @return this
+	 */
+	public HttpRequest body(Resource resource) {
+		if (null != resource) {
+			this.body = resource;
 		}
 		return this;
 	}
@@ -828,11 +839,38 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	 * 设置是否打开重定向，如果打开默认重定向次数为2<br>
 	 * 此方法效果与{@link #setMaxRedirectCount(int)} 一致
 	 *
+	 * <p>
+	 * 需要注意的是，当设置为{@code true}时，如果全局重定向次数非0，直接复用，否则设置默认2次。<br>
+	 * 当设置为{@code false}时，无论全局是否设置次数，都设置为0。<br>
+	 * 不调用此方法的情况下，使用全局默认的次数。
+	 * </p>
+	 *
 	 * @param isFollowRedirects 是否打开重定向
 	 * @return this
 	 */
 	public HttpRequest setFollowRedirects(boolean isFollowRedirects) {
-		return setMaxRedirectCount(isFollowRedirects ? 2 : 0);
+		if (isFollowRedirects) {
+			if (config.maxRedirectCount <= 0) {
+				// 默认两次跳转
+				return setMaxRedirectCount(2);
+			}
+		} else {
+			// 手动强制关闭重定向，此时不受全局重定向设置影响
+			if (config.maxRedirectCount < 0) {
+				return setMaxRedirectCount(0);
+			}
+		}
+		return this;
+	}
+
+	/**
+	 * 自动重定向时是否处理cookie
+	 * @param followRedirectsCookie  自动重定向时是否处理cookie
+	 * @return this
+	 */
+	public HttpRequest setFollowRedirectsCookie(boolean followRedirectsCookie) {
+		config.setFollowRedirectsCookie(followRedirectsCookie);
+		return this;
 	}
 
 	/**
@@ -1030,7 +1068,9 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	 * 执行Request请求后，对响应内容后续处理<br>
 	 * 处理结束后关闭连接
 	 *
+	 * @param <T>      处理结果类型
 	 * @param function 响应内容处理函数
+	 * @return 处理结果
 	 * @since 5.8.5
 	 */
 	public <T> T thenFunction(Function<HttpResponse, T> function) {
@@ -1105,9 +1145,20 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = StrUtil.builder();
+		final StringBuilder sb = StrUtil.builder();
 		sb.append("Request Url: ").append(this.url.setCharset(this.charset)).append(StrUtil.CRLF);
-		sb.append(super.toString());
+
+		// header
+		sb.append("Request Headers: ").append(StrUtil.CRLF);
+		for (Map.Entry<String, List<String>> entry : this.headers.entrySet()) {
+			sb.append("    ").append(
+					entry.getKey()).append(": ").append(CollUtil.join(entry.getValue(), ","))
+				.append(StrUtil.CRLF);
+		}
+
+		// body
+		sb.append("Request Body: ").append(StrUtil.CRLF);
+		sb.append("    ").append(createBody()).append(StrUtil.CRLF);
 		return sb.toString();
 	}
 
@@ -1206,8 +1257,8 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 			}
 
 			// 优先使用body形式的参数，不存在使用form
-			if (ArrayUtil.isNotEmpty(this.bodyBytes)) {
-				query.parse(StrUtil.str(this.bodyBytes, this.charset), this.charset);
+			if (null != this.body) {
+				query.parse(StrUtil.str(this.body.readBytes(), this.charset), this.charset);
 			} else {
 				query.addAll(this.form);
 			}
@@ -1223,7 +1274,7 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	private HttpResponse sendRedirectIfPossible(boolean isAsync) {
 		// 手动实现重定向
 		if (config.maxRedirectCount > 0) {
-			int responseCode;
+			final int responseCode;
 			try {
 				responseCode = httpConnection.responseCode();
 			} catch (IOException e) {
@@ -1231,10 +1282,37 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 				this.httpConnection.disconnectQuietly();
 				throw new HttpException(e);
 			}
-
+			// 支持自动重定向时处理cookie
+			// https://github.com/dromara/hutool/issues/2960
+			if (config.followRedirectsCookie) {
+				GlobalCookieManager.store(httpConnection);
+			}
 			if (responseCode != HttpURLConnection.HTTP_OK) {
 				if (HttpStatus.isRedirected(responseCode)) {
-					setUrl(UrlBuilder.ofHttpWithoutEncode(httpConnection.header(Header.LOCATION)));
+					final UrlBuilder redirectUrl;
+					String location = httpConnection.header(Header.LOCATION);
+					if (false == HttpUtil.isHttp(location) && false == HttpUtil.isHttps(location)) {
+						// issue#I5TPSY, location可能为相对路径
+						if (false == location.startsWith("/")) {
+							location = StrUtil.addSuffixIfNot(this.url.getPathStr(), "/") + location;
+						}
+
+						// issue#3265, 相对路径中可能存在参数，单独处理参数
+						final String query;
+						final List<String> split = StrUtil.split(location, '?', 2);
+						if (split.size() == 2) {
+							// 存在参数
+							location = split.get(0);
+							query = split.get(1);
+						} else {
+							query = null;
+						}
+						redirectUrl = UrlBuilder.of(this.url.getScheme(), this.url.getHost(), this.url.getPort()
+								, location, query, null, this.charset);
+					} else {
+						redirectUrl = UrlBuilder.ofHttpWithoutEncode(location);
+					}
+					setUrl(redirectUrl);
 					if (redirectCount < config.maxRedirectCount) {
 						redirectCount++;
 						// 重定向不再走过滤器
@@ -1286,13 +1364,21 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 		}
 
 		// Write的时候会优先使用body中的内容，write时自动关闭OutputStream
-		RequestBody body;
-		if (ArrayUtil.isNotEmpty(this.bodyBytes)) {
-			body = BytesBody.create(this.bodyBytes);
+		createBody().writeClose(this.httpConnection.getOutputStream());
+	}
+
+	/**
+	 * 创建body
+	 *
+	 * @return body
+	 */
+	private RequestBody createBody(){
+		// Write的时候会优先使用body中的内容，write时自动关闭OutputStream
+		if (null != this.body) {
+			return ResourceBody.create(this.body);
 		} else {
-			body = FormUrlEncodedBody.create(this.form, this.charset);
+			return FormUrlEncodedBody.create(this.form, this.charset);
 		}
-		body.writeClose(this.httpConnection.getOutputStream());
 	}
 
 	/**
@@ -1302,15 +1388,23 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	 * @throws IOException IO异常
 	 */
 	private void sendMultipart() throws IOException {
-		final MultipartBody multipartBody = MultipartBody.create(this.form, this.charset);
-		//设置表单类型为Multipart（文件上传）
-		this.httpConnection.header(Header.CONTENT_TYPE, multipartBody.getContentType(), true);
-		multipartBody.writeClose(this.httpConnection.getOutputStream());
+		final RequestBody body;
+		// issue#3158，当用户自定义为multipart同时传入body，则不做单独处理
+		if(null == form && null != this.body) {
+			body = ResourceBody.create(this.body);
+		}else{
+			final MultipartBody multipartBody = MultipartBody.create(this.form, this.charset);
+			//设置表单类型为Multipart（文件上传）
+			this.httpConnection.header(Header.CONTENT_TYPE, multipartBody.getContentType(), true);
+			body = multipartBody;
+		}
+
+		body.writeClose(this.httpConnection.getOutputStream());
 	}
 
 	/**
 	 * 是否忽略读取响应body部分<br>
-	 * HEAD、CONNECT、OPTIONS、TRACE方法将不读取响应体
+	 * HEAD、CONNECT、TRACE方法将不读取响应体
 	 *
 	 * @return 是否需要忽略响应body部分
 	 * @since 3.1.2
@@ -1318,7 +1412,6 @@ public class HttpRequest extends HttpBase<HttpRequest> {
 	private boolean isIgnoreResponseBody() {
 		return Method.HEAD == this.method //
 				|| Method.CONNECT == this.method //
-				|| Method.OPTIONS == this.method //
 				|| Method.TRACE == this.method;
 	}
 

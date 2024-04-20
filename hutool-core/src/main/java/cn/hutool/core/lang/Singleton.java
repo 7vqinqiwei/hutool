@@ -1,13 +1,13 @@
 package cn.hutool.core.lang;
 
 import cn.hutool.core.lang.func.Func0;
+import cn.hutool.core.map.SafeConcurrentHashMap;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.ClassUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  */
 public final class Singleton {
 
-	private static final ConcurrentHashMap<String, Object> POOL = new ConcurrentHashMap<>();
+	private static final SafeConcurrentHashMap<String, Object> POOL = new SafeConcurrentHashMap<>();
 
 	private Singleton() {
 	}
@@ -42,7 +42,6 @@ public final class Singleton {
 	/**
 	 * 获得指定类的单例对象<br>
 	 * 对象存在于池中返回，否则创建，每次调用此方法获得的对象为同一个对象<br>
-	 * 注意：单例针对的是类和参数，也就是说只有类、参数一致才会返回同一个对象
 	 *
 	 * @param <T>      单例对象类型
 	 * @param key      自定义键
@@ -52,15 +51,7 @@ public final class Singleton {
 	 */
 	@SuppressWarnings("unchecked")
 	public static <T> T get(String key, Func0<T> supplier) {
-		//return (T) POOL.computeIfAbsent(key, (k)-> supplier.callWithRuntimeException());
-		// issues#2349
-		// ConcurrentHashMap.computeIfAbsent在某些情况下会导致死循环问题，此处采用Dubbo的解决方案
-		Object value = POOL.get(key);
-		if(null == value){
-			POOL.putIfAbsent(key, supplier.callWithRuntimeException());
-			value = POOL.get(key);
-		}
-		return (T) value;
+		return (T) POOL.computeIfAbsent(key, (k)-> supplier.callWithRuntimeException());
 	}
 
 	/**

@@ -9,29 +9,12 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.lang.Editor;
 import cn.hutool.core.map.CaseInsensitiveMap;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.ArrayUtil;
-import cn.hutool.core.util.ClassUtil;
-import cn.hutool.core.util.ModifierUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.ReflectUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.*;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.beans.PropertyEditor;
-import java.beans.PropertyEditorManager;
+import java.beans.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -114,8 +97,11 @@ public class BeanUtil {
 		if (ClassUtil.isNormalClass(clazz)) {
 			for (Method method : clazz.getMethods()) {
 				if (method.getParameterCount() == 0) {
-					if (method.getName().startsWith("get") || method.getName().startsWith("is")) {
-						return true;
+					final String name = method.getName();
+					if (name.startsWith("get") || name.startsWith("is")) {
+						if (false == "getClass".equals(name)) {
+							return true;
+						}
 					}
 				}
 			}
@@ -306,24 +292,32 @@ public class BeanUtil {
 
 	/**
 	 * 设置字段值，通过反射设置字段值，并不调用setXXX方法<br>
-	 * 对象同样支持Map类型，fieldNameOrIndex即为key
+	 * 对象同样支持Map类型，fieldNameOrIndex即为key，支持：
+	 * <ul>
+	 *     <li>Map</li>
+	 *     <li>List</li>
+	 *     <li>Bean</li>
+	 * </ul>
 	 *
 	 * @param bean             Bean
 	 * @param fieldNameOrIndex 字段名或序号，序号支持负数
 	 * @param value            值
+	 * @return bean，当为数组时，返回一个新的数组
 	 */
 	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static void setFieldValue(Object bean, String fieldNameOrIndex, Object value) {
+	public static Object setFieldValue(Object bean, String fieldNameOrIndex, Object value) {
 		if (bean instanceof Map) {
 			((Map) bean).put(fieldNameOrIndex, value);
 		} else if (bean instanceof List) {
 			ListUtil.setOrPadding((List) bean, Convert.toInt(fieldNameOrIndex), value);
 		} else if (ArrayUtil.isArray(bean)) {
-			ArrayUtil.setOrAppend(bean, Convert.toInt(fieldNameOrIndex), value);
+			// issue#3008，追加产生新数组，此处返回新数组
+			return ArrayUtil.setOrAppend(bean, Convert.toInt(fieldNameOrIndex), value);
 		} else {
 			// 普通Bean对象
 			ReflectUtil.setFieldValue(bean, fieldNameOrIndex, value);
 		}
+		return bean;
 	}
 
 	/**
@@ -429,7 +423,9 @@ public class BeanUtil {
 	 * @param isToCamelCase 是否将Map中的下划线风格key转换为驼峰风格
 	 * @param copyOptions   转Bean选项
 	 * @return Bean
+	 * @deprecated isToCamelCase参数无效，请使用 {@link #toBean(Object, Class, CopyOptions)}
 	 */
+	@Deprecated
 	public static <T> T mapToBean(Map<?, ?> map, Class<T> beanClass, boolean isToCamelCase, CopyOptions copyOptions) {
 		return fillBeanWithMap(map, ReflectUtil.newInstanceIfPossible(beanClass), isToCamelCase, copyOptions);
 	}
@@ -458,7 +454,9 @@ public class BeanUtil {
 	 * @param isToCamelCase 是否将下划线模式转换为驼峰模式
 	 * @param isIgnoreError 是否忽略注入错误
 	 * @return Bean
+	 * @deprecated isToCamelCase参数无效，请使用{@link #fillBeanWithMap(Map, Object, boolean)}
 	 */
+	@Deprecated
 	public static <T> T fillBeanWithMap(Map<?, ?> map, T bean, boolean isToCamelCase, boolean isIgnoreError) {
 		return fillBeanWithMap(map, bean, isToCamelCase, CopyOptions.create().setIgnoreError(isIgnoreError));
 	}
@@ -486,7 +484,11 @@ public class BeanUtil {
 	 * @return Bean
 	 */
 	public static <T> T fillBeanWithMap(Map<?, ?> map, T bean, CopyOptions copyOptions) {
-		return fillBeanWithMap(map, bean, false, copyOptions);
+		if (MapUtil.isEmpty(map)) {
+			return bean;
+		}
+		copyProperties(map, bean, copyOptions);
+		return bean;
 	}
 
 	/**
@@ -499,14 +501,18 @@ public class BeanUtil {
 	 * @param copyOptions   属性复制选项 {@link CopyOptions}
 	 * @return Bean
 	 * @since 3.3.1
+	 * @deprecated isToCamelCase参数无效，请使用{@link #fillBeanWithMap(Map, Object, CopyOptions)}
 	 */
+	@Deprecated
 	public static <T> T fillBeanWithMap(Map<?, ?> map, T bean, boolean isToCamelCase, CopyOptions copyOptions) {
 		if (MapUtil.isEmpty(map)) {
 			return bean;
 		}
-		if (isToCamelCase) {
-			map = MapUtil.toCamelCaseMap(map);
-		}
+
+		// issue#3452，参数无效，MapToBeanCopier中已经有转驼峰逻辑
+//		if (isToCamelCase) {
+//			map = MapUtil.toCamelCaseMap(map);
+//		}
 		copyProperties(map, bean, copyOptions);
 		return bean;
 	}
@@ -623,6 +629,7 @@ public class BeanUtil {
 	}
 
 	// --------------------------------------------------------------------------------------------- beanToMap
+
 	/**
 	 * 将bean的部分属性转换成map<br>
 	 * 可选拷贝哪些属性值，默认是不忽略值为{@code null}的值的。
@@ -635,7 +642,7 @@ public class BeanUtil {
 	public static Map<String, Object> beanToMap(Object bean, String... properties) {
 		int mapSize = 16;
 		Editor<String> keyEditor = null;
-		if(ArrayUtil.isNotEmpty(properties)){
+		if (ArrayUtil.isNotEmpty(properties)) {
 			mapSize = properties.length;
 			final Set<String> propertiesSet = CollUtil.set(false, properties);
 			keyEditor = property -> propertiesSet.contains(property) ? property : null;
@@ -745,7 +752,7 @@ public class BeanUtil {
 	 * @return 目标对象
 	 */
 	public static <T> T copyProperties(Object source, Class<T> tClass, String... ignoreProperties) {
-		if(null == source){
+		if (null == source) {
 			return null;
 		}
 		T target = ReflectUtil.newInstanceIfPossible(tClass);
@@ -785,7 +792,7 @@ public class BeanUtil {
 	 * @param copyOptions 拷贝选项，见 {@link CopyOptions}
 	 */
 	public static void copyProperties(Object source, Object target, CopyOptions copyOptions) {
-		if(null == source){
+		if (null == source) {
 			return;
 		}
 		BeanCopier.create(source, target, ObjectUtil.defaultIfNull(copyOptions, CopyOptions::create)).copy();
@@ -809,6 +816,12 @@ public class BeanUtil {
 		if (collection.isEmpty()) {
 			return new ArrayList<>(0);
 		}
+
+		// issue#3091
+		if(ClassUtil.isBasicType(targetType) || String.class == targetType){
+			return Convert.toList(targetType, collection);
+		}
+
 		return collection.stream().map((source) -> {
 			final T target = ReflectUtil.newInstanceIfPossible(targetType);
 			copyProperties(source, target, copyOptions);
@@ -832,8 +845,8 @@ public class BeanUtil {
 
 	/**
 	 * 给定的Bean的类名是否匹配指定类名字符串<br>
-	 * 如果isSimple为{@code false}，则只匹配类名而忽略包名，例如：cn.hutool.TestEntity只匹配TestEntity<br>
-	 * 如果isSimple为{@code true}，则匹配包括包名的全类名，例如：cn.hutool.TestEntity匹配cn.hutool.TestEntity
+	 * 如果isSimple为{@code true}，则只匹配类名而忽略包名，例如：cn.hutool.TestEntity只匹配TestEntity<br>
+	 * 如果isSimple为{@code false}，则匹配包括包名的全类名，例如：cn.hutool.TestEntity匹配cn.hutool.TestEntity
 	 *
 	 * @param bean          Bean
 	 * @param beanClassName Bean的类名
@@ -908,12 +921,12 @@ public class BeanUtil {
 	 * 判断Bean是否为非空对象，非空对象表示本身不为{@code null}或者含有非{@code null}属性的对象
 	 *
 	 * @param bean             Bean对象
-	 * @param ignoreFiledNames 忽略检查的字段名
+	 * @param ignoreFieldNames 忽略检查的字段名
 	 * @return 是否为非空，{@code true} - 非空 / {@code false} - 空
 	 * @since 5.0.7
 	 */
-	public static boolean isNotEmpty(Object bean, String... ignoreFiledNames) {
-		return false == isEmpty(bean, ignoreFiledNames);
+	public static boolean isNotEmpty(Object bean, String... ignoreFieldNames) {
+		return false == isEmpty(bean, ignoreFieldNames);
 	}
 
 	/**
@@ -921,17 +934,17 @@ public class BeanUtil {
 	 * 此方法不判断static属性
 	 *
 	 * @param bean             Bean对象
-	 * @param ignoreFiledNames 忽略检查的字段名
+	 * @param ignoreFieldNames 忽略检查的字段名
 	 * @return 是否为空，{@code true} - 空 / {@code false} - 非空
 	 * @since 4.1.10
 	 */
-	public static boolean isEmpty(Object bean, String... ignoreFiledNames) {
+	public static boolean isEmpty(Object bean, String... ignoreFieldNames) {
 		if (null != bean) {
 			for (Field field : ReflectUtil.getFields(bean.getClass())) {
 				if (ModifierUtil.isStatic(field)) {
 					continue;
 				}
-				if ((false == ArrayUtil.contains(ignoreFiledNames, field.getName()))
+				if ((false == ArrayUtil.contains(ignoreFieldNames, field.getName()))
 						&& null != ReflectUtil.getFieldValue(bean, field)) {
 					return false;
 				}
@@ -945,11 +958,11 @@ public class BeanUtil {
 	 * 对象本身为{@code null}也返回true
 	 *
 	 * @param bean             Bean对象
-	 * @param ignoreFiledNames 忽略检查的字段名
+	 * @param ignoreFieldNames 忽略检查的字段名
 	 * @return 是否包含值为<code>null</code>的属性，{@code true} - 包含 / {@code false} - 不包含
 	 * @since 4.1.10
 	 */
-	public static boolean hasNullField(Object bean, String... ignoreFiledNames) {
+	public static boolean hasNullField(Object bean, String... ignoreFieldNames) {
 		if (null == bean) {
 			return true;
 		}
@@ -957,7 +970,7 @@ public class BeanUtil {
 			if (ModifierUtil.isStatic(field)) {
 				continue;
 			}
-			if ((false == ArrayUtil.contains(ignoreFiledNames, field.getName()))
+			if ((false == ArrayUtil.contains(ignoreFieldNames, field.getName()))
 					&& null == ReflectUtil.getFieldValue(bean, field)) {
 				return true;
 			}
@@ -992,14 +1005,14 @@ public class BeanUtil {
 	/**
 	 * 判断source与target的所有公共字段的值是否相同
 	 *
-	 * @param source 待检测对象1
-	 * @param target 待检测对象2
+	 * @param source           待检测对象1
+	 * @param target           待检测对象2
 	 * @param ignoreProperties 不需要检测的字段
 	 * @return 判断结果，如果为true则证明所有字段的值都相同
-	 * @since 5.8.4
 	 * @author Takak11
+	 * @since 5.8.4
 	 */
-	public static boolean isCommonFieldsEqual(Object source, Object target, String...ignoreProperties) {
+	public static boolean isCommonFieldsEqual(Object source, Object target, String... ignoreProperties) {
 
 		if (null == source && null == target) {
 			return true;
@@ -1008,15 +1021,17 @@ public class BeanUtil {
 			return false;
 		}
 
-		Map<String, Object> sourceFieldsMap = BeanUtil.beanToMap(source);
-		Map<String, Object> targetFieldsMap = BeanUtil.beanToMap(target);
+		final Map<String, Object> sourceFieldsMap = BeanUtil.beanToMap(source);
+		final Map<String, Object> targetFieldsMap = BeanUtil.beanToMap(target);
 
-		Set<String> sourceFields = sourceFieldsMap.keySet();
+		final Set<String> sourceFields = sourceFieldsMap.keySet();
 		sourceFields.removeAll(Arrays.asList(ignoreProperties));
 
 		for (String field : sourceFields) {
-			if(ObjectUtil.notEqual(sourceFieldsMap.get(field), targetFieldsMap.get(field))){
-				return false;
+			if(sourceFieldsMap.containsKey(field) && targetFieldsMap.containsKey(field)){
+				if (ObjectUtil.notEqual(sourceFieldsMap.get(field), targetFieldsMap.get(field))) {
+					return false;
+				}
 			}
 		}
 

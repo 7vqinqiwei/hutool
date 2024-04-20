@@ -147,6 +147,19 @@ public class IdcardUtil {
 	}
 
 	/**
+	 * 将18位身份证号码转换为15位
+	 *
+	 * @param  idCard 18位身份编码
+	 * @return 15位身份编码
+	 */
+	public static String convert18To15(String idCard) {
+		if (StrUtil.isNotBlank(idCard) && IdcardUtil.isValidCard18(idCard)) {
+			return idCard.substring(0, 6) + idCard.substring(8, idCard.length() - 1);
+		}
+		return idCard;
+	}
+
+	/**
 	 * 是否有效身份证号，忽略X的大小写<br>
 	 * 如果身份证号码中含有空格始终返回{@code false}
 	 *
@@ -258,12 +271,15 @@ public class IdcardUtil {
 	 * @since 5.5.7
 	 */
 	public static boolean isValidCard18(String idcard, boolean ignoreCase) {
+		if (idcard == null) {
+			return false;
+		}
 		if (CHINA_ID_MAX_LENGTH != idcard.length()) {
 			return false;
 		}
 
-		// 省份
-		final String proCode = idcard.substring(0, 2);
+		// 截取省份代码。新版外国人永久居留身份证以9开头，第二三位是受理地代码
+		final String proCode = idcard.startsWith("9") ? idcard.substring(1, 3): idcard.substring(0, 2);
 		if (null == CITY_CODES.get(proCode)) {
 			return false;
 		}
@@ -291,6 +307,9 @@ public class IdcardUtil {
 	 * @return 是否合法
 	 */
 	public static boolean isValidCard15(String idcard) {
+		if (idcard == null) {
+			return false;
+		}
 		if (CHINA_ID_MIN_LENGTH != idcard.length()) {
 			return false;
 		}
@@ -539,7 +558,7 @@ public class IdcardUtil {
 	public static int getGenderByIdCard(String idcard) {
 		Assert.notBlank(idcard);
 		final int len = idcard.length();
-		if (len < CHINA_ID_MIN_LENGTH) {
+		if (!(len == CHINA_ID_MIN_LENGTH || len == CHINA_ID_MAX_LENGTH)) {
 			throw new IllegalArgumentException("ID Card length must be 15 or 18");
 		}
 

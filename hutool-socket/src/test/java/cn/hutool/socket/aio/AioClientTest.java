@@ -2,6 +2,7 @@ package cn.hutool.socket.aio;
 
 import cn.hutool.core.lang.Console;
 import cn.hutool.core.thread.ThreadFactoryBuilder;
+import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.core.util.StrUtil;
 
 import java.io.IOException;
@@ -12,8 +13,8 @@ import java.nio.channels.AsynchronousChannelGroup;
 public class AioClientTest {
 	public static void main(String[] args) throws IOException {
 		final AsynchronousChannelGroup GROUP = AsynchronousChannelGroup.withFixedThreadPool(//
-				Runtime.getRuntime().availableProcessors(), // 默认线程池大小
-				ThreadFactoryBuilder.create().setNamePrefix("Huool-socket-").build()//
+				RuntimeUtil.getProcessorCount(), // 默认线程池大小
+				ThreadFactoryBuilder.create().setNamePrefix("Hutool-socket-").build()//
 		);
 
 		AioClient client = new AioClient(new InetSocketAddress("localhost", 8899), new SimpleIoAction() {

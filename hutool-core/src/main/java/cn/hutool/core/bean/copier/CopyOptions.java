@@ -1,11 +1,15 @@
 package cn.hutool.core.bean.copier;
 
+import cn.hutool.core.bean.PropDesc;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.convert.TypeConverter;
 import cn.hutool.core.lang.Editor;
 import cn.hutool.core.lang.func.Func1;
 import cn.hutool.core.lang.func.LambdaUtil;
 import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
@@ -68,10 +72,29 @@ public class CopyOptions implements Serializable {
 	protected boolean override = true;
 
 	/**
+	 * 是否自动转换为驼峰方式
+	 */
+	protected boolean autoTransCamelCase = true;
+
+	/**
+	 * 源对象和目标对象都是 {@code Map} 时, 需要忽略的源对象 {@code Map} key
+	 */
+	private Set<String> ignoreKeySet;
+
+	/**
 	 * 自定义类型转换器，默认使用全局万能转换器转换
 	 */
-	protected TypeConverter converter = (type, value) ->
-			Convert.convertWithCheck(type, value, null, ignoreError);
+	protected TypeConverter converter = (type, value) -> {
+		if (null == value) {
+			return null;
+		}
+
+		if (value instanceof IJSONTypeConverter) {
+			return ((IJSONTypeConverter) value).toBean(ObjectUtil.defaultIfNull(type, Object.class));
+		}
+
+		return Convert.convertWithCheck(type, value, null, ignoreError);
+	};
 
 	//region create
 
@@ -168,7 +191,8 @@ public class CopyOptions implements Serializable {
 	 * @return CopyOptions
 	 */
 	public CopyOptions setIgnoreProperties(String... ignoreProperties) {
-		return setPropertiesFilter((field, o) -> false == ArrayUtil.contains(ignoreProperties, field.getName()));
+		this.ignoreKeySet = CollUtil.newHashSet(ignoreProperties);
+		return this;
 	}
 
 	/**
@@ -182,8 +206,8 @@ public class CopyOptions implements Serializable {
 	 */
 	@SuppressWarnings("unchecked")
 	public <P, R> CopyOptions setIgnoreProperties(Func1<P, R>... funcs) {
-		final Set<String> ignoreProperties = ArrayUtil.mapToSet(funcs, LambdaUtil::getFieldName);
-		return setPropertiesFilter((field, o) -> false == ignoreProperties.contains(field.getName()));
+		this.ignoreKeySet = ArrayUtil.mapToSet(funcs, LambdaUtil::getFieldName);
+		return this;
 	}
 
 	/**
@@ -276,7 +300,7 @@ public class CopyOptions implements Serializable {
 	 */
 	protected Object editFieldValue(String fieldName, Object fieldValue) {
 		return (null != this.fieldValueEditor) ?
-				this.fieldValueEditor.apply(fieldName, fieldValue) : fieldValue;
+			this.fieldValueEditor.apply(fieldName, fieldValue) : fieldValue;
 	}
 
 	/**
@@ -304,6 +328,26 @@ public class CopyOptions implements Serializable {
 	}
 
 	/**
+	 * 设置是否自动转换为驼峰方式<br>
+	 * 一般用于map转bean和bean转bean出现非驼峰格式时，在尝试转换失败的情况下，是否二次检查转为驼峰匹配<br>
+	 * 此设置用于解决Bean和Map转换中的匹配问题而设置，并不是一个强制参数。
+	 * <ol>
+	 *     <li>当map转bean时，如果map中是下划线等非驼峰模式，自动匹配对应的驼峰字段，避免出现字段不拷贝问题。</li>
+	 *     <li>当bean转bean时，由于字段命名不规范，使用了非驼峰方式，增加兼容性。</li>
+	 * </ol>
+	 * <p>
+	 * 但是bean转Map和map转map时，没有使用这个参数，是因为没有匹配的必要，转map不存在无法匹配到的问题，因此此参数无效。
+	 *
+	 * @param autoTransCamelCase 是否自动转换为驼峰方式
+	 * @return this
+	 * @since 5.8.25
+	 */
+	public CopyOptions setAutoTransCamelCase(final boolean autoTransCamelCase) {
+		this.autoTransCamelCase = autoTransCamelCase;
+		return this;
+	}
+
+	/**
 	 * 设置自定义类型转换器，默认使用全局万能转换器转换。
 	 *
 	 * @param converter 转换器
@@ -326,7 +370,7 @@ public class CopyOptions implements Serializable {
 	 */
 	protected Object convertField(Type targetType, Object fieldValue) {
 		return (null != this.converter) ?
-				this.converter.convert(targetType, fieldValue) : fieldValue;
+			this.converter.convert(targetType, fieldValue) : fieldValue;
 	}
 
 	/**
@@ -349,5 +393,49 @@ public class CopyOptions implements Serializable {
 	 */
 	protected boolean testPropertyFilter(Field field, Object value) {
 		return null == this.propertiesFilter || this.propertiesFilter.test(field, value);
+	}
+
+	/**
+	 * 测试是否保留key, {@code true} 不保留， {@code false} 保留
+	 *
+	 * @param key {@link Map} key
+	 * @return 是否保留
+	 */
+	protected boolean testKeyFilter(Object key) {
+		if (CollUtil.isEmpty(this.ignoreKeySet)) {
+			return true;
+		}
+
+		if (ignoreCase) {
+			// 忽略大小写时要遍历检查
+			for (final String ignoreKey : this.ignoreKeySet) {
+				if (StrUtil.equalsIgnoreCase(key.toString(), ignoreKey)) {
+					return false;
+				}
+			}
+		}
+
+		return false == this.ignoreKeySet.contains(key);
+	}
+
+	/**
+	 * 查找Map对应Bean的名称<br>
+	 * 尝试原名称、转驼峰名称、isXxx去掉is的名称
+	 *
+	 * @param targetPropDescMap 目标bean的属性描述Map
+	 * @param sKeyStr           键或字段名
+	 * @return {@link PropDesc}
+	 */
+	protected PropDesc findPropDesc(final Map<String, PropDesc> targetPropDescMap, final String sKeyStr) {
+		PropDesc propDesc = targetPropDescMap.get(sKeyStr);
+		// 转驼峰尝试查找
+		if (null == propDesc && this.autoTransCamelCase) {
+			final String camelCaseKey = StrUtil.toCamelCase(sKeyStr);
+			if (!StrUtil.equals(sKeyStr, camelCaseKey)) {
+				// 只有转换为驼峰后与原key不同才重复查询，相同说明本身就是驼峰，不需要二次查询
+				propDesc = targetPropDescMap.get(camelCaseKey);
+			}
+		}
+		return propDesc;
 	}
 }

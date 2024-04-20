@@ -23,7 +23,6 @@ import java.util.concurrent.ExecutorService;
  * sf.start()
  * </pre>
  *
- *
  * @author Looly
  * @since 4.1.15
  */
@@ -34,10 +33,18 @@ public class SyncFinisher implements Closeable {
 	private ExecutorService executorService;
 
 	private boolean isBeginAtSameTime;
-	/** 启动同步器，用于保证所有worker线程同时开始 */
+	/**
+	 * 启动同步器，用于保证所有worker线程同时开始
+	 */
 	private final CountDownLatch beginLatch;
-	/** 结束同步器，用于等待所有worker线程同时结束 */
+	/**
+	 * 结束同步器，用于等待所有worker线程同时结束
+	 */
 	private CountDownLatch endLatch;
+	/**
+	 * 异常处理
+	 */
+	private Thread.UncaughtExceptionHandler exceptionHandler;
 
 	/**
 	 * 构造
@@ -58,6 +65,18 @@ public class SyncFinisher implements Closeable {
 	 */
 	public SyncFinisher setBeginAtSameTime(boolean isBeginAtSameTime) {
 		this.isBeginAtSameTime = isBeginAtSameTime;
+		return this;
+	}
+
+	/**
+	 * 设置异常处理
+	 *
+	 * @param exceptionHandler 异常处理器
+	 * @return this
+	 * @since 5.8.19
+	 */
+	public SyncFinisher setExceptionHandler(final Thread.UncaughtExceptionHandler exceptionHandler) {
+		this.exceptionHandler = exceptionHandler;
 		return this;
 	}
 
@@ -123,11 +142,15 @@ public class SyncFinisher implements Closeable {
 	public void start(boolean sync) {
 		endLatch = new CountDownLatch(workers.size());
 
-		if(null == this.executorService || this.executorService.isShutdown()){
-			this.executorService = ThreadUtil.newExecutor(threadSize);
+		if (null == this.executorService || this.executorService.isShutdown()) {
+			this.executorService = buildExecutor();
 		}
 		for (Worker worker : workers) {
-			executorService.submit(worker);
+			if(null != this.exceptionHandler){
+				executorService.execute(worker);
+			} else{
+				executorService.submit(worker);
+			}
 		}
 		// 保证所有worker同时开始
 		this.beginLatch.countDown();
@@ -150,11 +173,29 @@ public class SyncFinisher implements Closeable {
 	 *
 	 * @since 5.6.6
 	 */
-	public void stop(){
-		if(null != this.executorService){
+	public void stop() {
+		if (null != this.executorService) {
 			this.executorService.shutdown();
+			this.executorService = null;
 		}
-		this.executorService = null;
+
+		clearWorker();
+	}
+
+	/**
+	 * 立即结束线程池所有线程。此方法执行两种情况：
+	 * <ol>
+	 *     <li>执行start(true)后，调用此方法结束线程池回收资源</li>
+	 *     <li>执行start(false)后，用户自行判断结束点执行此方法</li>
+	 * </ol>
+	 *
+	 * @since 5.8.11
+	 */
+	public void stopNow() {
+		if (null != this.executorService) {
+			this.executorService.shutdownNow();
+			this.executorService = null;
+		}
 
 		clearWorker();
 	}
@@ -184,7 +225,6 @@ public class SyncFinisher implements Closeable {
 	 * 工作者，为一个线程
 	 *
 	 * @author xiaoleilu
-	 *
 	 */
 	public abstract class Worker implements Runnable {
 
@@ -208,5 +248,17 @@ public class SyncFinisher implements Closeable {
 		 * 任务内容
 		 */
 		public abstract void work();
+	}
+
+	/**
+	 * 构建线程池，加入了自定义的异常处理
+	 *
+	 * @return {@link ExecutorService}
+	 */
+	private ExecutorService buildExecutor() {
+		return ExecutorBuilder.create()
+			.setCorePoolSize(threadSize)
+			.setThreadFactory(new NamedThreadFactory("hutool-", null, false, exceptionHandler))
+			.build();
 	}
 }

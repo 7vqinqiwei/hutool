@@ -1,5 +1,7 @@
 package cn.hutool.core.thread;
 
+import cn.hutool.core.util.RuntimeUtil;
+
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
@@ -114,7 +116,7 @@ public class ThreadUtil {
 	 * Blocking Coefficient(阻塞系数) = 阻塞时间／（阻塞时间+使用CPU的时间）<br>
 	 * 计算密集型任务的阻塞系数为0，而IO密集型任务的阻塞系数则接近于1。
 	 * <p>
-	 * see: http://blog.csdn.net/partner4java/article/details/9417663
+	 * see: <a href="http://blog.csdn.net/partner4java/article/details/9417663">http://blog.csdn.net/partner4java/article/details/9417663</a>
 	 *
 	 * @param blockingCoefficient 阻塞系数，阻塞因子介于0~1之间的数，阻塞因子越大，线程池中的线程数越多。
 	 * @return {@link ThreadPoolExecutor}
@@ -126,7 +128,7 @@ public class ThreadUtil {
 		}
 
 		// 最佳的线程数 = CPU可用核心数 / (1 - 阻塞系数)
-		int poolSize = (int) (Runtime.getRuntime().availableProcessors() / (1 - blockingCoefficient));
+		int poolSize = (int) (RuntimeUtil.getProcessorCount() / (1 - blockingCoefficient));
 		return ExecutorBuilder.create().setCorePoolSize(poolSize).setMaxPoolSize(poolSize).setKeepAliveTime(0L).build();
 	}
 
@@ -135,7 +137,7 @@ public class ThreadUtil {
 	 * <pre>
 	 *     1. 核心线程数与最大线程数为nThreads指定的大小
 	 *     2. 默认使用LinkedBlockingQueue，默认队列大小为1024
-	 *     3. 如果isBlocked为{code true}，当执行拒绝策略的时候会处于阻塞状态，直到能添加到队列中或者被{@link Thread#interrupt()}中断
+	 *     3. 如果isBlocked为{@code true}，当执行拒绝策略的时候会处于阻塞状态，直到能添加到队列中或者被{@link Thread#interrupt()}中断
 	 * </pre>
 	 *
 	 * @param nThreads         线程池大小
@@ -154,7 +156,7 @@ public class ThreadUtil {
 	 * <pre>
 	 *     1. 核心线程数与最大线程数为nThreads指定的大小
 	 *     2. 默认使用LinkedBlockingQueue
-	 *     3. 如果isBlocked为{code true}，当执行拒绝策略的时候会处于阻塞状态，直到能添加到队列中或者被{@link Thread#interrupt()}中断
+	 *     3. 如果isBlocked为{@code true}，当执行拒绝策略的时候会处于阻塞状态，直到能添加到队列中或者被{@link Thread#interrupt()}中断
 	 * </pre>
 	 *
 	 * @param nThreads         线程池大小
@@ -382,18 +384,14 @@ public class ThreadUtil {
 	public static boolean safeSleep(long millis) {
 		long done = 0;
 		long before;
-		long spendTime;
-		while (done >= 0 && done < millis) {
-			before = System.currentTimeMillis();
-			if (false == sleep(millis - done)) {
+		// done表示实际花费的时间，确保实际花费时间大于应该sleep的时间
+		while (done < millis) {
+			before = System.nanoTime();
+			if (!sleep(millis - done)) {
 				return false;
 			}
-			spendTime = System.currentTimeMillis() - before;
-			if (spendTime <= 0) {
-				// Sleep花费时间为0或者负数，说明系统时间被拨动
-				break;
-			}
-			done += spendTime;
+			// done始终为正
+			done += (System.nanoTime() - before) / 1_000_000;
 		}
 		return true;
 	}
@@ -631,6 +629,7 @@ public class ThreadUtil {
 	 * @return {@link ConcurrencyTester}
 	 * @since 4.5.8
 	 */
+	@SuppressWarnings("resource")
 	public static ConcurrencyTester concurrencyTest(int threadSize, Runnable runnable) {
 		return (new ConcurrencyTester(threadSize)).test(runnable);
 	}
@@ -651,8 +650,8 @@ public class ThreadUtil {
 	 * 注意：此方法的延迟和周期的单位均为毫秒。
 	 *
 	 * <ul>
-	 *     <li>fixedRate 模式：下一次任务等待上一次任务执行完毕后再启动。</li>
-	 *     <li>fixedDelay模式：下一次任务不等待上一次任务，到周期自动执行。</li>
+	 *     <li>fixedRate 模式：以固定的频率执行。每period的时刻检查，如果上个任务完成，启动下个任务，否则等待上个任务结束后立即启动。</li>
+	 *     <li>fixedDelay模式：以固定的延时执行。上次任务结束后等待period再执行下个任务。</li>
 	 * </ul>
 	 *
 	 * @param executor              定时任务线程池，{@code null}新建一个默认线程池
@@ -675,8 +674,8 @@ public class ThreadUtil {
 	 * 开始执行一个定时任务，执行方式分fixedRate模式和fixedDelay模式。
 	 *
 	 * <ul>
-	 *     <li>fixedRate 模式：下一次任务等待上一次任务执行完毕后再启动。</li>
-	 *     <li>fixedDelay模式：下一次任务不等待上一次任务，到周期自动执行。</li>
+	 *     <li>fixedRate 模式：以固定的频率执行。每period的时刻检查，如果上个任务完成，启动下个任务，否则等待上个任务结束后立即启动。</li>
+	 *     <li>fixedDelay模式：以固定的延时执行。上次任务结束后等待period再执行下个任务。</li>
 	 * </ul>
 	 *
 	 * @param executor              定时任务线程池，{@code null}新建一个默认线程池

@@ -48,7 +48,9 @@ public class ImgUtilTest {
 	@Test
 	@Ignore
 	public void cutTest() {
-		ImgUtil.cut(FileUtil.file("d:/face.jpg"), FileUtil.file("d:/face_result.jpg"), new Rectangle(200, 200, 100, 100));
+		ImgUtil.cut(FileUtil.file("d:/test/hutool.png"),
+			FileUtil.file("d:/test/result.png"),
+			new Rectangle(0, 0, 400, 240));
 	}
 
 	@Test
@@ -89,7 +91,15 @@ public class ImgUtilTest {
 	@Test
 	@Ignore
 	public void sliceByRowsAndColsTest() {
-		ImgUtil.sliceByRowsAndCols(FileUtil.file("d:/test/logo.jpg"), FileUtil.file("d:/test/dest"), 1, 5);
+		ImgUtil.sliceByRowsAndCols(FileUtil.file("d:/temp/2.png"), FileUtil.file("d:/temp/slice/png"),ImgUtil.IMAGE_TYPE_PNG, 1, 5);
+	}
+
+	@Test
+	@Ignore
+	public void sliceByRowsAndColsTest2() {
+		ImgUtil.sliceByRowsAndCols(
+			FileUtil.file("d:/test/hutool.png"),
+			FileUtil.file("d:/test/dest"), ImgUtil.IMAGE_TYPE_PNG, 1, 5);
 	}
 
 	@Test

@@ -55,6 +55,12 @@ public class Validator {
 	 * 邮件
 	 */
 	public final static Pattern EMAIL = PatternPool.EMAIL;
+
+	/**
+	 * 邮件（包含中文）
+	 */
+	public final static Pattern EMAIL_WITH_CHINESE = PatternPool.EMAIL_WITH_CHINESE;
+
 	/**
 	 * 移动电话
 	 */
@@ -685,6 +691,21 @@ public class Validator {
 	}
 
 	/**
+	 * 验证是否为可用邮箱地址（兼容中文邮箱地址）
+	 *
+	 * @param value 值
+	 * @param includChinese 包含中文标识
+	 * @return true为可用邮箱地址
+	 */
+	public static boolean isEmail(CharSequence value,boolean includChinese) {
+		if (includChinese){
+			return isMatchRegex(EMAIL_WITH_CHINESE, value);
+		}
+		return isEmail(value);
+	}
+
+
+	/**
 	 * 验证是否为可用邮箱地址
 	 *
 	 * @param <T>      字符串类型
@@ -1235,5 +1256,24 @@ public class Validator {
 			throw new ValidateException(errorMsg);
 		}
 		return value;
+	}
+
+	/**
+	 * 检查给定的index是否超出长度限制，默认检查超出倍数（10倍），此方法主要用于内部，检查包括：
+	 * <ul>
+	 *     <li>数组调用setOrPadding时，最多允许padding的长度</li>
+	 *     <li>List调用setOrPadding时，最多允许padding的长度</li>
+	 *     <li>JSONArray调用setOrPadding时，最多允许padding的长度</li>
+	 * </ul>
+	 *
+	 * @param index 索引
+	 * @param size  数组、列表长度
+	 * @since 5.8.22
+	 */
+	public static void checkIndexLimit(final int index, final int size) {
+		// issue#3286, 增加安全检查，最多增加10倍
+		if (index > (size + 1) * 10) {
+			throw new ValidateException("Index [{}] is too large for size: [{}]", index, size);
+		}
 	}
 }

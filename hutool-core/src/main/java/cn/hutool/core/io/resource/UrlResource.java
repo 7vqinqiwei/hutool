@@ -4,9 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.URLUtil;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
 
@@ -103,5 +101,15 @@ public class UrlResource implements Resource, Serializable{
 	@Override
 	public String toString() {
 		return (null == this.url) ? "null" : this.url.toString();
+	}
+
+	/**
+	 * 获取资源长度
+	 *
+	 * @return 资源长度
+	 * @since 5.8.21
+	 */
+	public long size() {
+		return URLUtil.size(this.url);
 	}
 }

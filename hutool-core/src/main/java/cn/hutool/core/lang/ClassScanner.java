@@ -2,8 +2,10 @@ package cn.hutool.core.lang;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.EnumerationIter;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
+import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.*;
 
@@ -65,6 +67,16 @@ public class ClassScanner implements Serializable {
 	 * 扫描结果集
 	 */
 	private final Set<Class<?>> classes = new HashSet<>();
+
+	/**
+	 * 忽略loadClass时的错误
+	 */
+	private boolean ignoreLoadError = false;
+
+	/**
+	 * 获取加载错误的类名列表
+	 */
+	private final Set<String> classesOfLoadError = new HashSet<>();
 
 	/**
 	 * 扫描指定包路径下所有包含指定注解的类，包括其他加载的jar或者类
@@ -212,6 +224,17 @@ public class ClassScanner implements Serializable {
 	}
 
 	/**
+	 * 设置是否忽略loadClass时的错误
+	 *
+	 * @param ignoreLoadError 忽略loadClass时的错误
+	 * @return this
+	 */
+	public ClassScanner setIgnoreLoadError(boolean ignoreLoadError) {
+		this.ignoreLoadError = ignoreLoadError;
+		return this;
+	}
+
+	/**
 	 * 扫描包路径下满足class过滤器条件的所有class文件<br>
 	 * 此方法首先扫描指定包名下的资源目录，如果未扫描到，则扫描整个classpath中所有加载的类
 	 *
@@ -229,7 +252,12 @@ public class ClassScanner implements Serializable {
 	 * @since 5.7.5
 	 */
 	public Set<Class<?>> scan(boolean forceScanJavaClassPaths) {
-		for (URL url : ResourceUtil.getResourceIter(this.packagePath)) {
+
+		//多次扫描时,清理上次扫描历史
+		this.classes.clear();
+		this.classesOfLoadError.clear();
+
+		for (URL url : ResourceUtil.getResourceIter(this.packagePath, this.classLoader)) {
 			switch (url.getProtocol()) {
 				case "file":
 					scanFile(new File(URLUtil.decode(url.getFile(), this.charset.name())), null);
@@ -267,7 +295,20 @@ public class ClassScanner implements Serializable {
 		this.classLoader = classLoader;
 	}
 
+	/**
+	 * 忽略加载错误扫描后，可以获得之前扫描时加载错误的类名字集合
+	 * @return 加载错误的类名字集合
+	 */
+	public Set<String> getClassesOfLoadError() {
+		return Collections.unmodifiableSet(this.classesOfLoadError);
+	}
+
 	// --------------------------------------------------------------------------------------------------- Private method start
+
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		return super.clone();
+	}
 
 	/**
 	 * 扫描Java指定的ClassPath路径
@@ -316,22 +357,26 @@ public class ClassScanner implements Serializable {
 	}
 
 	/**
-	 * 扫描jar包
+	 * 扫描jar包，扫描结束后关闭jar文件
 	 *
 	 * @param jar jar包
 	 */
 	private void scanJar(JarFile jar) {
-		String name;
-		for (JarEntry entry : new EnumerationIter<>(jar.entries())) {
-			name = StrUtil.removePrefix(entry.getName(), StrUtil.SLASH);
-			if (StrUtil.isEmpty(packagePath) || name.startsWith(this.packagePath)) {
-				if (name.endsWith(FileUtil.CLASS_EXT) && false == entry.isDirectory()) {
-					final String className = name//
+		try{
+			String name;
+			for (JarEntry entry : new EnumerationIter<>(jar.entries())) {
+				name = StrUtil.removePrefix(entry.getName(), StrUtil.SLASH);
+				if (StrUtil.isEmpty(packagePath) || name.startsWith(this.packagePath)) {
+					if (name.endsWith(FileUtil.CLASS_EXT) && false == entry.isDirectory()) {
+						final String className = name//
 							.substring(0, name.length() - 6)//
 							.replace(CharUtil.SLASH, CharUtil.DOT);//
-					addIfAccept(loadClass(className));
+						addIfAccept(loadClass(className));
+					}
 				}
 			}
+		} finally {
+			IoUtil.close(jar);
 		}
 	}
 
@@ -341,7 +386,7 @@ public class ClassScanner implements Serializable {
 	 * @param className 类名
 	 * @return 加载的类
 	 */
-	private Class<?> loadClass(String className) {
+	protected Class<?> loadClass(String className) {
 		ClassLoader loader = this.classLoader;
 		if (null == loader) {
 			loader = ClassLoaderUtil.getClassLoader();
@@ -353,10 +398,16 @@ public class ClassScanner implements Serializable {
 			clazz = Class.forName(className, this.initialize, loader);
 		} catch (NoClassDefFoundError | ClassNotFoundException e) {
 			// 由于依赖库导致的类无法加载，直接跳过此类
+			classesOfLoadError.add(className);
 		} catch (UnsupportedClassVersionError e) {
 			// 版本导致的不兼容的类，跳过
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+			classesOfLoadError.add(className);
+		} catch (Throwable e) {
+			if (false == this.ignoreLoadError) {
+				throw ExceptionUtil.wrapRuntime(e);
+			} else {
+				classesOfLoadError.add(className);
+			}
 		}
 		return clazz;
 	}

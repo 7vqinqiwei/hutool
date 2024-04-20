@@ -108,10 +108,10 @@ public final class UrlBuilder implements Builder<String> {
 	 */
 	public static UrlBuilder ofHttp(String httpUrl, Charset charset) {
 		Assert.notBlank(httpUrl, "Http url must be not blank!");
-
-		final int sepIndex = httpUrl.indexOf("://");
-		if (sepIndex < 0) {
-			httpUrl = "http://" + httpUrl.trim();
+		httpUrl = StrUtil.trimStart(httpUrl);
+		// issue#I66CIR
+		if(false == StrUtil.startWithAnyIgnoreCase(httpUrl, "http://", "https://")){
+			httpUrl = "http://" + httpUrl;
 		}
 		return of(httpUrl, charset);
 	}
@@ -187,8 +187,19 @@ public final class UrlBuilder implements Builder<String> {
 	 * 创建空的UrlBuilder
 	 *
 	 * @return UrlBuilder
+	 * @deprecated 请使用 {@link #of()}
 	 */
+	@Deprecated
 	public static UrlBuilder create() {
+		return new UrlBuilder();
+	}
+
+	/**
+	 * 创建空的UrlBuilder
+	 *
+	 * @return UrlBuilder
+	 */
+	public static UrlBuilder of() {
 		return new UrlBuilder();
 	}
 
@@ -278,6 +289,20 @@ public final class UrlBuilder implements Builder<String> {
 	 */
 	public int getPort() {
 		return port;
+	}
+
+	/**
+	 * 获取端口，如果未自定义返回协议默认端口
+	 *
+	 * @return 端口
+	 */
+	public int getPortWithDefault() {
+		int port = getPort();
+		if (port > 0) {
+			return port;
+		}
+		URL url = this.toURL();
+		return url.getDefaultPort();
 	}
 
 	/**
@@ -544,12 +569,7 @@ public final class UrlBuilder implements Builder<String> {
 	 */
 	public URI toURI() {
 		try {
-			return new URI(
-					getSchemeWithDefault(),
-					getAuthority(),
-					getPathStr(),
-					getQueryStr(),
-					getFragmentEncoded());
+			return toURL().toURI();
 		} catch (URISyntaxException e) {
 			return null;
 		}
