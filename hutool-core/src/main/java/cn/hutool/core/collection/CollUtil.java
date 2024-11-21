@@ -308,7 +308,7 @@ public class CollUtil {
 	}
 
 	/**
-	 * 两个集合的差集<br>
+	 * 两个集合的对称差集 (A-B)∪(B-A)<br>
 	 * 针对一个集合中存在多个相同元素的情况，计算两个集合中此元素的个数，保留两个集合中此元素个数差的个数<br>
 	 * 例如：
 	 *
@@ -361,6 +361,10 @@ public class CollUtil {
 	 * @return 单差集
 	 */
 	public static <T> Collection<T> subtract(Collection<T> coll1, Collection<T> coll2) {
+		if(isEmpty(coll1) || isEmpty(coll2)){
+			return coll1;
+		}
+
 		Collection<T> result = ObjectUtil.clone(coll1);
 		try {
 			if (null == result) {

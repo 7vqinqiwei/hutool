@@ -352,6 +352,20 @@ public class HttpConnection {
 	}
 
 	/**
+	 * 设置固定长度的流模式，会设置HTTP请求头中的Content-Length字段，告知服务器整个请求体的精确字节大小。<br>
+	 * 这在上传文件或大数据量时非常有用，因为它允许服务器准确地知道何时接收完所有的请求数据，而不需要依赖于连接的关闭来判断数据传输的结束。
+	 *
+	 * @param contentLength 固定长度
+	 * @return this
+	 */
+	public HttpConnection setFixedLengthStreamingMode(long contentLength){
+		if(contentLength > 0){
+			conn.setFixedLengthStreamingMode(contentLength);
+		}
+		return this;
+	}
+
+	/**
 	 * 采用流方式上传数据，无需本地缓存数据。<br>
 	 * HttpUrlConnection默认是将所有数据读到本地缓存，然后再发送给服务器，这样上传大文件时就会导致内存溢出。
 	 *

@@ -375,7 +375,7 @@ public class DateUtil extends CalendarUtil {
 	}
 
 	/**
-	 * @return 当前月份
+	 * @return 当前月份，从0开始计数
 	 */
 	public static int thisMonth() {
 		return month(date());
@@ -522,7 +522,7 @@ public class DateUtil extends CalendarUtil {
 		if (date instanceof DateTime) {
 			timeZone = ((DateTime) date).getTimeZone();
 		}
-		return format(date, newSimpleFormat(format, null, timeZone));
+		return format(date, FastDateFormat.getInstance(format, timeZone));
 	}
 
 	/**
@@ -1406,7 +1406,7 @@ public class DateUtil extends CalendarUtil {
 		return offset(date, DateField.HOUR_OF_DAY, offset);
 	}
 
-	/**w
+	/**
 	 * 偏移天
 	 *
 	 * @param date   日期
@@ -1440,6 +1440,18 @@ public class DateUtil extends CalendarUtil {
 	}
 
 	/**
+	 * 偏移年
+	 *
+	 * @param date   日期
+	 * @param offset 偏移年数，正数向未来偏移，负数向历史偏移
+	 * @return 偏移后的日期
+	 * @since 5.8.29
+	 */
+	public static DateTime offsetYear(final Date date, final int offset) {
+		return offset(date, DateField.YEAR, offset);
+	}
+
+	/**
 	 * 获取指定日期偏移指定时间后的时间，生成的偏移日期不影响原日期
 	 *
 	 * @param date      基准日期
@@ -1448,6 +1460,9 @@ public class DateUtil extends CalendarUtil {
 	 * @return 偏移后的日期
 	 */
 	public static DateTime offset(Date date, DateField dateField, int offset) {
+		if (date == null) {
+			return null;
+		}
 		return dateNew(date).offset(dateField, offset);
 	}
 

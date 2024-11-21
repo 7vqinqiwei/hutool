@@ -340,6 +340,12 @@ public class ConverterRegistry implements Serializable {
 			return (T) converter.convert(value, (Class<?>) defaultValue);
 		}
 
+		// 空值转空Bean
+		if(ObjectUtil.isEmpty(value)){
+			// issue#3649 空值转空对象，则直接实例化
+			return ReflectUtil.newInstanceIfPossible(rowType);
+		}
+
 		// 表示非需要特殊转换的对象
 		return null;
 	}

@@ -3,6 +3,7 @@ package cn.hutool.captcha;
 
 import cn.hutool.captcha.generator.CodeGenerator;
 import cn.hutool.captcha.generator.RandomGenerator;
+import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.img.gif.AnimatedGifEncoder;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.RandomUtil;
@@ -53,9 +54,9 @@ public class GifCaptcha extends AbstractCaptcha {
 	}
 
 	/**
-	 * @param width     验证码宽度
-	 * @param height    验证码高度
-	 * @param codeCount 验证码个数
+	 * @param width          验证码宽度
+	 * @param height         验证码高度
+	 * @param codeCount      验证码个数
 	 * @param interfereCount 验证码干扰元素个数
 	 */
 	public GifCaptcha(int width, int height, int codeCount, int interfereCount) {
@@ -72,6 +73,19 @@ public class GifCaptcha extends AbstractCaptcha {
 	 */
 	public GifCaptcha(int width, int height, CodeGenerator generator, int interfereCount) {
 		super(width, height, generator, interfereCount);
+	}
+
+	/**
+	 * 构造
+	 *
+	 * @param width          图片宽
+	 * @param height         图片高
+	 * @param codeCount      验证码个数
+	 * @param interfereCount 验证码干扰元素个数
+	 * @param size           字体的大小 高度的倍数
+	 */
+	public GifCaptcha(int width, int height, int codeCount, int interfereCount, float size) {
+		super(width, height, new RandomGenerator(codeCount), interfereCount, size);
 	}
 
 	/**
@@ -168,13 +182,11 @@ public class GifCaptcha extends AbstractCaptcha {
 	 * @return BufferedImage
 	 */
 	private BufferedImage graphicsImage(char[] chars, Color[] fontColor, char[] words, int flag) {
-		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		final BufferedImage image = new BufferedImage(width, height, (null == this.background) ? BufferedImage.TYPE_4BYTE_ABGR : BufferedImage.TYPE_INT_RGB);
 		//或得图形上下文
-		Graphics2D g2d = image.createGraphics();
-		try{
+		final Graphics2D g2d = ImgUtil.createGraphics(image, this.background);
+		try {
 			//利用指定颜色填充背景
-			g2d.setColor(ObjectUtil.defaultIfNull(this.background, Color.WHITE));
-			g2d.fillRect(0, 0, width, height);
 			AlphaComposite ac;
 			// 字符的y坐标
 			float y = (height >> 1) + (font.getSize() >> 1);
@@ -191,9 +203,9 @@ public class GifCaptcha extends AbstractCaptcha {
 				g2d.setComposite(ac);
 				g2d.setColor(fontColor[i]);
 				g2d.drawOval(
-					RandomUtil.randomInt(width),
-					RandomUtil.randomInt(height),
-					RandomUtil.randomInt(5, 30), 5 + RandomUtil.randomInt(5, 30)
+						RandomUtil.randomInt(width),
+						RandomUtil.randomInt(height),
+						RandomUtil.randomInt(5, 30), 5 + RandomUtil.randomInt(5, 30)
 				);//绘制椭圆边框
 				g2d.drawString(words[i] + "", x + (font.getSize() + m) * i, y);
 			}

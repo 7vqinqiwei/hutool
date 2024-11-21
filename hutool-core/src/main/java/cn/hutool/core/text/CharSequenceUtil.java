@@ -762,8 +762,8 @@ public class CharSequenceUtil {
 			return false;
 		}
 
-		for (CharSequence suffix : prefixes) {
-			if (startWith(str, suffix, false)) {
+		for (CharSequence prefix : prefixes) {
+			if (startWith(str, prefix, false)) {
 				return true;
 			}
 		}
@@ -775,17 +775,17 @@ public class CharSequenceUtil {
 	 * 给定字符串和数组为空都返回false
 	 *
 	 * @param str      给定字符串
-	 * @param suffixes 需要检测的开始字符串
+	 * @param prefixes 需要检测的开始字符串
 	 * @return 给定字符串是否以任何一个字符串开始
 	 * @since 5.8.1
 	 */
-	public static boolean startWithAnyIgnoreCase(final CharSequence str, final CharSequence... suffixes) {
-		if (isEmpty(str) || ArrayUtil.isEmpty(suffixes)) {
+	public static boolean startWithAnyIgnoreCase(final CharSequence str, final CharSequence... prefixes) {
+		if (isEmpty(str) || ArrayUtil.isEmpty(prefixes)) {
 			return false;
 		}
 
-		for (final CharSequence suffix : suffixes) {
-			if (startWith(str, suffix, true)) {
+		for (final CharSequence prefix : prefixes) {
+			if (startWith(str, prefix, true)) {
 				return true;
 			}
 		}
@@ -978,7 +978,11 @@ public class CharSequenceUtil {
 	}
 
 	/**
-	 * 检查指定字符串中是否只包含给定的字符
+	 * 检查指定字符串中是否只包含给定的字符<br>
+	 * 这里的containsOnly并不是必须全部给定的testChars都需要有，而是一个子集。testChars是个限定集合，检查字符串中的字符是否在这个限定集合中。<br>
+	 * <pre>{@code
+	 *   StrUtil.containsOnly("asdas", 'a', 'd', 's','l');   --> true
+	 * }</pre>
 	 *
 	 * @param str       字符串
 	 * @param testChars 检查的字符
@@ -1462,6 +1466,36 @@ public class CharSequenceUtil {
 	}
 
 	/**
+	 * 去掉指定所有前缀，如：
+	 * <pre>{@code
+	 *     str=abcdef, prefix=ab => return cdef
+	 *     str=ababcdef, prefix=ab => return cdef
+	 *     str=ababcdef, prefix="" => return ababcdef
+	 *     str=ababcdef, prefix=null => return ababcdef
+	 * }</pre>
+	 *
+	 * @param str    字符串，空返回原字符串
+	 * @param prefix 前缀，空返回原字符串
+	 * @return 去掉所有前缀的字符串，若前缀不是 preffix， 返回原字符串
+	 * @since 5.8.30
+	 */
+	public static String removeAllPrefix(CharSequence str, CharSequence prefix) {
+		if (isEmpty(str) || isEmpty(prefix)) {
+			return str(str);
+		}
+
+		final String prefixStr = prefix.toString();
+		final int prefixLength = prefixStr.length();
+
+		final String str2 = str.toString();
+		int toIndex = 0;
+		while (str2.startsWith(prefixStr, toIndex)) {
+			toIndex += prefixLength;
+		}
+		return subSuf(str2, toIndex);
+	}
+
+	/**
 	 * 忽略大小写去掉指定前缀
 	 *
 	 * @param str    字符串
@@ -1498,6 +1532,37 @@ public class CharSequenceUtil {
 		}
 		return str2;
 	}
+
+	/**
+	 * 去掉指定所有后缀，如：
+	 * <pre>{@code
+	 *     str=11abab, suffix=ab => return 11
+	 *     str=11ab, suffix=ab => return 11
+	 *     str=11ab, suffix="" => return 11ab
+	 *     str=11ab, suffix=null => return 11ab
+	 * }</pre>
+	 *
+	 * @param str    字符串，空返回原字符串
+	 * @param suffix 后缀字符串，空返回原字符串
+	 * @return 去掉所有后缀的字符串，若后缀不是 suffix， 返回原字符串
+	 * @since 5.8.30
+	 */
+	public static String removeAllSuffix(CharSequence str, CharSequence suffix) {
+		if (isEmpty(str) || isEmpty(suffix)) {
+			return str(str);
+		}
+
+		final String suffixStr = suffix.toString();
+		final int suffixLength = suffixStr.length();
+
+		final String str2 = str.toString();
+		int toIndex = str2.length();
+		while (str2.startsWith(suffixStr, toIndex - suffixLength)){
+			toIndex -= suffixLength;
+		}
+		return subPre(str2, toIndex);
+	}
+
 
 	/**
 	 * 去掉指定后缀，并小写首字母
@@ -1542,6 +1607,31 @@ public class CharSequenceUtil {
 	// ------------------------------------------------------------------------ strip
 
 	/**
+	 * 去除两边的指定字符串，忽略大小写
+	 *
+	 * @param str            被处理的字符串
+	 * @param prefixOrSuffix 前缀或后缀
+	 * @return 处理后的字符串
+	 * @since 3.1.2
+	 */
+	public static String stripIgnoreCase(final CharSequence str, final CharSequence prefixOrSuffix) {
+		return stripIgnoreCase(str, prefixOrSuffix, prefixOrSuffix);
+	}
+
+	/**
+	 * 去除两边的指定字符串，忽略大小写
+	 *
+	 * @param str    被处理的字符串
+	 * @param prefix 前缀
+	 * @param suffix 后缀
+	 * @return 处理后的字符串
+	 * @since 3.1.2
+	 */
+	public static String stripIgnoreCase(final CharSequence str, final CharSequence prefix, final CharSequence suffix) {
+		return strip(str, prefix, suffix, true);
+	}
+
+	/**
 	 * 去除两边的指定字符串
 	 *
 	 * @param str            被处理的字符串
@@ -1558,7 +1648,20 @@ public class CharSequenceUtil {
 	}
 
 	/**
-	 * 去除两边的指定字符串
+	 * 去除两边的指定字符串<br>
+	 * 两边字符如果存在，则去除，不存在不做处理
+	 * <pre>{@code
+	 * "aaa_STRIPPED_bbb", "a", "b"  -> "aa_STRIPPED_bb"
+	 * "aaa_STRIPPED_bbb", null, null  -> "aaa_STRIPPED_bbb"
+	 * "aaa_STRIPPED_bbb", "", ""  -> "aaa_STRIPPED_bbb"
+	 * "aaa_STRIPPED_bbb", "", "b"  -> "aaa_STRIPPED_bb"
+	 * "aaa_STRIPPED_bbb", null, "b"  -> "aaa_STRIPPED_bb"
+	 * "aaa_STRIPPED_bbb", "a", ""  -> "aa_STRIPPED_bbb"
+	 * "aaa_STRIPPED_bbb", "a", null  -> "aa_STRIPPED_bbb"
+	 *
+	 * "a", "a", "a"  -> ""
+	 * }
+	 * </pre>
 	 *
 	 * @param str    被处理的字符串
 	 * @param prefix 前缀
@@ -1567,59 +1670,146 @@ public class CharSequenceUtil {
 	 * @since 3.1.2
 	 */
 	public static String strip(CharSequence str, CharSequence prefix, CharSequence suffix) {
+		return strip(str, prefix, suffix, false);
+	}
+
+	/**
+	 * 去除两边的指定字符串<br>
+	 * 两边字符如果存在，则去除，不存在不做处理
+	 * <pre>{@code
+	 * "aaa_STRIPPED_bbb", "a", "b"  -> "aa_STRIPPED_bb"
+	 * "aaa_STRIPPED_bbb", null, null  -> "aaa_STRIPPED_bbb"
+	 * "aaa_STRIPPED_bbb", "", ""  -> "aaa_STRIPPED_bbb"
+	 * "aaa_STRIPPED_bbb", "", "b"  -> "aaa_STRIPPED_bb"
+	 * "aaa_STRIPPED_bbb", null, "b"  -> "aaa_STRIPPED_bb"
+	 * "aaa_STRIPPED_bbb", "a", ""  -> "aa_STRIPPED_bbb"
+	 * "aaa_STRIPPED_bbb", "a", null  -> "aa_STRIPPED_bbb"
+	 *
+	 * "a", "a", "a"  -> ""
+	 * }
+	 * </pre>
+	 *
+	 * @param str    被处理的字符串
+	 * @param prefix 前缀
+	 * @param suffix 后缀
+	 * @param ignoreCase 是否忽略大小写
+	 * @return 处理后的字符串
+	 * @since 3.1.2
+	 */
+	public static String strip(CharSequence str, CharSequence prefix, CharSequence suffix, boolean ignoreCase) {
 		if (isEmpty(str)) {
 			return str(str);
 		}
 
+		final String str2 = str.toString();
 		int from = 0;
-		int to = str.length();
+		int to = str2.length();
 
-		String str2 = str.toString();
-		if (startWith(str2, prefix)) {
+		if (startWith(str2, prefix, ignoreCase)) {
 			from = prefix.length();
+			if(from == to){
+				// "a", "a", "a"  -> ""
+				return EMPTY;
+			}
 		}
-		if (endWith(str2, suffix)) {
+		if (endWith(str2, suffix, ignoreCase)) {
 			to -= suffix.length();
+			if(from == to){
+				// "a", "a", "a"  -> ""
+				return EMPTY;
+			} else if(to < from){
+				// pre去除后和suffix有重叠，如 ("aba", "ab", "ba") -> "a"
+				to += suffix.length();
+			}
 		}
 
-		return str2.substring(Math.min(from, to), Math.max(from, to));
+		return str2.substring(from, to);
 	}
 
 	/**
-	 * 去除两边的指定字符串，忽略大小写
+	 * 去除两边<u><b>所有</b></u>的指定字符串
+	 *
+	 * <pre>{@code
+	 * "aaa_STRIPPED_bbb", "a"  -> "_STRIPPED_bbb"
+	 * "aaa_STRIPPED_bbb", "a", "b"  -> "_STRIPPED_"
+	 * "aaa_STRIPPED_bbb", ""  -> "aaa_STRIPPED_bbb"
+	 * }
+	 * </pre>
 	 *
 	 * @param str            被处理的字符串
 	 * @param prefixOrSuffix 前缀或后缀
 	 * @return 处理后的字符串
-	 * @since 3.1.2
+	 * @since 5.8.30
 	 */
-	public static String stripIgnoreCase(CharSequence str, CharSequence prefixOrSuffix) {
-		return stripIgnoreCase(str, prefixOrSuffix, prefixOrSuffix);
+	public static String stripAll(final CharSequence str, final CharSequence prefixOrSuffix) {
+		if (equals(str, prefixOrSuffix)) {
+			return EMPTY;
+		}
+		return stripAll(str, prefixOrSuffix, prefixOrSuffix);
 	}
 
 	/**
-	 * 去除两边的指定字符串，忽略大小写
+	 * 去除两边<u><b>所有</b></u>的指定字符串
+	 *
+	 * <pre>{@code
+	 * "aaa_STRIPPED_bbb", "a", "b"  -> "_STRIPPED_"
+	 * "aaa_STRIPPED_bbb", null, null  -> "aaa_STRIPPED_bbb"
+	 * "aaa_STRIPPED_bbb", "", ""  -> "aaa_STRIPPED_bbb"
+	 * "aaa_STRIPPED_bbb", "", "b"  -> "aaa_STRIPPED_"
+	 * "aaa_STRIPPED_bbb", null, "b"  -> "aaa_STRIPPED_"
+	 * "aaa_STRIPPED_bbb", "a", ""  -> "_STRIPPED_bbb"
+	 * "aaa_STRIPPED_bbb", "a", null  -> "_STRIPPED_bbb"
+	 *
+	 * // special test
+	 * "aaaaaabbb", "aaa", null  -> "bbb"
+	 * "aaaaaaabbb", "aa", null  -> "abbb"
+	 *
+	 * "aaaaaaaaa", "aaa", "aa"  -> ""
+	 * "a", "a", "a"  -> ""
+	 * }
+	 * </pre>
 	 *
 	 * @param str    被处理的字符串
 	 * @param prefix 前缀
 	 * @param suffix 后缀
 	 * @return 处理后的字符串
-	 * @since 3.1.2
+	 * @since 5.8.30
 	 */
-	public static String stripIgnoreCase(CharSequence str, CharSequence prefix, CharSequence suffix) {
+	public static String stripAll(final CharSequence str, final CharSequence prefix, final CharSequence suffix) {
 		if (isEmpty(str)) {
 			return str(str);
 		}
-		int from = 0;
-		int to = str.length();
 
-		String str2 = str.toString();
-		if (startWithIgnoreCase(str2, prefix)) {
-			from = prefix.length();
+		final String prefixStr = emptyIfNull(prefix);
+		final String suffixStr = emptyIfNull(suffix);
+
+		final String str2 = str.toString();
+		int from = 0;
+		int to = str2.length();
+
+		if(!prefixStr.isEmpty()){
+			while (str2.startsWith(prefixStr, from)) {
+				from += prefix.length();
+				if(from == to){
+					// "a", "a", "a"  -> ""
+					return EMPTY;
+				}
+			}
 		}
-		if (endWithIgnoreCase(str2, suffix)) {
-			to -= suffix.length();
+		if(!suffixStr.isEmpty()){
+			while (str2.startsWith(suffixStr, to - suffixStr.length())) {
+				to -= suffixStr.length();
+				if(from == to){
+					// "a", "a", "a"  -> ""
+					return EMPTY;
+				}else if(to < from){
+					// pre去除后和suffix有重叠，如 ("aba", "ab", "ba") -> "a"
+					to += suffixStr.length();
+					break;
+				}
+			}
 		}
+
 		return str2.substring(from, to);
 	}
 
@@ -3046,7 +3236,7 @@ public class CharSequenceUtil {
 	 * @return 是否被包装
 	 */
 	public static boolean isWrap(CharSequence str, char prefixChar, char suffixChar) {
-		if (null == str) {
+		if (null == str || str.length() < 2) {
 			return false;
 		}
 

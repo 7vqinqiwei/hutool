@@ -4,7 +4,6 @@ import cn.hutool.core.codec.Base64;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.io.IORuntimeException;
 import cn.hutool.core.io.IoUtil;
-import cn.hutool.core.io.file.FileNameUtil;
 import cn.hutool.core.io.resource.Resource;
 import cn.hutool.core.lang.Assert;
 import cn.hutool.core.util.NumberUtil;
@@ -1899,6 +1898,9 @@ public class ImgUtil {
 			throw new IORuntimeException(e);
 		} finally {
 			writer.dispose();
+			// issue#IAPZG7
+			// FileCacheImageOutputStream会产生临时文件，此处关闭清除
+			IoUtil.close(output);
 		}
 		return true;
 	}
@@ -2223,6 +2225,29 @@ public class ImgUtil {
 	 */
 	public static Color randomColor() {
 		return ColorUtil.randomColor();
+	}
+
+	/**
+	 * 生成随机颜色，与指定颜色有一定的区分度
+	 *
+	 * @param compareColor 比较颜色
+	 * @param minDistance 最小色差，按三维坐标计算的距离值
+	 * @return 与指定颜色有一定的区分度的随机颜色
+	 * @since 5.8.30
+	 */
+	public static Color randomColor(Color compareColor,int minDistance) {
+		return ColorUtil.randomColor(compareColor,minDistance);
+	}
+
+	/**
+	 * 生成随机颜色，与指定颜色有一定的区分度
+	 *
+	 * @param compareColor 比较颜色
+	 * @return 与指定颜色有一定的区分度的随机颜色，默认是最大可能的三维距离的一半
+	 * @since 5.8.30
+	 */
+	public static Color randomColor(Color compareColor) {
+		return ColorUtil.randomColor(compareColor,ColorUtil.maxDistance(compareColor) / 2);
 	}
 
 	/**

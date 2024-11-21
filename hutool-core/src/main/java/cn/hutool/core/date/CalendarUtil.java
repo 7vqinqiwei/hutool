@@ -5,6 +5,7 @@ import cn.hutool.core.convert.NumberChineseFormatter;
 import cn.hutool.core.date.format.DateParser;
 import cn.hutool.core.date.format.FastDateParser;
 import cn.hutool.core.date.format.GlobalCustomFormat;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 
@@ -355,6 +356,12 @@ public class CalendarUtil {
 		if (cal1 == null || cal2 == null) {
 			throw new IllegalArgumentException("The date must not be null");
 		}
+
+		if(ObjUtil.notEqual(cal1.getTimeZone(), cal2.getTimeZone())){
+			// 统一时区
+			cal2 = changeTimeZone(cal2, cal1.getTimeZone());
+		}
+
 		return cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR) && //
 			cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && //
 			cal1.get(Calendar.ERA) == cal2.get(Calendar.ERA);
@@ -418,6 +425,12 @@ public class CalendarUtil {
 		if (cal1 == null || cal2 == null) {
 			throw new IllegalArgumentException("The date must not be null");
 		}
+
+		if(ObjUtil.notEqual(cal1.getTimeZone(), cal2.getTimeZone())){
+			// 统一时区
+			cal2 = changeTimeZone(cal2, cal1.getTimeZone());
+		}
+
 		return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && //
 			cal1.get(Calendar.MONTH) == cal2.get(Calendar.MONTH) &&
 			// issue#3011@Github
@@ -787,5 +800,18 @@ public class CalendarUtil {
 		calendar.setLenient(lenient);
 
 		return parser.parse(StrUtil.str(str), new ParsePosition(0), calendar) ? calendar : null;
+	}
+
+	/**
+	 * 转换为默认时区的Calendar
+	 *
+	 * @param cal 时间
+	 * @return 默认时区的calendar对象
+	 */
+	private static Calendar changeTimeZone(Calendar cal, TimeZone timeZone) {
+		// 转换到统一时区，例如UTC
+		cal = (Calendar) cal.clone();
+		cal.setTimeZone(timeZone);
+		return cal;
 	}
 }

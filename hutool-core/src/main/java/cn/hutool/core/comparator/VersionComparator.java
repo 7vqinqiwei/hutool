@@ -57,7 +57,7 @@ public class VersionComparator implements Comparator<String>, Serializable {
 		}
 		if (version1 == null && version2 == null) {
 			return 0;
-		} else if (version1 == null) {// null视为最小版本，排在前
+		} else if (version1 == null) {// null或""视为最小版本，排在前
 			return -1;
 		} else if (version2 == null) {
 			return 1;
